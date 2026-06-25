@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { ApiKeyService } from "./apiKeyService";
-import { streamClaude, type ChatMessage } from "./anthropicClient";
+import { streamWithFallback } from "./aiRouter";
+import type { ChatMessage } from "./anthropicClient";
 import { LLM_VENDOR } from "./llmConfig";
 import { CLAUDE_MODELS, OPENAI_MODELS } from "./models";
 import { streamOpenAI } from "./openaiClient";
@@ -18,6 +19,9 @@ export function registerClaudeLanguageModelProvider(
   context.subscriptions.push(
     vscode.lm.registerLanguageModelChatProvider(LLM_VENDOR, {
       async provideLanguageModelChatInformation(_options, _token) {
+        const hasAnthropic = await apiKeyService.hasApiKey();
+        const hasOpenAi = await apiKeyService.hasOpenAiKey();
+
         const claudeModels = CLAUDE_MODELS.map((model): NativeLanguageModelInformation => ({
           id: model.id,
           name: model.label,
@@ -48,6 +52,9 @@ export function registerClaudeLanguageModelProvider(
           kind: "openai",
         }));
 
+        if (!hasAnthropic && hasOpenAi) {
+          return [...openAiModels, ...claudeModels];
+        }
         return [...claudeModels, ...openAiModels];
       },
 
@@ -67,17 +74,35 @@ export function registerClaudeLanguageModelProvider(
         if (isOpenAiModel) {
           const apiKey = await apiKeyService.getOpenAiKey();
           if (!apiKey) {
-            throw new Error("Configura una API Key de OpenAI en el panel izquierdo (llave) o en EditCore -> Cuenta & API.");
+            throw new Error(
+              "Configura una API Key de OpenAI en el panel izquierdo (llave). Obtén una en platform.openai.com/api-keys"
+            );
           }
-          await withTemporaryConfig("openai.model", model.id, () => streamOpenAI(apiKey, chatMessages, onToken));
+          await withTemporaryConfig("openai.model", model.id, () =>
+            streamOpenAI(apiKey, chatMessages, onToken)
+          );
           return;
         }
 
-        const apiKey = await apiKeyService.getApiKey();
-        if (!apiKey) {
-          throw new Error("Configura una API Key de Claude (Anthropic) en el panel izquierdo (llave) o en EditCore -> Cuenta & API.");
+        const hasAnthropic = await apiKeyService.hasApiKey();
+        const hasOpenAi = await apiKeyService.hasOpenAiKey();
+        if (!hasAnthropic && !hasOpenAi) {
+          throw new Error(
+            "Configura al menos una API Key en el panel izquierdo (llave): Claude (console.anthropic.com) u OpenAI (platform.openai.com)."
+          );
         }
-        await withTemporaryConfig("model", model.id, () => streamClaude(apiKey, chatMessages, onToken));
+
+        if (!hasAnthropic && hasOpenAi) {
+          progress.report(
+            new vscode.LanguageModelTextPart(
+              "_Sin key de Claude — respondiendo con OpenAI._\n\n"
+            )
+          );
+        }
+
+        await withTemporaryConfig("model", model.id, () =>
+          streamWithFallback(apiKeyService, chatMessages, onToken)
+        );
       },
 
       async provideTokenCount(_model, text, _token) {

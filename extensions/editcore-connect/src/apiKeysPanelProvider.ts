@@ -28,8 +28,15 @@ export class ApiKeysPanelProvider implements vscode.WebviewViewProvider {
           }
           await writeSharedKeys({ anthropic: key });
           await this.context.secrets.store("anthropicApiKey", key);
-          await validateAnthropicKey(key).catch(() => void 0);
-          vscode.window.showInformationMessage("EditCore: API Key de Claude guardada.");
+          try {
+            await validateAnthropicKey(key);
+            vscode.window.showInformationMessage("EditCore: API Key de Claude guardada y validada.");
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            vscode.window.showWarningMessage(
+              `EditCore: Claude guardada, pero la validación falló: ${message}`
+            );
+          }
           await this.pushState();
         } else if (msg.type === "saveOpenAi") {
           const key = String(msg.key || "").trim();
@@ -38,8 +45,15 @@ export class ApiKeysPanelProvider implements vscode.WebviewViewProvider {
           }
           await writeSharedKeys({ openai: key });
           await this.context.secrets.store("openaiApiKey", key);
-          await validateOpenAiKey(key).catch(() => void 0);
-          vscode.window.showInformationMessage("EditCore: API Key de OpenAI guardada.");
+          try {
+            await validateOpenAiKey(key);
+            vscode.window.showInformationMessage("EditCore: API Key de OpenAI guardada y validada.");
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            vscode.window.showWarningMessage(
+              `EditCore: OpenAI guardada, pero la validación falló: ${message}`
+            );
+          }
           await this.pushState();
         } else if (msg.type === "clearAnthropic") {
           await writeSharedKeys({ anthropic: undefined });

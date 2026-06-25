@@ -46,7 +46,13 @@
   "_comment_productMerge": "No quitar defaultChatAgent del upstream: Code-OSS lo requiere para arrancar. chatExtensionId apunta a editcore-claude para la UI del chat.",
   "defaultChatAgent": {
     "chatExtensionId": "editcore.editcore-claude",
-    "extensionId": "editcore.editcore-claude"
+    "extensionId": "editcore.editcore-claude",
+    "provider": {
+      "default": {
+        "id": "editcore",
+        "name": "EditCore"
+      }
+    }
   },
   "extensionEnabledApiProposals": {
     "editcore.editcore-claude": [

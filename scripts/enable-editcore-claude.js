@@ -88,9 +88,35 @@ function fixDb(dbPath) {
   return changed;
 }
 
+function clearModelCache(dbPath) {
+  if (!fs.existsSync(dbPath)) {
+    return false;
+  }
+  const db = new Database(dbPath);
+  const keys = [
+    "chat.cachedLanguageModels.v2",
+    "chat.cachedLanguageModels",
+    "chatModelRecentlyUsed",
+    "chatModelPinned",
+    "chat.currentLanguageModel.panel",
+    "chat.currentLanguageModel.panel.isDefault",
+  ];
+  let removed = 0;
+  for (const key of keys) {
+    const r = db.prepare("DELETE FROM ItemTable WHERE key = ?").run(key);
+    if (r.changes > 0) {
+      console.log("OK: cache eliminada:", key);
+      removed++;
+    }
+  }
+  db.close();
+  return removed > 0;
+}
+
 let any = false;
 for (const p of dbPaths) {
   if (fixDb(p)) any = true;
+  if (clearModelCache(p)) any = true;
 }
 
 if (any) {

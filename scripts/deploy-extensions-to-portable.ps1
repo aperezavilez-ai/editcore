@@ -30,6 +30,7 @@ foreach ($name in @("editcore-connect", "editcore-claude")) {
     continue
   }
   Push-Location $src
+  if (Test-Path "out") { Remove-Item "out" -Recurse -Force }
   Invoke-Npm @("run", "compile")
   Pop-Location
   if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
@@ -40,6 +41,17 @@ foreach ($name in @("editcore-connect", "editcore-claude")) {
   Invoke-Npm @("install", "--omit=dev")
   Pop-Location
   Write-Host "OK: $name -> $dest" -ForegroundColor Green
+}
+
+$patchProduct = Join-Path $Root "scripts\patch-portable-product-chat.js"
+if (Test-Path $patchProduct) {
+  node $patchProduct
+}
+
+$clearCache = Join-Path $Root "scripts\clear-editcore-chat-model-cache.js"
+if (Test-Path $clearCache) {
+  Write-Host "Limpiando cache de modelos GPTPRO4ALL obsoletos..." -ForegroundColor Yellow
+  node $clearCache
 }
 
 Write-Host ""
