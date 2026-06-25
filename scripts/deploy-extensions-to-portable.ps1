@@ -48,10 +48,40 @@ if (Test-Path $patchProduct) {
   node $patchProduct
 }
 
+$patchOnboarding = Join-Path $Root "scripts\patch-portable-onboarding-stub.js"
+if (Test-Path $patchOnboarding) {
+  node $patchOnboarding
+}
+
+$patchChatEnable = Join-Path $Root "scripts\patch-portable-chat-enablement.js"
+if (Test-Path $patchChatEnable) {
+  node $patchChatEnable
+}
+
+$removeGptpro4all = Join-Path $Root "scripts\patch-portable-remove-gptpro4all.js"
+if (Test-Path $removeGptpro4all) {
+  node $removeGptpro4all
+}
+
+$fixStartup = Join-Path $Root "scripts\fix-startup-settings.js"
+if (Test-Path $fixStartup) {
+  node $fixStartup
+}
+
+$enableClaude = Join-Path $Root "scripts\enable-editcore-claude.js"
+if (Test-Path $enableClaude) {
+  node $enableClaude
+}
+
 $clearCache = Join-Path $Root "scripts\clear-editcore-chat-model-cache.js"
 if (Test-Path $clearCache) {
-  Write-Host "Limpiando cache de modelos GPTPRO4ALL obsoletos..." -ForegroundColor Yellow
+  Write-Host "Limpiando cache de modelos obsoletos..." -ForegroundColor Yellow
   node $clearCache
+}
+
+$purgeGptpro4all = Join-Path $Root "scripts\purge-gptpro4all-user-data.js"
+if (Test-Path $purgeGptpro4all) {
+  node $purgeGptpro4all
 }
 
 $applySettings = Join-Path $Root "scripts\apply-portable-user-settings.js"

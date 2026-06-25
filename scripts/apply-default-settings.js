@@ -25,7 +25,6 @@ const current = readJson(path.resolve(settingsPath));
 
 // Claves que EditCore debe imponer (no dejar que settings viejos de Copilot las pisen).
 const EDITCORE_FORCE_KEYS = [
-	'workbench.startupEditor',
 	'workbench.welcomePage.experimentalOnboarding',
 	'chat.titleBar.signIn.enabled',
 	'chat.agent.enabled',
@@ -36,6 +35,7 @@ const EDITCORE_FORCE_KEYS = [
 	'chat.customizations.harnessSelector.enabled',
 	'chat.extensionTools.enabled',
 	'chat.generalPurposeAgent.enabled',
+	'chat.tips.enabled',
 ];
 
 const merged = { ...defaults, ...current };

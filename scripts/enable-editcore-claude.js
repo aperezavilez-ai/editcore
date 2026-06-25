@@ -53,24 +53,37 @@ function fixDb(dbPath) {
     console.log("INFO: sin lista disabled en", dbPath);
   }
 
-  // chat.setupContext: VS Code marca el chat como disabled hasta "setup"
   const chatRow = get.get("chat.setupContext");
   if (chatRow?.value) {
     try {
       const ctx = JSON.parse(chatRow.value);
-      if (ctx.disabled) {
+      if (ctx.disabled || !ctx.installed) {
         ctx.disabled = false;
         ctx.installed = true;
         db.prepare("INSERT OR REPLACE INTO ItemTable (key, value) VALUES (?, ?)").run(
           "chat.setupContext",
           JSON.stringify(ctx)
         );
-        console.log("OK: chat.setupContext.disabled = false");
+        console.log("OK: chat.setupContext -> disabled=false, installed=true");
         changed = true;
       }
     } catch (e) {
       console.warn("WARN: chat.setupContext:", e.message);
     }
+  } else {
+    db.prepare("INSERT OR REPLACE INTO ItemTable (key, value) VALUES (?, ?)").run(
+      "chat.setupContext",
+      JSON.stringify({
+        entitlement: 1,
+        installed: true,
+        disabled: false,
+        untrusted: false,
+        disabledInWorkspace: false,
+        hidden: false,
+      })
+    );
+    console.log("OK: chat.setupContext creado");
+    changed = true;
   }
 
   // Marcar migración como hecha (evita re-deshabilitar en builds sin parche)

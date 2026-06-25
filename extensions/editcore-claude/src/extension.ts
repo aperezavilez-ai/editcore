@@ -31,15 +31,14 @@ import { createStatusBarItem, showAbout } from "./hub/statusBar";
 import { initVoyageService } from "./rag/voyageService";
 import { registerDiagnosticCommands } from "./diagnostics/diagnosticCommands";
 import { registerQuickActionsBar } from "./hub/quickActionsBar";
-import { registerRecentWorkspaceTracking } from "./welcome/recentWorkspaces";
 import { registerWelcomePanel, showWelcomeIfNeeded } from "./welcome/welcomePanel";
 import { setDiagnosticRuntime } from "./diagnostics/diagnosticRuntime";
 
 export function activate(context: vscode.ExtensionContext) {
   void writeActivationProbe(context);
   registerQuickActionsBar(context);
-  registerRecentWorkspaceTracking(context);
   registerWelcomePanel(context);
+  void showWelcomeIfNeeded(context);
 
   const apiKeyService = new ApiKeyService(context);
   setDiagnosticRuntime(context, apiKeyService);
@@ -281,13 +280,6 @@ export function activate(context: vscode.ExtensionContext) {
       });
     })
   );
-
-  // Pantalla de inicio cuando no hay carpeta (no bloquea si falla).
-  setTimeout(() => {
-    void showWelcomeIfNeeded(context).catch(() => {
-      void vscode.commands.executeCommand("workbench.action.showWelcomePage");
-    });
-  }, 800);
 }
 
 async function writeActivationProbe(context: vscode.ExtensionContext): Promise<void> {
