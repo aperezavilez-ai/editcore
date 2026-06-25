@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { LLM_CONFIG } from '../../llmConfig';
 import { ApiKeyService } from '../../apiKeyService';
 import { getRagIndex } from '../../rag/chunkIndex';
 import { getWorkspaceIndex } from '../../index/workspaceIndex';
@@ -35,7 +36,7 @@ export async function runEditcoreChecks(
       : hasOpenAi
         ? 'Sin key Anthropic — el chat usará OpenAI como proveedor principal.'
         : 'No hay API Key. El chat y el agente no funcionarán.',
-    hint: hasAnthropic ? undefined : 'EditCore -> Cuenta & API -> pegar key GPTPRO4ALL sk-...',
+    hint: hasAnthropic ? undefined : 'Panel izquierdo (llave) o Cuenta & API -> pegar key Anthropic sk-...',
   });
 
   findings.push({
@@ -62,7 +63,7 @@ export async function runEditcoreChecks(
       : 'Desactivado en configuración.',
   });
 
-  const model = vscode.workspace.getConfiguration('editcore').get<string>('model', 'claude-sonnet-4-6');
+  const model = vscode.workspace.getConfiguration('editcore').get<string>('model', LLM_CONFIG.claude.defaultModel);
   findings.push({
     id: 'api.model',
     category: 'editcore',

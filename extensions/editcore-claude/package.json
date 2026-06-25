@@ -1,7 +1,7 @@
 {
   "name": "editcore-claude",
   "displayName": "EditCore - Claude Assistant",
-  "description": "Chat con Claude via GPTPRO4ALL integrado nativamente en EditCore IDE.",
+  "description": "Chat con Claude (Anthropic) y OpenAI integrado nativamente en EditCore IDE.",
   "version": "1.1.0",
   "publisher": "editcore",
   "engines": {
@@ -19,7 +19,7 @@
   "activationEvents": [
     "*",
     "onStartupFinished",
-    "onLanguageModelChatProvider:gptpro4all",
+    "onLanguageModelChatProvider:editcore",
     "onChatParticipant:editcore.claude",
     "onView:editcore.homeView",
     "onView:editcore.accountView",
@@ -32,7 +32,7 @@
         "id": "editcore.claude",
         "name": "claude",
         "fullName": "Claude",
-        "description": "Asistente de codigo con Claude via GPTPRO4ALL",
+        "description": "Asistente de codigo con Claude (Anthropic) y OpenAI",
         "isDefault": true,
         "modes": [
           "ask",
@@ -97,7 +97,7 @@
       },
       {
         "command": "editcore.setApiKey",
-        "title": "EditCore: Configurar API Key de GPTPRO4ALL"
+        "title": "EditCore: Configurar API Key de Claude"
       },
       {
         "command": "editcore.openAgent",
@@ -207,8 +207,8 @@
       },
       {
         "command": "editcore.diagnoseNativeModels",
-        "title": "EditCore: Diagnosticar modelos GPTPRO4ALL",
-        "shortTitle": "Diagnosticar GPTPRO4ALL"
+        "title": "EditCore: Diagnosticar modelos nativos",
+        "shortTitle": "Diagnosticar modelos"
       }
     ],
     "menus": {
@@ -248,37 +248,37 @@
         "editcore.model": {
           "type": "string",
           "enum": [
-            "claude-sonnet-4-6",
-            "claude-opus-4-6",
-            "claude-opus-4-7",
-            "claude-opus-4-8",
-            "claude-fable-5"
+            "claude-sonnet-4-20250514",
+            "claude-opus-4-20250514",
+            "claude-3-5-sonnet-20241022",
+            "claude-3-5-haiku-20241022"
           ],
           "enumDescriptions": [
-            "Default GPTPRO4ALL",
-            "Mas potente",
-            "Mas potente",
-            "Claude mas potente",
-            "Premium"
+            "Claude Sonnet 4 — equilibrado",
+            "Claude Opus 4 — mas potente",
+            "Claude 3.5 Sonnet — estable",
+            "Claude 3.5 Haiku — economico"
           ],
-          "default": "claude-sonnet-4-6",
-          "description": "Modelo Claude usado por chat, agente y @claude via GPTPRO4ALL"
+          "default": "claude-sonnet-4-20250514",
+          "description": "Modelo Claude (Anthropic) usado por chat, agente y @claude"
         },
         "editcore.openai.model": {
           "type": "string",
           "enum": [
-            "gpt-5.5"
+            "gpt-4o",
+            "gpt-4o-mini"
           ],
           "enumDescriptions": [
-            "Default Codex/GPT de GPTPRO4ALL"
+            "GPT-4o — OpenAI por defecto",
+            "GPT-4o mini — ligero y economico"
           ],
-          "default": "gpt-5.5",
-          "description": "Modelo Codex/GPT usado como respaldo o proveedor principal via GPTPRO4ALL"
+          "default": "gpt-4o",
+          "description": "Modelo OpenAI usado como respaldo o proveedor principal"
         },
         "editcore.fallback.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Si Claude falla y hay key Codex/GPT, cambiar automaticamente a Codex/GPT via GPTPRO4ALL"
+          "description": "Si Claude falla y hay key OpenAI, cambiar automaticamente a OpenAI"
         },
         "editcore.maxTokens": {
           "type": "number",
@@ -327,7 +327,7 @@
         "editcore.sessions.autoSummary": {
           "type": "boolean",
           "default": true,
-          "description": "Tras cada sesion Agent, generar resumen con GPTPRO4ALL (async)"
+          "description": "Tras cada sesion Agent, generar resumen con Claude (async)"
         },
         "editcore.diagnostics.useClaude": {
           "type": "boolean",
@@ -336,15 +336,14 @@
         },
         "editcore.diagnostics.model": {
           "type": "string",
-          "default": "claude-sonnet-4-6",
+          "default": "claude-sonnet-4-20250514",
           "enum": [
-            "claude-sonnet-4-6",
-            "claude-opus-4-6",
-            "claude-opus-4-7",
-            "claude-opus-4-8",
-            "claude-fable-5"
+            "claude-sonnet-4-20250514",
+            "claude-opus-4-20250514",
+            "claude-3-5-sonnet-20241022",
+            "claude-3-5-haiku-20241022"
           ],
-          "description": "Modelo Claude GPTPRO4ALL para analisis de autodiagnostico"
+          "description": "Modelo Claude para analisis de autodiagnostico"
         },
         "editcore.diagnostics.maxTokens": {
           "type": "number",
@@ -415,8 +414,8 @@
     ],
     "languageModelChatProviders": [
       {
-        "vendor": "gptpro4all",
-        "displayName": "GPTPRO4ALL",
+        "vendor": "editcore",
+        "displayName": "EditCore",
         "configuration": {
           "type": "object",
           "properties": {}

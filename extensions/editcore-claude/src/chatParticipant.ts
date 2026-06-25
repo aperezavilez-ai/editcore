@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { ApiKeyService } from "./apiKeyService";
 import { streamWithFallback } from "./aiRouter";
+import { LLM_CONFIG } from "./llmConfig";
 import { CLAUDE_MODELS } from "./models";
 import type { ChatMessage } from "./anthropicClient";
 import { runAgentTask, AgentEvent } from "./agent/agentLoop";
@@ -22,7 +23,7 @@ export function registerClaudeChatParticipant(
       const hasOpenAi = await apiKeyService.hasOpenAiKey();
       if (!hasAnthropic && !hasOpenAi) {
         stream.markdown(
-          "**Sin API Key configurada.** Abre **EditCore -> Cuenta & API** y pega tu key de **GPTPRO4ALL** (`sk-...`).\n\nEditCore usa Claude primero y Codex/GPT como respaldo automatico si falla."
+          "**Sin API Key configurada.** Abre el panel de **API Keys** (icono de llave en la barra izquierda) y pega tu key de **Claude (Anthropic)** o **OpenAI** (`sk-...`).\n\nEditCore usa Claude primero y OpenAI como respaldo automatico si falla."
         );
         stream.button({
           command: "editcore.openAccountPanel",
@@ -32,7 +33,7 @@ export function registerClaudeChatParticipant(
       }
 
       const config = vscode.workspace.getConfiguration("editcore");
-      const model = config.get<string>("model", "claude-sonnet-4-6");
+      const model = config.get<string>("model", LLM_CONFIG.claude.defaultModel);
       const modelLabel = CLAUDE_MODELS.find((m) => m.id === model)?.label ?? model;
 
       if (isAgentMode(request)) {

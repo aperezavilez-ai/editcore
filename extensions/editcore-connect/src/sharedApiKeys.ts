@@ -7,8 +7,10 @@ const KEYS_FILE = path.join(
   "api-keys.json"
 );
 
-const GPTPRO4ALL_CLAUDE_BASE_URL = "https://api.chatgptpro4all.com";
-const GPTPRO4ALL_CODEX_BASE_URL = "https://api.chatgptpro4all.com/v1";
+const ANTHROPIC_API_URL = "https://api.anthropic.com";
+const OPENAI_API_URL = "https://api.openai.com/v1";
+const VALIDATION_CLAUDE_MODEL = "claude-3-5-haiku-20241022";
+const VALIDATION_OPENAI_MODEL = "gpt-4o-mini";
 
 export interface SharedApiKeys {
   anthropic?: string;
@@ -54,16 +56,15 @@ export function keyHint(key?: string): string {
 }
 
 export async function validateAnthropicKey(apiKey: string): Promise<void> {
-  const res = await fetch(`${GPTPRO4ALL_CLAUDE_BASE_URL}/v1/messages`, {
+  const res = await fetch(`${ANTHROPIC_API_URL}/v1/messages`, {
     method: "POST",
     headers: {
       "x-api-key": apiKey,
-      Authorization: `Bearer ${apiKey}`,
       "anthropic-version": "2023-06-01",
       "content-type": "application/json",
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-6",
+      model: VALIDATION_CLAUDE_MODEL,
       max_tokens: 8,
       messages: [{ role: "user", content: "ping" }],
     }),
@@ -73,19 +74,19 @@ export async function validateAnthropicKey(apiKey: string): Promise<void> {
   }
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(`GPTPRO4ALL Claude (${res.status}): ${body.slice(0, 120)}`);
+    throw new Error(`Anthropic (${res.status}): ${body.slice(0, 120)}`);
   }
 }
 
 export async function validateOpenAiKey(apiKey: string): Promise<void> {
-  const res = await fetch(`${GPTPRO4ALL_CODEX_BASE_URL}/chat/completions`, {
+  const res = await fetch(`${OPENAI_API_URL}/chat/completions`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "gpt-5.5",
+      model: VALIDATION_OPENAI_MODEL,
       max_tokens: 8,
       messages: [{ role: "user", content: "ping" }],
     }),
@@ -95,6 +96,6 @@ export async function validateOpenAiKey(apiKey: string): Promise<void> {
   }
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(`GPTPRO4ALL Codex (${res.status}): ${body.slice(0, 120)}`);
+    throw new Error(`OpenAI (${res.status}): ${body.slice(0, 120)}`);
   }
 }

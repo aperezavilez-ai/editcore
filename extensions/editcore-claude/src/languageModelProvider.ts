@@ -1,13 +1,11 @@
 import * as vscode from "vscode";
 import { ApiKeyService } from "./apiKeyService";
 import { streamClaude, type ChatMessage } from "./anthropicClient";
-import { GPTPRO4ALL_CONFIG } from "./gptpro4all.config";
+import { LLM_VENDOR } from "./llmConfig";
 import { CLAUDE_MODELS, OPENAI_MODELS } from "./models";
 import { streamOpenAI } from "./openaiClient";
 
-const GPTPRO4ALL_VENDOR = "gptpro4all";
-
-type NativeModelKind = "claude" | "codex";
+type NativeModelKind = "claude" | "openai";
 
 interface NativeLanguageModelInformation extends vscode.LanguageModelChatInformation {
   kind: NativeModelKind;
@@ -18,15 +16,15 @@ export function registerClaudeLanguageModelProvider(
   apiKeyService: ApiKeyService
 ): void {
   context.subscriptions.push(
-    vscode.lm.registerLanguageModelChatProvider(GPTPRO4ALL_VENDOR, {
+    vscode.lm.registerLanguageModelChatProvider(LLM_VENDOR, {
       async provideLanguageModelChatInformation(_options, _token) {
         const claudeModels = CLAUDE_MODELS.map((model): NativeLanguageModelInformation => ({
           id: model.id,
           name: model.label,
           family: "claude",
-          version: "gptpro4all",
+          version: "anthropic",
           tooltip: model.description,
-          detail: model.tier === "premium" ? "GPTPRO4ALL Premium" : "GPTPRO4ALL Claude",
+          detail: model.tier === "premium" ? "Anthropic (economico)" : "Anthropic Claude",
           maxInputTokens: 200_000,
           maxOutputTokens: 64_000,
           capabilities: {
@@ -35,22 +33,22 @@ export function registerClaudeLanguageModelProvider(
           kind: "claude",
         }));
 
-        const codexModels = OPENAI_MODELS.map((model): NativeLanguageModelInformation => ({
+        const openAiModels = OPENAI_MODELS.map((model): NativeLanguageModelInformation => ({
           id: model.id,
           name: model.label,
           family: "gpt",
-          version: "gptpro4all",
+          version: "openai",
           tooltip: model.description,
-          detail: "GPTPRO4ALL Codex",
+          detail: "OpenAI",
           maxInputTokens: 200_000,
           maxOutputTokens: 64_000,
           capabilities: {
             toolCalling: false,
           },
-          kind: "codex",
+          kind: "openai",
         }));
 
-        return [...claudeModels, ...codexModels];
+        return [...claudeModels, ...openAiModels];
       },
 
       async provideLanguageModelChatResponse(model, messages, _options, progress, token) {
@@ -65,11 +63,11 @@ export function registerClaudeLanguageModelProvider(
           }
         };
 
-        const isCodexModel = OPENAI_MODELS.some((candidate) => candidate.id === model.id);
-        if (isCodexModel) {
+        const isOpenAiModel = OPENAI_MODELS.some((candidate) => candidate.id === model.id);
+        if (isOpenAiModel) {
           const apiKey = await apiKeyService.getOpenAiKey();
           if (!apiKey) {
-            throw new Error("Configura una API Key Codex de GPTPRO4ALL en EditCore -> Cuenta & API.");
+            throw new Error("Configura una API Key de OpenAI en el panel izquierdo (llave) o en EditCore -> Cuenta & API.");
           }
           await withTemporaryConfig("openai.model", model.id, () => streamOpenAI(apiKey, chatMessages, onToken));
           return;
@@ -77,7 +75,7 @@ export function registerClaudeLanguageModelProvider(
 
         const apiKey = await apiKeyService.getApiKey();
         if (!apiKey) {
-          throw new Error("Configura una API Key Claude de GPTPRO4ALL en EditCore -> Cuenta & API.");
+          throw new Error("Configura una API Key de Claude (Anthropic) en el panel izquierdo (llave) o en EditCore -> Cuenta & API.");
         }
         await withTemporaryConfig("model", model.id, () => streamClaude(apiKey, chatMessages, onToken));
       },

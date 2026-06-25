@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { createClaudeClient, mapClaudeApiError } from "./anthropicClient";
-import { GPTPRO4ALL_CONFIG } from "./gptpro4all.config";
+import { LLM_CONFIG } from "./llmConfig";
 import { readSharedKeys } from "./sharedApiKeys";
 
 const SECRET_KEY = "anthropicApiKey";
@@ -8,15 +8,16 @@ const OPENAI_SECRET_KEY = "openaiApiKey";
 const USAGE_KEY = "editcore.usageTotals";
 
 const MODEL_PRICING: Record<string, { input: number; output: number }> = {
-  "claude-sonnet-4-6": { input: 3, output: 15 },
-  "claude-opus-4-6": { input: 15, output: 75 },
-  "claude-opus-4-7": { input: 15, output: 75 },
-  "claude-opus-4-8": { input: 15, output: 75 },
-  "claude-fable-5": { input: 20, output: 90 },
+  "claude-sonnet-4-20250514": { input: 3, output: 15 },
+  "claude-opus-4-20250514": { input: 15, output: 75 },
+  "claude-3-5-sonnet-20241022": { input: 3, output: 15 },
+  "claude-3-5-haiku-20241022": { input: 1, output: 5 },
+  "gpt-4o": { input: 2.5, output: 10 },
+  "gpt-4o-mini": { input: 0.15, output: 0.6 },
 };
 
 function estimateCostUsd(model: string, inputTokens: number, outputTokens: number): number {
-  const p = MODEL_PRICING[model] ?? MODEL_PRICING[GPTPRO4ALL_CONFIG.claude.defaultModel];
+  const p = MODEL_PRICING[model] ?? MODEL_PRICING[LLM_CONFIG.claude.defaultModel];
   return (inputTokens / 1_000_000) * p.input + (outputTokens / 1_000_000) * p.output;
 }
 
@@ -83,7 +84,7 @@ export class ApiKeyService {
       return shared;
     }
     const key = await this.context.secrets.get(SECRET_KEY);
-    return key?.trim() || GPTPRO4ALL_CONFIG.claude.apiKey;
+    return key?.trim() || undefined;
   }
 
   async getOpenAiKey(): Promise<string | undefined> {
@@ -92,7 +93,7 @@ export class ApiKeyService {
       return shared;
     }
     const key = await this.context.secrets.get(OPENAI_SECRET_KEY);
-    return key?.trim() || GPTPRO4ALL_CONFIG.codex.apiKey;
+    return key?.trim() || undefined;
   }
 
   async getOpenAiKeyHint(): Promise<string> {
@@ -109,7 +110,7 @@ export class ApiKeyService {
       throw new Error("La API Key no puede estar vacia.");
     }
     if (!key.startsWith("sk-")) {
-      throw new Error("Formato invalido. La key de GPTPRO4ALL debe empezar con sk-");
+      throw new Error("Formato invalido. La key de Anthropic debe empezar con sk-");
     }
     await this.context.secrets.store(SECRET_KEY, key);
     const { writeSharedKeys } = await import("./sharedApiKeys");
@@ -133,10 +134,10 @@ export class ApiKeyService {
   async saveOpenAiKey(rawKey: string): Promise<void> {
     const key = rawKey.trim();
     if (!key) {
-      throw new Error("La API Key de GPTPRO4ALL no puede estar vacia.");
+      throw new Error("La API Key de OpenAI no puede estar vacia.");
     }
     if (!key.startsWith("sk-")) {
-      throw new Error("Formato invalido. La key de GPTPRO4ALL debe empezar con sk-");
+      throw new Error("Formato invalido. La key de OpenAI debe empezar con sk-");
     }
     await this.context.secrets.store(OPENAI_SECRET_KEY, key);
     const { writeSharedKeys } = await import("./sharedApiKeys");
@@ -146,7 +147,7 @@ export class ApiKeyService {
       await validateOpenAiKey(key);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      vscode.window.showWarningMessage(`EditCore: Codex guardada, pero la validación falló: ${message}`);
+      vscode.window.showWarningMessage(`EditCore: OpenAI guardada, pero la validación falló: ${message}`);
     }
     this._onDidChange.fire();
   }
@@ -164,7 +165,7 @@ export class ApiKeyService {
       await client.messages.create({
         model: vscode.workspace
           .getConfiguration("editcore")
-          .get<string>("model", GPTPRO4ALL_CONFIG.claude.defaultModel),
+          .get<string>("model", LLM_CONFIG.claude.defaultModel),
         max_tokens: 16,
         messages: [{ role: "user", content: "ping" }],
       });
@@ -179,7 +180,7 @@ export class ApiKeyService {
   recordUsage(inputTokens: number, outputTokens: number): void {
     const model = vscode.workspace
       .getConfiguration("editcore")
-      .get<string>("model", GPTPRO4ALL_CONFIG.claude.defaultModel);
+      .get<string>("model", LLM_CONFIG.claude.defaultModel);
     const cost = estimateCostUsd(model, inputTokens, outputTokens);
 
     this.sessionInput += inputTokens;
@@ -239,8 +240,8 @@ export class ApiKeyService {
       apiKeyHint: await this.getApiKeyHint(),
       hasOpenAiKey: await this.hasOpenAiKey(),
       openAiKeyHint: await this.getOpenAiKeyHint(),
-      model: config.get<string>("model", GPTPRO4ALL_CONFIG.claude.defaultModel),
-      openAiModel: config.get<string>("openai.model", GPTPRO4ALL_CONFIG.codex.defaultModel),
+      model: config.get<string>("model", LLM_CONFIG.claude.defaultModel),
+      openAiModel: config.get<string>("openai.model", LLM_CONFIG.openai.defaultModel),
       fallbackEnabled: config.get<boolean>("fallback.enabled", true),
     };
   }

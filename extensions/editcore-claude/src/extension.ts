@@ -7,6 +7,7 @@ import { AgentPanel } from "./agent/agentPanel";
 import { registerClaudeChatParticipant } from "./chatParticipant";
 import { registerClaudeLanguageModelProvider } from "./languageModelProvider";
 import { ApiKeyService } from "./apiKeyService";
+import { LLM_VENDOR } from "./llmConfig";
 import { getWorkspaceIndex } from "./index/workspaceIndex";
 import { getRagIndex } from "./rag/chunkIndex";
 import { buildDependencyGraph } from "./twin/dependencyGraph";
@@ -76,11 +77,11 @@ export function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(
     vscode.commands.registerCommand("editcore.diagnoseNativeModels", async () => {
-      const models = await vscode.lm.selectChatModels({ vendor: "gptpro4all" });
+      const models = await vscode.lm.selectChatModels({ vendor: LLM_VENDOR });
       const lines = models.map((model) => `${model.id} | ${model.vendor} | ${model.family} | ${model.name}`);
       const message = lines.length
-        ? `GPTPRO4ALL modelos nativos: ${lines.length}\n${lines.join("\n")}`
-        : "GPTPRO4ALL no devolvio modelos nativos. El proveedor no se activo o fue bloqueado por el host.";
+        ? `EditCore modelos nativos: ${lines.length}\n${lines.join("\n")}`
+        : "EditCore no devolvio modelos nativos. El proveedor no se activo o fue bloqueado por el host.";
       await vscode.window.showInformationMessage(message, { modal: true });
     })
   );
@@ -291,7 +292,7 @@ async function writeActivationProbe(context: vscode.ExtensionContext): Promise<v
       JSON.stringify({
         activatedAt: new Date().toISOString(),
         extensionPath: context.extensionPath,
-        vendor: "gptpro4all",
+        vendor: LLM_VENDOR,
       }, null, 2)
     );
   } catch {

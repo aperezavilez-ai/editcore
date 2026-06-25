@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { ApiKeyService } from '../apiKeyService';
 import { createClaudeClient } from '../anthropicClient';
-import { GPTPRO4ALL_CONFIG } from '../gptpro4all.config';
+import { LLM_CONFIG } from '../llmConfig';
 import { getSessionStore } from './agentSessionStore';
 
 export async function enrichSessionSummary(
@@ -19,7 +19,7 @@ export async function enrichSessionSummary(
   }
 
   const client = createClaudeClient(apiKey);
-  const model = GPTPRO4ALL_CONFIG.claude.defaultModel;
+  const model = LLM_CONFIG.claude.defaultModel;
 
   try {
     const response = await client.messages.create({

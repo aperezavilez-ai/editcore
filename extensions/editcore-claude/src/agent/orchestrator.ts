@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { runAgentTask, AgentEvent } from './agentLoop';
 import { AgentRoleId } from '../agents/roles';
 import { createClaudeClient, mapClaudeApiError } from '../anthropicClient';
-import { GPTPRO4ALL_CONFIG } from '../gptpro4all.config';
+import { LLM_CONFIG } from '../llmConfig';
 
 export type OrchestratorEvent =
   | { type: 'phase'; phase: 'plan' | 'execute' | 'review'; message: string }
@@ -22,7 +22,7 @@ export async function runOrchestratedTask(
   roleId: AgentRoleId = 'default'
 ): Promise<void> {
   const config = vscode.workspace.getConfiguration('editcore');
-  const model = config.get<string>('model', GPTPRO4ALL_CONFIG.claude.defaultModel);
+  const model = config.get<string>('model', LLM_CONFIG.claude.defaultModel);
   const client = createClaudeClient(apiKey);
 
   onEvent({ type: 'phase', phase: 'plan', message: 'Generando plan de trabajo…' });

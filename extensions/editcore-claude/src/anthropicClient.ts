@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import Anthropic from "@anthropic-ai/sdk";
-import { GPTPRO4ALL_CONFIG, createGptPro4AllClaudeHeaders } from "./gptpro4all.config";
+import { LLM_CONFIG } from "./llmConfig";
 import { isValidModelId } from "./models";
 
 export interface ChatMessage {
@@ -16,7 +16,7 @@ export interface ClaudeUsage {
 
 function getModelConfig(): { model: string; maxTokens: number } {
   const config = vscode.workspace.getConfiguration("editcore");
-  const model = config.get<string>("model", GPTPRO4ALL_CONFIG.claude.defaultModel);
+  const model = config.get<string>("model", LLM_CONFIG.claude.defaultModel);
   const maxTokens = config.get<number>("maxTokens", 8096);
   if (!isValidModelId(model)) {
     throw new Error(`Modelo desconocido: ${model}. Elige uno en EditCore -> Cuenta & API.`);
@@ -27,24 +27,23 @@ function getModelConfig(): { model: string; maxTokens: number } {
 export function createClaudeClient(apiKey: string): Anthropic {
   return new Anthropic({
     apiKey,
-    baseURL: GPTPRO4ALL_CONFIG.claude.baseUrl,
-    defaultHeaders: createGptPro4AllClaudeHeaders(apiKey),
+    baseURL: LLM_CONFIG.claude.baseUrl,
   });
 }
 
 export function mapClaudeApiError(err: unknown): Error {
   const status = (err as { status?: number })?.status;
   if (status === 401) {
-    return new Error("API key invalid. Contact support.");
+    return new Error("API key de Anthropic invalida. Revisa la key en el panel de APIs.");
   }
   if (status === 403) {
-    return new Error("API key without permissions in GPTPRO4ALL. Contact support.");
+    return new Error("La API key de Anthropic no tiene permisos suficientes.");
   }
   if (status === 429) {
-    return new Error("Rate limit reached. Wait a moment and retry.");
+    return new Error("Limite de uso alcanzado. Espera un momento e intenta de nuevo.");
   }
   if (status && status >= 500) {
-    return new Error("Service temporarily unavailable. Try again.");
+    return new Error("Anthropic no esta disponible temporalmente. Intenta de nuevo.");
   }
   if (err instanceof Error) {
     const message = err.message.toLowerCase();
@@ -55,11 +54,11 @@ export function mapClaudeApiError(err: unknown): Error {
       message.includes("enotfound") ||
       message.includes("timeout")
     ) {
-      return new Error("No connection to GPTPRO4ALL. Check your internet.");
+      return new Error("Sin conexion con Anthropic. Revisa tu internet.");
     }
     return err;
   }
-  return new Error("Error desconocido al llamar a GPTPRO4ALL.");
+  return new Error("Error desconocido al llamar a Anthropic.");
 }
 
 export async function callClaude(

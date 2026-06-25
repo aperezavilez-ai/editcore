@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { ApiKeyService } from "../apiKeyService";
 import { agentFallbackResponse } from "../aiRouter";
 import { createClaudeClient, mapClaudeApiError } from "../anthropicClient";
-import { GPTPRO4ALL_CONFIG } from "../gptpro4all.config";
+import { LLM_CONFIG } from "../llmConfig";
 import { getAllAgentTools, executeAgentTool, setToolCallRecorder } from "./tools";
 import { buildAgentContext } from "./agentContext";
 import { AgentRoleId, buildSystemPrompt } from "../agents/roles";
@@ -43,7 +43,7 @@ export async function runAgentTask(
   apiKeyService?: ApiKeyService
 ): Promise<void> {
   const config = vscode.workspace.getConfiguration("editcore");
-  const model = config.get<string>("model", GPTPRO4ALL_CONFIG.claude.defaultModel);
+  const model = config.get<string>("model", LLM_CONFIG.claude.defaultModel);
   const maxTokens = config.get<number>("maxTokens", 8096);
 
   if (!apiKey?.trim()) {
@@ -52,7 +52,7 @@ export async function runAgentTask(
       if (fallback) {
         onEvent({
           type: "assistant_text",
-          text: `_Sin clave Claude GPTPRO4ALL; respuesta con Codex/GPT sin herramientas._\n\n${fallback.text}`,
+          text: `_Sin clave Claude; respuesta con OpenAI sin herramientas._\n\n${fallback.text}`,
         });
         onUsage?.(fallback.usage.inputTokens, fallback.usage.outputTokens);
         onEvent({ type: "done", reason: "finished" });
@@ -61,7 +61,7 @@ export async function runAgentTask(
     }
     onEvent({
       type: "error",
-      message: "Configura una API Key de GPTPRO4ALL en EditCore -> Cuenta & API.",
+      message: "Configura una API Key de Claude o OpenAI en el panel de APIs.",
     });
     return;
   }
@@ -101,14 +101,14 @@ export async function runAgentTask(
             if (fallback) {
               onEvent({
                 type: "assistant_text",
-                text: `_Claude GPTPRO4ALL no disponible; respuesta con Codex/GPT sin herramientas._\n\n${fallback.text}`,
+                text: `_Claude no disponible; respuesta con OpenAI sin herramientas._\n\n${fallback.text}`,
               });
               onUsage?.(fallback.usage.inputTokens, fallback.usage.outputTokens);
               onEvent({ type: "done", reason: "finished" });
               return;
             }
           } catch {
-            // Keep the original Claude/GPTPRO4ALL error below.
+            // Keep the original Claude error below.
           }
         }
         onEvent({ type: "error", message: mapClaudeApiError(err).message });

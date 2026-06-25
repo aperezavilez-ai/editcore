@@ -6,15 +6,11 @@ import {
   validateOpenAiKey,
   writeSharedKeys,
 } from "./sharedApiKeys";
-import { ApiKeyService } from "../../editcore-claude/src/apiKeyService";
 
 export class ApiKeysPanelProvider implements vscode.WebviewViewProvider {
   private view?: vscode.WebviewView;
 
-  constructor(
-    private readonly context: vscode.ExtensionContext,
-    private readonly apiKeyService?: ApiKeyService
-  ) {}
+  constructor(private readonly context: vscode.ExtensionContext) {}
 
   resolveWebviewView(webviewView: vscode.WebviewView): void {
     this.view = webviewView;
@@ -28,30 +24,22 @@ export class ApiKeysPanelProvider implements vscode.WebviewViewProvider {
         } else if (msg.type === "saveAnthropic") {
           const key = String(msg.key || "").trim();
           if (!key.startsWith("sk-")) {
-            throw new Error("La key de GPTPRO4ALL debe empezar con sk-");
+            throw new Error("La key de Anthropic debe empezar con sk-");
           }
-          if (this.apiKeyService) {
-            await this.apiKeyService.saveApiKey(key);
-          } else {
-            await writeSharedKeys({ anthropic: key });
-            await this.context.secrets.store("anthropicApiKey", key);
-            await validateAnthropicKey(key).catch(() => void 0);
-          }
-          vscode.window.showInformationMessage("EditCore: API Key Claude GPTPRO4ALL guardada.");
+          await writeSharedKeys({ anthropic: key });
+          await this.context.secrets.store("anthropicApiKey", key);
+          await validateAnthropicKey(key).catch(() => void 0);
+          vscode.window.showInformationMessage("EditCore: API Key de Claude guardada.");
           await this.pushState();
         } else if (msg.type === "saveOpenAi") {
           const key = String(msg.key || "").trim();
           if (!key.startsWith("sk-")) {
             throw new Error("La key de OpenAI debe empezar con sk-");
           }
-          if (this.apiKeyService) {
-            await this.apiKeyService.saveOpenAiKey(key);
-          } else {
-            await writeSharedKeys({ openai: key });
-            await this.context.secrets.store("openaiApiKey", key);
-            await validateOpenAiKey(key).catch(() => void 0);
-          }
-          vscode.window.showInformationMessage("EditCore: API Key Codex GPTPRO4ALL guardada.");
+          await writeSharedKeys({ openai: key });
+          await this.context.secrets.store("openaiApiKey", key);
+          await validateOpenAiKey(key).catch(() => void 0);
+          vscode.window.showInformationMessage("EditCore: API Key de OpenAI guardada.");
           await this.pushState();
         } else if (msg.type === "clearAnthropic") {
           await writeSharedKeys({ anthropic: undefined });
@@ -115,9 +103,9 @@ export class ApiKeysPanelProvider implements vscode.WebviewViewProvider {
   <p class="sub">Pega aquí tus keys. <strong>No instales nada del marketplace.</strong> Este panel funciona aunque Claude esté desactivado.</p>
 
   <section>
-    <div id="anthropicStatus" class="bad">Sin Claude GPTPRO4ALL</div>
-    <label>GPTPRO4ALL Claude — sk-...</label>
-    <input id="anthropicKey" type="password" placeholder="sk-..." autocomplete="off" />
+    <div id="anthropicStatus" class="bad">Sin Claude</div>
+    <label>Claude (Anthropic) — sk-ant-...</label>
+    <input id="anthropicKey" type="password" placeholder="sk-ant-..." autocomplete="off" />
     <div class="row">
       <button id="saveAnthropic">Guardar Claude</button>
       <button class="secondary" id="clearAnthropic">Eliminar</button>
@@ -126,11 +114,11 @@ export class ApiKeysPanelProvider implements vscode.WebviewViewProvider {
   </section>
 
   <section>
-    <div id="openaiStatus" class="bad">Sin Codex GPTPRO4ALL</div>
-    <label>GPTPRO4ALL Codex (respaldo) — sk-...</label>
+    <div id="openaiStatus" class="bad">Sin OpenAI</div>
+    <label>OpenAI (respaldo) — sk-...</label>
     <input id="openaiKey" type="password" placeholder="sk-..." autocomplete="off" />
     <div class="row">
-      <button id="saveOpenAi">Guardar Codex</button>
+      <button id="saveOpenAi">Guardar OpenAI</button>
       <button class="secondary" id="clearOpenAi">Eliminar</button>
     </div>
     <p class="hint" id="openaiHint"></p>
@@ -160,11 +148,11 @@ export class ApiKeysPanelProvider implements vscode.WebviewViewProvider {
     const aSt = document.getElementById('anthropicStatus');
     const oSt = document.getElementById('openaiStatus');
     aSt.className = msg.hasAnthropic ? 'ok' : 'bad';
-    aSt.textContent = msg.hasAnthropic ? 'Claude GPTPRO4ALL activa · ' + msg.anthropicHint : 'Sin Claude GPTPRO4ALL';
+    aSt.textContent = msg.hasAnthropic ? 'Claude activa · ' + msg.anthropicHint : 'Sin Claude';
     oSt.className = msg.hasOpenAi ? 'ok' : 'bad';
-    oSt.textContent = msg.hasOpenAi ? 'Codex GPTPRO4ALL activa · ' + msg.openaiHint : 'Sin Codex GPTPRO4ALL (opcional)';
-    document.getElementById('anthropicHint').textContent = msg.hasAnthropic ? 'Key: ' + msg.anthropicHint : 'Usa tu key GPTPRO4ALL Claude';
-    document.getElementById('openaiHint').textContent = msg.hasOpenAi ? 'Key: ' + msg.openaiHint : 'Opcional — usa tu key GPTPRO4ALL Codex';
+    oSt.textContent = msg.hasOpenAi ? 'OpenAI activa · ' + msg.openaiHint : 'Sin OpenAI (opcional)';
+    document.getElementById('anthropicHint').textContent = msg.hasAnthropic ? 'Key: ' + msg.anthropicHint : 'Pega tu key de console.anthropic.com';
+    document.getElementById('openaiHint').textContent = msg.hasOpenAi ? 'Key: ' + msg.openaiHint : 'Opcional — key de platform.openai.com';
   });
   vscode.postMessage({ type: 'refresh' });
 </script>

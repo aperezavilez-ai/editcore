@@ -5,36 +5,30 @@ export interface ClaudeModelOption {
   tier: "balanced" | "powerful" | "premium";
 }
 
-/** Claude models available through GPTPRO4ALL. */
+/** Modelos Claude disponibles via API de Anthropic. */
 export const CLAUDE_MODELS: ClaudeModelOption[] = [
   {
-    id: "claude-sonnet-4-6",
-    label: "Claude Sonnet 4.6",
-    description: "Default GPTPRO4ALL model: fast, stable, and high quality",
+    id: "claude-sonnet-4-20250514",
+    label: "Claude Sonnet 4",
+    description: "Modelo equilibrado: rápido y de alta calidad",
     tier: "balanced",
   },
   {
-    id: "claude-opus-4-6",
-    label: "Claude Opus 4.6",
-    description: "More powerful model for complex tasks",
+    id: "claude-opus-4-20250514",
+    label: "Claude Opus 4",
+    description: "Modelo más potente para tareas complejas",
     tier: "powerful",
   },
   {
-    id: "claude-opus-4-7",
-    label: "Claude Opus 4.7",
-    description: "More powerful model for agent and reasoning work",
-    tier: "powerful",
+    id: "claude-3-5-sonnet-20241022",
+    label: "Claude 3.5 Sonnet",
+    description: "Versión estable y versátil",
+    tier: "balanced",
   },
   {
-    id: "claude-opus-4-8",
-    label: "Claude Opus 4.8",
-    description: "Most powerful Claude model available in GPTPRO4ALL",
-    tier: "powerful",
-  },
-  {
-    id: "claude-fable-5",
-    label: "Claude Fable 5",
-    description: "Premium Claude model",
+    id: "claude-3-5-haiku-20241022",
+    label: "Claude 3.5 Haiku",
+    description: "Modelo ligero y económico",
     tier: "premium",
   },
 ];
@@ -53,12 +47,17 @@ export interface OpenAiModelOption {
   description: string;
 }
 
-/** Codex/OpenAI-compatible models available through GPTPRO4ALL. */
+/** Modelos OpenAI disponibles via API oficial. */
 export const OPENAI_MODELS: OpenAiModelOption[] = [
   {
-    id: "gpt-5.5",
-    label: "GPT 5.5",
-    description: "Default Codex/GPT model in GPTPRO4ALL",
+    id: "gpt-4o",
+    label: "GPT-4o",
+    description: "Modelo OpenAI por defecto: rápido y capaz",
+  },
+  {
+    id: "gpt-4o-mini",
+    label: "GPT-4o mini",
+    description: "Modelo ligero y económico",
   },
 ];
 

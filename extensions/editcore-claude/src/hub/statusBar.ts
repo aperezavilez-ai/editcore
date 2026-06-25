@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { LLM_CONFIG } from "../llmConfig";
 import { getRagIndex } from '../rag/chunkIndex';
 import { getWorkspaceIndex } from '../index/workspaceIndex';
 
@@ -11,7 +12,7 @@ export function createStatusBarItem(
 
   const refresh = () => {
     const config = vscode.workspace.getConfiguration('editcore');
-    const model = config.get<string>('model', 'claude-sonnet-4-6');
+    const model = config.get<string>('model', LLM_CONFIG.claude.defaultModel);
     const short = model.replace('claude-', '').replace(/-/g, ' ');
     const rag = getRagIndex().getStats();
     item.text = `$(sparkle) EditCore · ${short}`;

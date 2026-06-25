@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { GPTPRO4ALL_CONFIG } from "./gptpro4all.config";
+import { LLM_CONFIG } from "./llmConfig";
 import { isValidOpenAiModelId } from "./models";
 import type { ChatMessage } from "./anthropicClient";
 
@@ -12,10 +12,10 @@ export interface OpenAiUsage {
 
 function getOpenAiConfig(): { model: string; maxTokens: number } {
   const config = vscode.workspace.getConfiguration("editcore");
-  const model = config.get<string>("openai.model", GPTPRO4ALL_CONFIG.codex.defaultModel);
+  const model = config.get<string>("openai.model", LLM_CONFIG.openai.defaultModel);
   const maxTokens = config.get<number>("maxTokens", 8096);
   if (!isValidOpenAiModelId(model)) {
-    throw new Error(`Modelo GPTPRO4ALL desconocido: ${model}. Configuralo en Cuenta & API.`);
+    throw new Error(`Modelo OpenAI desconocido: ${model}. Configuralo en Cuenta & API.`);
   }
   return { model, maxTokens };
 }
@@ -30,18 +30,18 @@ async function readBodyPreview(res: Response): Promise<string> {
 
 function mapOpenAiError(status: number, body: string): Error {
   if (status === 401) {
-    return new Error("API key invalid. Contact support.");
+    return new Error("API key de OpenAI invalida. Revisa la key en el panel de APIs.");
   }
   if (status === 403) {
-    return new Error("API key without permissions in GPTPRO4ALL. Contact support.");
+    return new Error("La API key de OpenAI no tiene permisos suficientes.");
   }
   if (status === 429) {
-    return new Error("Rate limit reached. Wait a moment and retry.");
+    return new Error("Limite de uso alcanzado. Espera un momento e intenta de nuevo.");
   }
   if (status >= 500) {
-    return new Error("Service temporarily unavailable. Try again.");
+    return new Error("OpenAI no esta disponible temporalmente. Intenta de nuevo.");
   }
-  return new Error(`Error GPTPRO4ALL (${status}): ${body}`);
+  return new Error(`Error OpenAI (${status}): ${body}`);
 }
 
 function mapNetworkError(err: unknown): Error {
@@ -54,18 +54,18 @@ function mapNetworkError(err: unknown): Error {
       message.includes("enotfound") ||
       message.includes("timeout")
     ) {
-      return new Error("No connection to GPTPRO4ALL. Check your internet.");
+      return new Error("Sin conexion con OpenAI. Revisa tu internet.");
     }
     return err;
   }
-  return new Error("Error desconocido al llamar a GPTPRO4ALL.");
+  return new Error("Error desconocido al llamar a OpenAI.");
 }
 
 export async function validateOpenAiKey(apiKey: string): Promise<void> {
   const { model } = getOpenAiConfig();
   let res: Response;
   try {
-    res = await fetch(`${GPTPRO4ALL_CONFIG.codex.baseUrl}/chat/completions`, {
+    res = await fetch(`${LLM_CONFIG.openai.baseUrl}/chat/completions`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -95,7 +95,7 @@ export async function callOpenAI(
   const { model, maxTokens } = getOpenAiConfig();
   let res: Response;
   try {
-    res = await fetch(`${GPTPRO4ALL_CONFIG.codex.baseUrl}/chat/completions`, {
+    res = await fetch(`${LLM_CONFIG.openai.baseUrl}/chat/completions`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -137,7 +137,7 @@ export async function streamOpenAI(
   const { model, maxTokens } = getOpenAiConfig();
   let res: Response;
   try {
-    res = await fetch(`${GPTPRO4ALL_CONFIG.codex.baseUrl}/chat/completions`, {
+    res = await fetch(`${LLM_CONFIG.openai.baseUrl}/chat/completions`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -158,7 +158,7 @@ export async function streamOpenAI(
     throw mapOpenAiError(res.status, await readBodyPreview(res));
   }
   if (!res.body) {
-    throw new Error("GPTPRO4ALL no devolvio stream de respuesta.");
+    throw new Error("OpenAI no devolvio stream de respuesta.");
   }
 
   const reader = res.body.getReader();
