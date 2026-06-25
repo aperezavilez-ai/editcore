@@ -282,10 +282,12 @@ export function activate(context: vscode.ExtensionContext) {
     })
   );
 
-  // Pantalla de inicio (estilo Cursor) cuando no hay carpeta abierta.
+  // Pantalla de inicio cuando no hay carpeta (no bloquea si falla).
   setTimeout(() => {
-    void showWelcomeIfNeeded(context);
-  }, 250);
+    void showWelcomeIfNeeded(context).catch(() => {
+      void vscode.commands.executeCommand("workbench.action.showWelcomePage");
+    });
+  }, 800);
 }
 
 async function writeActivationProbe(context: vscode.ExtensionContext): Promise<void> {

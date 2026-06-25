@@ -38,10 +38,6 @@ function mergeProduct(upstream, branding) {
 			result[key] = mergeBuiltInExtensions(upstreamValue, brandingValue);
 			continue;
 		}
-		if (key === 'defaultChatAgent' && brandingValue && typeof brandingValue === 'object') {
-			result[key] = brandingValue;
-			continue;
-		}
 		if (
 			brandingValue &&
 			typeof brandingValue === 'object' &&

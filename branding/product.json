@@ -43,16 +43,10 @@
   "_comment_builtInExtensions": "No listar git/github/git-base aquí: ya vienen en extensions/ del repo. editcore-claude y editcore-connect se copian con el script de build. builtInExtensions del upstream (js-debug) se conservan al fusionar.",
   "_comment_extensionsGallery": "Open VSX evita licencia propietaria de Microsoft Marketplace — necesario para distribuir tu propio fork legalmente.",
   "_comment_appId": "Proyecto de uso personal: estos GUIDs son fijos y no es necesario regenerarlos a menos que algún día decidas distribuir EditCore a más gente.",
-  "_comment_productMerge": "No quitar defaultChatAgent del upstream: Code-OSS lo requiere para arrancar. chatExtensionId apunta a editcore-claude para la UI del chat.",
+  "_comment_productMerge": "No quitar defaultChatAgent del upstream: Code-OSS lo requiere para arrancar. Solo se parchean extensionId/chatExtensionId en el script de build.",
   "defaultChatAgent": {
     "chatExtensionId": "editcore.editcore-claude",
-    "extensionId": "editcore.editcore-claude",
-    "provider": {
-      "default": {
-        "id": "editcore",
-        "name": "EditCore"
-      }
-    }
+    "extensionId": "editcore.editcore-claude"
   },
   "extensionEnabledApiProposals": {
     "editcore.editcore-claude": [
