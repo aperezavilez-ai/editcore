@@ -6,8 +6,10 @@ import { callWithFallback } from "./aiRouter";
 import { AgentPanel } from "./agent/agentPanel";
 import { registerClaudeChatParticipant } from "./chatParticipant";
 import { registerClaudeLanguageModelProvider } from "./languageModelProvider";
+import { registerWorkspaceContextProvider } from "./workspace/workspaceContextProvider";
 import { ApiKeyService } from "./apiKeyService";
 import { LLM_VENDOR } from "./llmConfig";
+import { DEPRECATED_CLAUDE_MODELS } from "./models";
 import { getWorkspaceIndex } from "./index/workspaceIndex";
 import { getRagIndex } from "./rag/chunkIndex";
 import { buildDependencyGraph } from "./twin/dependencyGraph";
@@ -46,6 +48,8 @@ export function activate(context: vscode.ExtensionContext) {
 
   registerClaudeLanguageModelProvider(context, apiKeyService);
   registerClaudeChatParticipant(context, apiKeyService);
+  registerWorkspaceContextProvider(context);
+  void migrateDeprecatedModelSettings();
 
   // Precalentar índice del workspace para búsqueda semántica ligera.
   if (vscode.workspace.workspaceFolders?.length) {
@@ -357,6 +361,24 @@ async function maybePromptWorkspaceInit(context: vscode.ExtensionContext): Promi
   await context.globalState.update(flagKey, true);
   if (choice === "Inicializar") {
     await vscode.commands.executeCommand("editcore.initWorkspace");
+  }
+}
+
+async function migrateDeprecatedModelSettings(): Promise<void> {
+  const config = vscode.workspace.getConfiguration("editcore");
+  const current = config.get<string>("model");
+  if (!current || !(current in DEPRECATED_CLAUDE_MODELS)) {
+    return;
+  }
+  const next = DEPRECATED_CLAUDE_MODELS[current];
+  await config.update("model", next, vscode.ConfigurationTarget.Global);
+  const diag = config.get<string>("diagnostics.model");
+  if (diag && diag in DEPRECATED_CLAUDE_MODELS) {
+    await config.update(
+      "diagnostics.model",
+      DEPRECATED_CLAUDE_MODELS[diag],
+      vscode.ConfigurationTarget.Global
+    );
   }
 }
 

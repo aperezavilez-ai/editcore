@@ -73,6 +73,21 @@ if (Test-Path $alwaysLoadClaude) {
   node $alwaysLoadClaude
 }
 
+$cleanChatUi = Join-Path $Root "scripts\patch-portable-chat-clean-ui.js"
+if (Test-Path $cleanChatUi) {
+  node $cleanChatUi
+}
+
+$modelPicker = Join-Path $Root "scripts\patch-portable-chat-model-picker.js"
+if (Test-Path $modelPicker) {
+  node $modelPicker
+}
+
+$browserTitlebar = Join-Path $Root "scripts\patch-portable-browser-titlebar.js"
+if (Test-Path $browserTitlebar) {
+  node $browserTitlebar
+}
+
 $removeGptpro4all = Join-Path $Root "scripts\patch-portable-remove-gptpro4all.js"
 if (Test-Path $removeGptpro4all) {
   node $removeGptpro4all
@@ -102,6 +117,11 @@ $clearCache = Join-Path $Root "scripts\clear-editcore-chat-model-cache.js"
 if (Test-Path $clearCache) {
   Write-Host "Limpiando cache de modelos obsoletos..." -ForegroundColor Yellow
   node $clearCache
+}
+
+$fixLmProfile = Join-Path $Root "scripts\fix-editcore-language-models-profile.js"
+if (Test-Path $fixLmProfile) {
+  node $fixLmProfile
 }
 
 $purgeGptpro4all = Join-Path $Root "scripts\purge-gptpro4all-user-data.js"

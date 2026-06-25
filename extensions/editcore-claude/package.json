@@ -2,7 +2,7 @@
   "name": "editcore-claude",
   "displayName": "EditCore - Claude Assistant",
   "description": "Chat con Claude (Anthropic) y OpenAI integrado nativamente en EditCore IDE.",
-  "version": "1.3.1",
+  "version": "1.3.4",
   "publisher": "editcore",
   "engines": {
     "vscode": "^1.85.0"
@@ -13,7 +13,7 @@
     },
     "virtualWorkspaces": true
   },
-  "extensionKind": ["ui", "workspace"],
+  "extensionKind": ["ui"],
   "categories": [
     "Other",
     "Machine Learning"
@@ -21,7 +21,8 @@
   "enabledApiProposals": [
     "defaultChatParticipant",
     "chatParticipantAdditions",
-    "chatProvider"
+    "chatProvider",
+    "chatContextProvider"
   ],
   "activationEvents": [
     "onStartupFinished",
@@ -38,8 +39,8 @@
       {
         "id": "editcore.claude",
         "name": "claude",
-        "fullName": "Claude",
-        "description": "Asistente de codigo con Claude (Anthropic) y OpenAI",
+        "fullName": "Asistente",
+        "description": "Asistente de codigo de EditCore (Anthropic y OpenAI)",
         "isDefault": true,
         "modes": [
           "ask",
@@ -71,7 +72,7 @@
         {
           "type": "webview",
           "id": "editcore.chatView",
-          "name": "Chat con Claude"
+          "name": "Chat"
         },
         {
           "type": "webview",
@@ -81,6 +82,12 @@
       ]
     },
     "commands": [
+      {
+        "command": "editcore.openBrowser",
+        "title": "EditCore: Abrir browser",
+        "shortTitle": "Browser",
+        "icon": "$(globe)"
+      },
       {
         "command": "editcore.showWelcome",
         "title": "EditCore: Pantalla de inicio",
@@ -262,14 +269,12 @@
           "enum": [
             "claude-sonnet-4-20250514",
             "claude-opus-4-20250514",
-            "claude-3-5-sonnet-20241022",
             "claude-3-5-haiku-20241022"
           ],
           "enumDescriptions": [
-            "Claude Sonnet 4 — equilibrado",
+            "Claude Sonnet 4 — equilibrado (recomendado)",
             "Claude Opus 4 — mas potente",
-            "Claude 3.5 Sonnet — estable",
-            "Claude 3.5 Haiku — economico"
+            "Claude 3.5 Haiku — rapido y economico"
           ],
           "default": "claude-sonnet-4-20250514",
           "description": "Modelo Claude (Anthropic) usado por chat, agente y @claude"
@@ -278,11 +283,15 @@
           "type": "string",
           "enum": [
             "gpt-4o",
-            "gpt-4o-mini"
+            "gpt-4o-mini",
+            "gpt-4.1",
+            "gpt-4.1-mini"
           ],
           "enumDescriptions": [
             "GPT-4o — OpenAI por defecto",
-            "GPT-4o mini — ligero y economico"
+            "GPT-4o mini — ligero y economico",
+            "GPT-4.1 — mas reciente",
+            "GPT-4.1 mini — compacto"
           ],
           "default": "gpt-4o",
           "description": "Modelo OpenAI usado como respaldo o proveedor principal"
@@ -352,7 +361,6 @@
           "enum": [
             "claude-sonnet-4-20250514",
             "claude-opus-4-20250514",
-            "claude-3-5-sonnet-20241022",
             "claude-3-5-haiku-20241022"
           ],
           "description": "Modelo Claude para analisis de autodiagnostico"
@@ -392,10 +400,10 @@
       "chat.agent.enabled": true,
       "chat.agentHost.enabled": false,
       "chat.newSession.defaultMode": "agent",
-      "chat.agentsControl.enabled": "hidden",
+      "chat.agentsControl.enabled": "compact",
       "chat.unifiedAgentsBar.enabled": false,
-      "chat.customizations.harnessSelector.enabled": false,
-      "chat.extensionTools.enabled": false,
+      "chat.customizations.harnessSelector.enabled": true,
+      "chat.extensionTools.enabled": true,
       "chat.generalPurposeAgent.enabled": false
     },
     "keybindings": [
@@ -422,16 +430,18 @@
         "key": "ctrl+alt+r",
         "mac": "cmd+alt+r",
         "when": "editorTextFocus || !editorFocus"
+      },
+      {
+        "command": "editcore.openBrowser",
+        "key": "ctrl+alt+/",
+        "mac": "cmd+alt+/",
+        "when": "editorTextFocus || !editorFocus"
       }
     ],
     "languageModelChatProviders": [
       {
         "vendor": "editcore",
-        "displayName": "EditCore",
-        "configuration": {
-          "type": "object",
-          "properties": {}
-        }
+        "displayName": "EditCore"
       }
     ]
   },

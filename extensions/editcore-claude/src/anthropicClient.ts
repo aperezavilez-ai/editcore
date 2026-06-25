@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import Anthropic from "@anthropic-ai/sdk";
 import { LLM_CONFIG } from "./llmConfig";
-import { isValidModelId } from "./models";
+import { isValidModelId, resolveClaudeModelId } from "./models";
 
 export interface ChatMessage {
   role: "user" | "assistant";
@@ -16,7 +16,8 @@ export interface ClaudeUsage {
 
 function getModelConfig(): { model: string; maxTokens: number } {
   const config = vscode.workspace.getConfiguration("editcore");
-  const model = config.get<string>("model", LLM_CONFIG.claude.defaultModel);
+  const raw = config.get<string>("model", LLM_CONFIG.claude.defaultModel);
+  const model = resolveClaudeModelId(raw);
   const maxTokens = config.get<number>("maxTokens", 8096);
   if (!isValidModelId(model)) {
     throw new Error(`Modelo desconocido: ${model}. Elige uno en EditCore -> Cuenta & API.`);

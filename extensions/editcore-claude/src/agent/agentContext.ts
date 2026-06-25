@@ -1,8 +1,14 @@
 import { loadProjectMemory, formatMemoryForPrompt } from '../memory/projectMemory';
 import { hybridCodeSearch } from '../rag/chunkIndex';
+import { getWorkspaceContextBlock } from '../workspace/workspaceContext';
 
 export async function buildAgentContext(userTask: string): Promise<string> {
   const sections: string[] = [];
+
+  const workspace = await getWorkspaceContextBlock();
+  if (workspace) {
+    sections.push(workspace);
+  }
 
   const memory = await loadProjectMemory();
   const memoryBlock = formatMemoryForPrompt(memory);

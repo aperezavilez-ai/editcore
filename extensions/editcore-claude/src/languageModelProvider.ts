@@ -1,15 +1,16 @@
 import * as vscode from "vscode";
 import { ApiKeyService } from "./apiKeyService";
-import { streamWithFallback } from "./aiRouter";
+import { streamForSelectedModel } from "./aiRouter";
 import type { ChatMessage } from "./anthropicClient";
 import { LLM_VENDOR } from "./llmConfig";
 import { CLAUDE_MODELS, OPENAI_MODELS } from "./models";
-import { streamOpenAI } from "./openaiClient";
+import { prependWorkspaceContext } from "./workspace/workspaceMessages";
 
 type NativeModelKind = "claude" | "openai";
 
 interface NativeLanguageModelInformation extends vscode.LanguageModelChatInformation {
   kind: NativeModelKind;
+  isDefault?: boolean;
 }
 
 export function registerClaudeLanguageModelProvider(
@@ -18,26 +19,34 @@ export function registerClaudeLanguageModelProvider(
 ): void {
   context.subscriptions.push(
     vscode.lm.registerLanguageModelChatProvider(LLM_VENDOR, {
-      async provideLanguageModelChatInformation(_options, _token) {
+      async provideLanguageModelChatInformation(options, _token) {
+        // VS Code re-invokes configurable providers per group (editcore/group/id vs editcore/id).
+        // Models are registered only on the ungrouped call to avoid duplicates in the picker.
+        const opts = options as { group?: string; configuration?: unknown };
+        if (opts.group || opts.configuration) {
+          return [];
+        }
+
         const hasAnthropic = await apiKeyService.hasApiKey();
         const hasOpenAi = await apiKeyService.hasOpenAiKey();
 
-        const claudeModels = CLAUDE_MODELS.map((model): NativeLanguageModelInformation => ({
+        const claudeModels = CLAUDE_MODELS.map((model, index): NativeLanguageModelInformation => ({
           id: model.id,
           name: model.label,
           family: "claude",
           version: "anthropic",
           tooltip: model.description,
-          detail: model.tier === "premium" ? "Anthropic (economico)" : "Anthropic Claude",
+          detail: "Anthropic Claude",
           maxInputTokens: 200_000,
           maxOutputTokens: 64_000,
           capabilities: {
             toolCalling: true,
           },
           kind: "claude",
+          isDefault: index === 0,
         }));
 
-        const openAiModels = OPENAI_MODELS.map((model): NativeLanguageModelInformation => ({
+        const openAiModels = OPENAI_MODELS.map((model, index): NativeLanguageModelInformation => ({
           id: model.id,
           name: model.label,
           family: "gpt",
@@ -47,62 +56,34 @@ export function registerClaudeLanguageModelProvider(
           maxInputTokens: 200_000,
           maxOutputTokens: 64_000,
           capabilities: {
-            toolCalling: false,
+            toolCalling: true,
           },
           kind: "openai",
+          isDefault: !hasAnthropic && index === 0,
         }));
 
-        if (!hasAnthropic && hasOpenAi) {
-          return [...openAiModels, ...claudeModels];
-        }
         return [...claudeModels, ...openAiModels];
       },
 
       async provideLanguageModelChatResponse(model, messages, _options, progress, token) {
-        const chatMessages = toChatMessages(messages);
+        const base = toChatMessages(messages);
+        const chatMessages = await prependWorkspaceContext(base);
         if (chatMessages.length === 0) {
           return;
         }
 
-        const onToken = (chunk: string) => {
-          if (!token.isCancellationRequested) {
-            progress.report(new vscode.LanguageModelTextPart(chunk));
-          }
-        };
-
-        const isOpenAiModel = OPENAI_MODELS.some((candidate) => candidate.id === model.id);
-        if (isOpenAiModel) {
-          const apiKey = await apiKeyService.getOpenAiKey();
-          if (!apiKey) {
-            throw new Error(
-              "Configura una API Key de OpenAI en el panel izquierdo (llave). Obtén una en platform.openai.com/api-keys"
-            );
-          }
-          await withTemporaryConfig("openai.model", model.id, () =>
-            streamOpenAI(apiKey, chatMessages, onToken)
-          );
-          return;
-        }
-
-        const hasAnthropic = await apiKeyService.hasApiKey();
-        const hasOpenAi = await apiKeyService.hasOpenAiKey();
-        if (!hasAnthropic && !hasOpenAi) {
-          throw new Error(
-            "Configura al menos una API Key en el panel izquierdo (llave): Claude (console.anthropic.com) u OpenAI (platform.openai.com)."
-          );
-        }
-
-        if (!hasAnthropic && hasOpenAi) {
-          progress.report(
-            new vscode.LanguageModelTextPart(
-              "_Sin key de Claude — respondiendo con OpenAI._\n\n"
-            )
-          );
-        }
-
-        await withTemporaryConfig("model", model.id, () =>
-          streamWithFallback(apiKeyService, chatMessages, onToken)
+        const usage = await streamForSelectedModel(
+          apiKeyService,
+          chatMessages,
+          model.id,
+          (chunk) => {
+            if (!token.isCancellationRequested) {
+              progress.report(new vscode.LanguageModelTextPart(chunk));
+            }
+          },
+          { allowFallback: false }
         );
+        apiKeyService.recordUsage(usage.inputTokens, usage.outputTokens);
       },
 
       async provideTokenCount(_model, text, _token) {
@@ -114,24 +95,6 @@ export function registerClaudeLanguageModelProvider(
       },
     })
   );
-}
-
-async function withTemporaryConfig<T>(
-  key: "model" | "openai.model",
-  value: string,
-  task: () => Promise<T>
-): Promise<T> {
-  const config = vscode.workspace.getConfiguration("editcore");
-  const previous = config.get<string>(key);
-  if (previous === value) {
-    return task();
-  }
-  await config.update(key, value, vscode.ConfigurationTarget.Global);
-  try {
-    return await task();
-  } finally {
-    await config.update(key, previous, vscode.ConfigurationTarget.Global);
-  }
 }
 
 function toChatMessages(messages: readonly vscode.LanguageModelChatRequestMessage[]): ChatMessage[] {

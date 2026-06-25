@@ -18,6 +18,8 @@ export type AgentEvent =
   | { type: "error"; message: string };
 
 const SYSTEM_PROMPT_BASE = `Eres el Agent Mode de EditCore IDE, un asistente de programacion autonomo.
+El usuario tiene un workspace abierto en el explorador; su ruta y estructura vienen en el contexto de la tarea.
+No pidas que comparta archivos manualmente: usa list_directory, read_file y search_codebase desde el inicio.
 Tienes herramientas para explorar, buscar, leer, parchear y escribir archivos, ejecutar comandos, git (status, diff, commit, push), analisis de impacto, gemelo digital y MCP.
 
 Integraciones EditCore Connect (guiar al usuario cuando haga falta):

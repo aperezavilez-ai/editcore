@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { ApiKeyService } from "./apiKeyService";
 import { callClaude, streamClaude, type ChatMessage } from "./anthropicClient";
 import { callOpenAI, streamOpenAI } from "./openaiClient";
+import { isOpenAiModelId } from "./models";
 
 export type LlmProvider = "anthropic" | "openai";
 
@@ -71,6 +72,68 @@ export async function callWithFallback(
   }
 
   throw new Error("Configura al menos una API Key: Anthropic (Claude) u OpenAI.");
+}
+
+export async function streamForSelectedModel(
+  apiKeyService: ApiKeyService,
+  messages: ChatMessage[],
+  modelId: string,
+  onToken: (token: string) => void,
+  options?: { allowFallback?: boolean }
+): Promise<LlmUsage> {
+  const allowFallback = options?.allowFallback ?? false;
+  const isOpenAiModel = isOpenAiModelId(modelId);
+
+  if (isOpenAiModel) {
+    const openaiKey = await apiKeyService.getOpenAiKey();
+    if (!openaiKey) {
+      throw new Error("Configura una API Key de OpenAI en el panel de APIs.");
+    }
+    const config = vscode.workspace.getConfiguration("editcore");
+    const previous = config.get<string>("openai.model");
+    if (previous !== modelId) {
+      await config.update("openai.model", modelId, vscode.ConfigurationTarget.Global);
+    }
+    try {
+      const usage = await streamOpenAI(openaiKey, messages, onToken);
+      return { ...usage, provider: "openai", usedFallback: false };
+    } finally {
+      if (previous !== modelId) {
+        await config.update("openai.model", previous, vscode.ConfigurationTarget.Global);
+      }
+    }
+  }
+
+  const anthropicKey = await apiKeyService.getApiKey();
+  const openaiKey = await apiKeyService.getOpenAiKey();
+
+  if (!anthropicKey) {
+    if (openaiKey && isFallbackEnabled()) {
+      const usage = await streamOpenAI(openaiKey, messages, onToken);
+      return { ...usage, provider: "openai", usedFallback: true };
+    }
+    throw new Error("Configura una API Key de Claude (Anthropic) en el panel de APIs.");
+  }
+
+  const config = vscode.workspace.getConfiguration("editcore");
+  const previous = config.get<string>("model");
+  if (previous !== modelId) {
+    await config.update("model", modelId, vscode.ConfigurationTarget.Global);
+  }
+  try {
+    const usage = await streamClaude(anthropicKey, messages, onToken);
+    return { ...usage, provider: "anthropic", model: modelId, usedFallback: false };
+  } catch (err) {
+    if (allowFallback && isFallbackEnabled() && openaiKey && shouldFallback(err)) {
+      const usage = await streamOpenAI(openaiKey, messages, onToken);
+      return { ...usage, usedFallback: true };
+    }
+    throw err;
+  } finally {
+    if (previous !== modelId) {
+      await config.update("model", previous, vscode.ConfigurationTarget.Global);
+    }
+  }
 }
 
 export async function streamWithFallback(

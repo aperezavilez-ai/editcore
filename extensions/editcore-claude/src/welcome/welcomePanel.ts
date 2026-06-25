@@ -120,7 +120,7 @@ function formatRecent(entry: RecentWorkspace): { name: string; path: string; par
 
 function getHtml(webview: vscode.Webview, context: vscode.ExtensionContext): string {
   const logoUri = webview.asWebviewUri(
-    vscode.Uri.joinPath(context.extensionUri, "media", "editcore-icon.svg")
+    vscode.Uri.joinPath(context.extensionUri, "media", "editcore-welcome.svg")
   );
   const csp = `default-src 'none'; img-src ${webview.cspSource} https: data:; style-src 'unsafe-inline'; script-src 'unsafe-inline';`;
 
@@ -150,7 +150,14 @@ function getHtml(webview: vscode.Webview, context: vscode.ExtensionContext): str
     display: flex; flex-direction: column; align-items: center; gap: 10px;
     margin-bottom: 28px;
   }
-  .brand img { width: 56px; height: 56px; opacity: .95; }
+  .brand img {
+    width: 112px;
+    height: 112px;
+    opacity: 1;
+    image-rendering: auto;
+    -webkit-user-drag: none;
+    user-select: none;
+  }
   .brand h1 {
     margin: 0; font-size: 28px; font-weight: 700; letter-spacing: .12em;
   }
@@ -169,6 +176,10 @@ function getHtml(webview: vscode.Webview, context: vscode.ExtensionContext): str
     cursor: pointer;
     text-align: center;
     transition: background .15s, border-color .15s, transform .1s;
+    color: #ffffff;
+    font: inherit;
+    appearance: none;
+    -webkit-appearance: none;
   }
   .card:hover {
     background: var(--vscode-list-hoverBackground, #2a2d2e);
@@ -176,7 +187,7 @@ function getHtml(webview: vscode.Webview, context: vscode.ExtensionContext): str
     transform: translateY(-1px);
   }
   .card .icon { font-size: 28px; margin-bottom: 10px; }
-  .card .title { font-size: 14px; font-weight: 600; }
+  .card .title { font-size: 14px; font-weight: 600; color: #ffffff; }
   .recent-head {
     display: flex; align-items: baseline; justify-content: space-between;
     margin-bottom: 10px;
@@ -190,6 +201,12 @@ function getHtml(webview: vscode.Webview, context: vscode.ExtensionContext): str
   .recent-item {
     display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;
     padding: 10px 12px; border-radius: 6px; cursor: pointer;
+    color: #ffffff;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    font: inherit;
   }
   .recent-item:hover { background: var(--vscode-list-hoverBackground, #2a2d2e); }
   .recent-item .name { font-size: 13px; font-weight: 600; }

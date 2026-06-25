@@ -51,7 +51,9 @@
   "extensionEnabledApiProposals": {
     "editcore.editcore-claude": [
       "defaultChatParticipant",
-      "chatParticipantAdditions"
+      "chatParticipantAdditions",
+      "chatProvider",
+      "chatContextProvider"
     ]
   },
   "checksumFailMoreInfoUrl": "https://github.com/editcore/editcore#readme",

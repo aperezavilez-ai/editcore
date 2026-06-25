@@ -35,6 +35,9 @@ if (fs.existsSync(defaultsPath)) {
     "workbench.browser.openLocalhostLinks": defaults["workbench.browser.openLocalhostLinks"],
     "workbench.secondarySideBar.defaultVisibility":
       defaults["workbench.secondarySideBar.defaultVisibility"],
+    "terminal.integrated.initialHint": defaults["terminal.integrated.initialHint"],
+    "terminal.integrated.initialHintCopilotCli":
+      defaults["terminal.integrated.initialHintCopilotCli"],
   });
 }
 fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + "\n", "utf8");

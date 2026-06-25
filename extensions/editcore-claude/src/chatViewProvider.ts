@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { ApiKeyService } from "./apiKeyService";
-import { streamWithFallback } from "./aiRouter";
+import { streamForSelectedModel } from "./aiRouter";
 import type { ChatMessage } from "./anthropicClient";
 import { getModelLabel, getOpenAiModelLabel } from "./models";
 
@@ -81,18 +81,21 @@ export class ClaudeChatViewProvider implements vscode.WebviewViewProvider {
 
     let fullText = "";
     try {
-      const usage = await streamWithFallback(this.apiKeyService, this.history, (token) => {
-        fullText += token;
-        this.view?.webview.postMessage({ type: "assistantToken", text: token });
-      });
+      const config = vscode.workspace.getConfiguration("editcore");
+      const modelId = config.get<string>("model", "claude-sonnet-4-20250514");
+      const usage = await streamForSelectedModel(
+        this.apiKeyService,
+        this.history,
+        modelId,
+        (token) => {
+          fullText += token;
+          this.view?.webview.postMessage({ type: "assistantToken", text: token });
+        },
+        { allowFallback: false }
+      );
       this.history.push({ role: "assistant", content: fullText });
       this.apiKeyService.recordUsage(usage.inputTokens, usage.outputTokens);
-      const providerLabel = usage.provider === "openai" ? "OpenAI" : "Claude";
-      const fallbackNote = usage.usedFallback ? " · respaldo OpenAI" : "";
-      this.view?.webview.postMessage({
-        type: "assistantDone",
-        usage: `Tokens ↑${usage.inputTokens} ↓${usage.outputTokens} · ${providerLabel}${fallbackNote}`,
-      });
+      this.view?.webview.postMessage({ type: "assistantDone" });
       await this.pushStatus();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Error al contactar al proveedor de IA.";
@@ -144,14 +147,14 @@ export class ClaudeChatViewProvider implements vscode.WebviewViewProvider {
 <body>
   <div id="header">
     <div id="headerTop">
-      <span style="font-size:12px; font-weight:600;">Chat con Claude</span>
+      <span style="font-size:12px; font-weight:600;">Chat</span>
       <button id="accountBtn">Cuenta &amp; API</button>
     </div>
     <div id="meta">Modelo: <span id="modelLabel">—</span> · Sesión: ↑<span id="sessIn">0</span> ↓<span id="sessOut">0</span></div>
   </div>
   <div id="messages"></div>
   <div id="inputRow">
-    <textarea id="inputBox" rows="2" placeholder="Pregúntale a Claude..."></textarea>
+    <textarea id="inputBox" rows="2" placeholder="Describe qué quieres construir..."></textarea>
     <button id="sendBtn">Enviar</button>
   </div>
 

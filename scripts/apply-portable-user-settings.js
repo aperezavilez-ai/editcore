@@ -40,6 +40,9 @@ const EDITCORE_FORCE_KEYS = [
   "chat.extensionTools.enabled",
   "chat.generalPurposeAgent.enabled",
   "chat.tips.enabled",
+  "telemetry.feedback.enabled",
+  "terminal.integrated.initialHint",
+  "terminal.integrated.initialHintCopilotCli",
 ];
 
 const defaults = readJson(defaultsPath);

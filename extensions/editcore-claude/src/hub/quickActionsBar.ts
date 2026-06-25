@@ -5,8 +5,17 @@ export function registerQuickActionsBar(context: vscode.ExtensionContext): void 
   context.subscriptions.push(
     vscode.commands.registerCommand('editcore.reloadWindow', async () => {
       await vscode.commands.executeCommand('workbench.action.reloadWindow');
+    }),
+    vscode.commands.registerCommand('editcore.openBrowser', async () => {
+      await vscode.commands.executeCommand('workbench.action.browser.openOrList');
     })
   );
+
+  const browser = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 10001);
+  browser.command = 'editcore.openBrowser';
+  browser.text = '$(globe) Browser';
+  browser.tooltip = 'Abrir navegador integrado (preview local) — Ctrl+Alt+/';
+  browser.show();
 
   const api = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 10000);
   api.command = 'editcore.openAccountPanel';
@@ -20,7 +29,7 @@ export function registerQuickActionsBar(context: vscode.ExtensionContext): void 
   reload.tooltip = 'Aplicar cambios sin cerrar EditCore (Ctrl+Alt+R)';
   reload.show();
 
-  context.subscriptions.push(api, reload);
+  context.subscriptions.push(api, reload, browser);
 }
 
 export async function openEditCoreHome(): Promise<void> {

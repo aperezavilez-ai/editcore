@@ -1,8 +1,8 @@
 import * as vscode from "vscode";
 import { ApiKeyService } from "./apiKeyService";
-import { streamWithFallback } from "./aiRouter";
+import { streamForSelectedModel } from "./aiRouter";
 import { LLM_CONFIG } from "./llmConfig";
-import { CLAUDE_MODELS } from "./models";
+import { CLAUDE_MODELS, OPENAI_MODELS } from "./models";
 import type { ChatMessage } from "./anthropicClient";
 import { runAgentTask, AgentEvent } from "./agent/agentLoop";
 import { runOrchestratedTask, OrchestratorEvent } from "./agent/orchestrator";
@@ -11,6 +11,8 @@ import { isAgentMode } from "./chatRequestTypes";
 import { appendAudit } from "./enterprise/orgConfig";
 import { getSessionStore } from "./sessions/agentSessionStore";
 import { enrichSessionSummary } from "./sessions/sessionSummarizer";
+import { getWorkspaceContextBlock } from "./workspace/workspaceContext";
+import { prependWorkspaceContext } from "./workspace/workspaceMessages";
 
 export function registerClaudeChatParticipant(
   context: vscode.ExtensionContext,
@@ -33,8 +35,11 @@ export function registerClaudeChatParticipant(
       }
 
       const config = vscode.workspace.getConfiguration("editcore");
-      const model = config.get<string>("model", LLM_CONFIG.claude.defaultModel);
-      const modelLabel = CLAUDE_MODELS.find((m) => m.id === model)?.label ?? model;
+      const selectedModelId = request.model?.id ?? config.get<string>("model", LLM_CONFIG.claude.defaultModel);
+      const modelLabel =
+        CLAUDE_MODELS.find((m) => m.id === selectedModelId)?.label ??
+        OPENAI_MODELS.find((m) => m.id === selectedModelId)?.label ??
+        selectedModelId;
 
       if (isAgentMode(request)) {
         const apiKey = await apiKeyService.getApiKey();
@@ -45,47 +50,40 @@ export function registerClaudeChatParticipant(
           stream,
           token,
           apiKeyService,
-          modelLabel
+          modelLabel,
+          selectedModelId
         );
       }
 
-      stream.progress(`Claude (${modelLabel}) está pensando...`);
-
-      const messages = buildMessages(chatContext.history, request.prompt);
+      const messages = await buildMessages(chatContext.history, request.prompt);
       let fullText = "";
 
       try {
-        const usage = await streamWithFallback(apiKeyService, messages, (chunk) => {
-          if (token.isCancellationRequested) {
-            return;
-          }
-          fullText += chunk;
-          stream.markdown(chunk);
-        });
+        const usage = await streamForSelectedModel(
+          apiKeyService,
+          messages,
+          selectedModelId,
+          (chunk) => {
+            if (token.isCancellationRequested) {
+              return;
+            }
+            fullText += chunk;
+            stream.markdown(chunk);
+          },
+          { allowFallback: false }
+        );
 
         apiKeyService.recordUsage(usage.inputTokens, usage.outputTokens);
 
         if (!fullText.trim()) {
           stream.markdown("_(Sin respuesta de texto)_");
         }
-
-        const providerLabel = usage.provider === "openai" ? "OpenAI" : "Claude";
-        const fallbackNote = usage.usedFallback ? " · respaldo OpenAI" : "";
-        stream.markdown(
-          `\n\n---\n_Tokens: ↑${usage.inputTokens.toLocaleString()} ↓${usage.outputTokens.toLocaleString()} · ${providerLabel} \`${usage.model}\`${fallbackNote}_`
-        );
       } catch (err: unknown) {
         const message =
-          err instanceof Error ? err.message : "Error al contactar a Claude.";
+          err instanceof Error ? err.message : "Error al contactar al proveedor de IA.";
         return { errorDetails: { message } };
       }
     }
-  );
-
-  participant.iconPath = vscode.Uri.joinPath(
-    context.extensionUri,
-    "media",
-    "editcore-icon.svg"
   );
 
   context.subscriptions.push(participant);
@@ -98,17 +96,16 @@ async function handleAgentRequest(
   stream: vscode.ChatResponseStream,
   token: vscode.CancellationToken,
   apiKeyService: ApiKeyService,
-  modelLabel: string
+  _modelLabel: string,
+  _selectedModelId: string
 ): Promise<{ errorDetails: { message: string } } | void> {
   const abortController = new AbortController();
   const cancelListener = token.onCancellationRequested(() => abortController.abort());
   let totalInput = 0;
   let totalOutput = 0;
 
-  stream.progress(`Claude Agent (${modelLabel}) trabajando...`);
-
   const { role, cleanPrompt } = detectRoleFromPrompt(request.prompt);
-  const task = buildAgentTask(chatContext.history, cleanPrompt, request.references);
+  const task = await buildAgentTask(chatContext.history, cleanPrompt, request.references);
 
   const sessionStore = getSessionStore();
   const session = await sessionStore.create(cleanPrompt || request.prompt, role);
@@ -135,7 +132,6 @@ async function handleAgentRequest(
       ? runOrchestratedTask(apiKey, task, (event: OrchestratorEvent) => {
           if (token.isCancellationRequested) return;
           if (event.type === "phase") {
-            stream.progress(event.message);
             return;
           }
           streamAgentEvent(event, stream, (text) => {
@@ -189,12 +185,6 @@ async function handleAgentRequest(
       cleanPrompt || request.prompt,
       assistantSummary
     );
-
-    if (totalInput > 0 || totalOutput > 0) {
-      stream.markdown(
-        `\n\n---\n_Tokens: ↑${totalInput.toLocaleString()} ↓${totalOutput.toLocaleString()} · modo Agent · \`${modelLabel}\`_`
-      );
-    }
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : "Error al contactar a Claude.";
@@ -224,34 +214,15 @@ function streamAgentEvent(
       stream.markdown(event.text);
       break;
     case "tool_call_start":
-      stream.progress(`🔧 ${event.name}…`);
-      stream.markdown(
-        `\n\n**🔧 ${event.name}**\n\`\`\`json\n${JSON.stringify(event.input, null, 2)}\n\`\`\`\n`
-      );
+    case "tool_call_result":
       break;
-    case "tool_call_result": {
-      const preview =
-        event.output.length > 1200
-          ? `${event.output.slice(0, 1200)}\n…_(truncado)_`
-          : event.output;
-      stream.markdown(
-        event.isError
-          ? `\n❌ **Error**\n\`\`\`\n${preview}\n\`\`\`\n`
-          : `\n\`\`\`\n${preview}\n\`\`\`\n`
-      );
-      break;
-    }
     case "done":
       if (event.reason === "max_iterations") {
-        stream.markdown(
-          "\n\n⚠️ _El agente alcanzó el límite de iteraciones. Puedes pedirle que continúe._\n"
-        );
-      } else if (event.reason === "cancelled") {
-        stream.markdown("\n\n_Cancelado._\n");
+        stream.markdown("\n\n_El agente alcanzó el límite de iteraciones. Puedes pedirle que continúe._\n");
       }
       break;
     case "error":
-      stream.markdown(`\n\n**Error:** ${event.message}\n`);
+      stream.markdown(`\n\n${event.message}\n`);
       break;
   }
 }
@@ -260,8 +231,21 @@ function buildAgentTask(
   history: ReadonlyArray<vscode.ChatRequestTurn | vscode.ChatResponseTurn>,
   prompt: string,
   references: readonly vscode.ChatPromptReference[]
-): string {
+): Promise<string> {
+  return buildAgentTaskAsync(history, prompt, references);
+}
+
+async function buildAgentTaskAsync(
+  history: ReadonlyArray<vscode.ChatRequestTurn | vscode.ChatResponseTurn>,
+  prompt: string,
+  references: readonly vscode.ChatPromptReference[]
+): Promise<string> {
   const sections: string[] = [];
+
+  const workspace = await getWorkspaceContextBlock();
+  if (workspace) {
+    sections.push(workspace);
+  }
 
   const refLines = references
     .map((ref) => formatReference(ref))
@@ -325,7 +309,14 @@ function formatHistoryForAgent(
 function buildMessages(
   history: ReadonlyArray<vscode.ChatRequestTurn | vscode.ChatResponseTurn>,
   prompt: string
-): ChatMessage[] {
+): Promise<ChatMessage[]> {
+  return buildMessagesAsync(history, prompt);
+}
+
+async function buildMessagesAsync(
+  history: ReadonlyArray<vscode.ChatRequestTurn | vscode.ChatResponseTurn>,
+  prompt: string
+): Promise<ChatMessage[]> {
   const messages: ChatMessage[] = [];
 
   for (const turn of history) {
@@ -349,7 +340,7 @@ function buildMessages(
   }
 
   messages.push({ role: "user", content: prompt });
-  return messages;
+  return prependWorkspaceContext(messages);
 }
 
 function markdownToString(value: string | vscode.MarkdownString): string {
