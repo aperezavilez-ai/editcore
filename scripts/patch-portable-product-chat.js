@@ -11,6 +11,7 @@ const productPath = path.join(root, "VSCode-win32-x64", "resources", "app", "pro
 const upstreamPath = path.join(root, "editcore-src", "product.json");
 
 const CHAT_EXTENSION_ID = "editcore.editcore-claude";
+const CONNECT_EXTENSION_ID = "editcore.editcore-connect";
 
 if (!fs.existsSync(productPath)) {
   console.warn("skip: no existe", productPath);
@@ -41,6 +42,18 @@ if (!product.defaultChatAgent || typeof product.defaultChatAgent !== "object") {
 
 product.defaultChatAgent.extensionId = CHAT_EXTENSION_ID;
 product.defaultChatAgent.chatExtensionId = CHAT_EXTENSION_ID;
+
+product.builtInExtensionsEnabledWithAutoUpdates = [CHAT_EXTENSION_ID];
+
+if (!product.extensionUntrustedWorkspaceSupport) {
+  product.extensionUntrustedWorkspaceSupport = {};
+}
+product.extensionUntrustedWorkspaceSupport[CHAT_EXTENSION_ID] = {
+  override: true,
+};
+product.extensionUntrustedWorkspaceSupport[CONNECT_EXTENSION_ID] = {
+  override: true,
+};
 
 fs.writeFileSync(productPath, JSON.stringify(product, null, "\t") + "\n", "utf8");
 console.log("OK: chat apunta a", CHAT_EXTENSION_ID, "->", productPath);

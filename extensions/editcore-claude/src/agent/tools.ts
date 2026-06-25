@@ -143,6 +143,17 @@ export const AGENT_TOOLS = [
     },
   },
   {
+    name: 'git_push',
+    description: 'Hace git push al remoto (por defecto origin). Requiere aprobación.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        remote: { type: 'string', description: 'Remoto git, por defecto origin.' },
+        branch: { type: 'string', description: 'Rama a publicar; si se omite usa la rama actual.' },
+      },
+    },
+  },
+  {
     name: 'analyze_impact',
     description: 'Analiza qué archivos podrían verse afectados si modificás un módulo.',
     input_schema: {
@@ -506,6 +517,18 @@ async function execGitCommit(input: { message: string }): Promise<string> {
   return execInWorkspace(finalCommand);
 }
 
+async function execGitPush(input: { remote?: string; branch?: string }): Promise<string> {
+  const remote = input.remote?.trim() || 'origin';
+  const branch = input.branch?.trim();
+  const cmd = branch ? `git push ${remote} ${branch}` : `git push ${remote}`;
+  const decision = await requestCommandApproval(cmd, 'Publicar cambios (git push)');
+  if (decision.action === 'cancel') {
+    return 'RECHAZADO_POR_EL_USUARIO: push cancelado.';
+  }
+  const finalCommand = decision.action === 'edit' ? decision.editedCommand! : cmd;
+  return execInWorkspace(finalCommand);
+}
+
 function execInWorkspace(command: string): Promise<string> {
   const root = getWorkspaceRoot();
   return new Promise((resolve) => {
@@ -664,6 +687,9 @@ export async function executeAgentTool(
         break;
       case 'git_commit':
         output = await execGitCommit(input);
+        break;
+      case 'git_push':
+        output = await execGitPush(input ?? {});
         break;
       case 'analyze_impact': {
         const report = await analyzeFileImpact(input.path);

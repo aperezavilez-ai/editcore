@@ -7,6 +7,13 @@
   "engines": {
     "vscode": "^1.85.0"
   },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true
+    },
+    "virtualWorkspaces": true
+  },
+  "extensionKind": ["ui", "workspace"],
   "categories": [
     "Other",
     "Machine Learning"

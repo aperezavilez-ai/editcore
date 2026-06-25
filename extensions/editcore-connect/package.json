@@ -5,6 +5,11 @@
   "version": "0.4.0",
   "publisher": "editcore",
   "engines": { "vscode": "^1.85.0" },
+  "extensionKind": ["ui", "workspace"],
+  "capabilities": {
+    "untrustedWorkspaces": { "supported": true },
+    "virtualWorkspaces": true
+  },
   "categories": ["Other"],
   "activationEvents": [
     "onStartupFinished",

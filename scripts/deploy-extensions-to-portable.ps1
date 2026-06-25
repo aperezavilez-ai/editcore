@@ -58,6 +58,21 @@ if (Test-Path $patchChatEnable) {
   node $patchChatEnable
 }
 
+$forceClaudeStartup = Join-Path $Root "scripts\patch-portable-force-editcore-claude-startup.js"
+if (Test-Path $forceClaudeStartup) {
+  node $forceClaudeStartup
+}
+
+$fixChatDisabled = Join-Path $Root "scripts\patch-portable-fix-chat-setup-disabled.js"
+if (Test-Path $fixChatDisabled) {
+  node $fixChatDisabled
+}
+
+$alwaysLoadClaude = Join-Path $Root "scripts\patch-portable-always-load-editcore-claude.js"
+if (Test-Path $alwaysLoadClaude) {
+  node $alwaysLoadClaude
+}
+
 $removeGptpro4all = Join-Path $Root "scripts\patch-portable-remove-gptpro4all.js"
 if (Test-Path $removeGptpro4all) {
   node $removeGptpro4all
@@ -71,6 +86,11 @@ if (Test-Path $skipCopilotSetup) {
 $fixStartup = Join-Path $Root "scripts\fix-startup-settings.js"
 if (Test-Path $fixStartup) {
   node $fixStartup
+}
+
+$fixWorkspaceUi = Join-Path $Root "scripts\fix-workspace-ui-settings.js"
+if (Test-Path $fixWorkspaceUi) {
+  node $fixWorkspaceUi
 }
 
 $enableClaude = Join-Path $Root "scripts\enable-editcore-claude.js"
@@ -92,6 +112,11 @@ if (Test-Path $purgeGptpro4all) {
 $applySettings = Join-Path $Root "scripts\apply-portable-user-settings.js"
 if (Test-Path $applySettings) {
   node $applySettings
+}
+
+$applyArgv = Join-Path $Root "scripts\apply-portable-argv.js"
+if (Test-Path $applyArgv) {
+  node $applyArgv
 }
 
 Write-Host ""

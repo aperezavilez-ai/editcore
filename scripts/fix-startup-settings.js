@@ -19,6 +19,24 @@ const settings = JSON.parse(fs.readFileSync(settingsPath, "utf8").replace(/^\uFE
 settings["workbench.startupEditor"] = "none";
 settings["chat.tips.enabled"] = false;
 delete settings["workbench.startupEditor.welcomePage"];
+delete settings["workbench.secondarySideBar.defaultVisibility.hidden"];
+if (settings["workbench.secondarySideBar.defaultVisibility"] === "hidden") {
+  settings["workbench.secondarySideBar.defaultVisibility"] = "visible";
+}
+const defaultsPath = path.join(__dirname, "..", "branding", "default-settings.json");
+if (fs.existsSync(defaultsPath)) {
+  const defaults = JSON.parse(fs.readFileSync(defaultsPath, "utf8").replace(/^\uFEFF/, ""));
+  Object.assign(settings, {
+    "security.workspace.trust.enabled": defaults["security.workspace.trust.enabled"],
+    "security.workspace.trust.startupPrompt": defaults["security.workspace.trust.startupPrompt"],
+    "security.workspace.trust.banner": defaults["security.workspace.trust.banner"],
+    "security.workspace.trust.untrustedFiles": defaults["security.workspace.trust.untrustedFiles"],
+    "workbench.browser.showInTitleBar": defaults["workbench.browser.showInTitleBar"],
+    "workbench.browser.openLocalhostLinks": defaults["workbench.browser.openLocalhostLinks"],
+    "workbench.secondarySideBar.defaultVisibility":
+      defaults["workbench.secondarySideBar.defaultVisibility"],
+  });
+}
 fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + "\n", "utf8");
 console.log("OK: workbench.startupEditor = none ->", settingsPath);
 

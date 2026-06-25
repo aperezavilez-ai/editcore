@@ -1,6 +1,11 @@
 {
+  "security.workspace.trust.enabled": false,
+  "security.workspace.trust.startupPrompt": "never",
+  "security.workspace.trust.banner": "never",
+  "security.workspace.trust.untrustedFiles": "open",
   "workbench.browser.showInTitleBar": true,
   "workbench.browser.openLocalhostLinks": true,
+  "workbench.secondarySideBar.defaultVisibility": "visible",
   "workbench.welcomePage.experimentalOnboarding": false,
   "chat.titleBar.signIn.enabled": false,
   "chat.agentHost.enabled": false,

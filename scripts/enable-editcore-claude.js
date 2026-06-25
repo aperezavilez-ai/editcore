@@ -63,6 +63,10 @@ function fixDb(dbPath) {
         ctx.installed = true;
         touch = true;
       }
+      if (ctx.untrusted) {
+        ctx.untrusted = false;
+        touch = true;
+      }
       if (!ctx.completed) {
         ctx.completed = true;
         touch = true;

@@ -22,6 +22,13 @@ function readJson(filePath) {
 }
 
 const EDITCORE_FORCE_KEYS = [
+  "security.workspace.trust.enabled",
+  "security.workspace.trust.startupPrompt",
+  "security.workspace.trust.banner",
+  "security.workspace.trust.untrustedFiles",
+  "workbench.browser.showInTitleBar",
+  "workbench.browser.openLocalhostLinks",
+  "workbench.secondarySideBar.defaultVisibility",
   "workbench.welcomePage.experimentalOnboarding",
   "chat.titleBar.signIn.enabled",
   "chat.agent.enabled",
