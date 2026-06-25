@@ -1,0 +1,62 @@
+{
+  "nameShort": "EditCore",
+  "nameLong": "EditCore IDE",
+  "applicationName": "editcore",
+  "dataFolderName": ".editcore",
+  "sharedDataFolderName": ".editcore",
+  "win32MutexName": "editcoreide",
+  "licenseFileName": "LICENSE.txt",
+  "licenseUrl": "https://github.com/editcore/editcore/blob/main/LICENSE.txt",
+  "win32DirName": "EditCore IDE",
+  "win32NameVersion": "EditCore IDE",
+  "win32RegValueName": "EditCoreIDE",
+  "win32AppId": "{{D9F8C2A1-0000-4000-8000-000000000001}",
+  "win32x64AppId": "{{D9F8C2A1-0000-4000-8000-000000000002}",
+  "win32arm64AppId": "{{D9F8C2A1-0000-4000-8000-000000000003}",
+  "win32UserAppId": "{{D9F8C2A1-0000-4000-8000-000000000004}",
+  "win32x64UserAppId": "{{D9F8C2A1-0000-4000-8000-000000000005}",
+  "win32arm64UserAppId": "{{D9F8C2A1-0000-4000-8000-000000000006}",
+  "win32AppUserModelId": "EditCore.EditCoreIDE",
+  "win32ShellNameShort": "EditCore IDE",
+  "win32TunnelServiceMutex": "editcoreide-tunnelservice",
+  "win32TunnelMutex": "editcoreide-tunnel",
+  "win32ContextMenu": {
+    "x64": { "clsid": "{E1D1C2A1-0001-4000-8000-000000000001}" },
+    "arm64": { "clsid": "{E1D1C2A1-0002-4000-8000-000000000002}" }
+  },
+  "darwinBundleIdentifier": "com.editcore.ide",
+  "linuxIconName": "editcore",
+  "licenseName": "MIT",
+  "quality": "stable",
+  "urlProtocol": "editcore",
+  "serverApplicationName": "editcore-server",
+  "serverDataFolderName": ".editcore-server",
+  "tunnelApplicationName": "editcore-tunnel",
+  "reportIssueUrl": "https://github.com/editcore/editcore/issues/new",
+  "documentationUrl": "https://github.com/editcore/editcore#readme",
+  "requestFeatureUrl": "https://github.com/editcore/editcore/issues/new",
+  "extensionsGallery": {
+    "serviceUrl": "https://open-vsx.org/vscode/gallery",
+    "itemUrl": "https://open-vsx.org/vscode/item",
+    "resourceUrlTemplate": "https://open-vsx.org/vscode/asset/{publisher}/{name}/{version}/Microsoft.VisualStudio.Code.WebResources/{path}"
+  },
+  "_comment_builtInExtensions": "No listar git/github/git-base aquí: ya vienen en extensions/ del repo. editcore-claude y editcore-connect se copian con el script de build. builtInExtensions del upstream (js-debug) se conservan al fusionar.",
+  "_comment_extensionsGallery": "Open VSX evita licencia propietaria de Microsoft Marketplace — necesario para distribuir tu propio fork legalmente.",
+  "_comment_appId": "Proyecto de uso personal: estos GUIDs son fijos y no es necesario regenerarlos a menos que algún día decidas distribuir EditCore a más gente.",
+  "_comment_productMerge": "No quitar defaultChatAgent del upstream: Code-OSS lo requiere para arrancar. chatExtensionId apunta a editcore-claude para la UI del chat.",
+  "defaultChatAgent": {
+    "chatExtensionId": "editcore.editcore-claude",
+    "extensionId": "editcore.editcore-claude"
+  },
+  "extensionEnabledApiProposals": {
+    "editcore.editcore-claude": [
+      "defaultChatParticipant",
+      "chatParticipantAdditions"
+    ]
+  },
+  "checksumFailMoreInfoUrl": "https://github.com/editcore/editcore#readme",
+  "aiConfig": {
+    "ariaKey": ""
+  },
+  "_comment_telemetry": "Sin endpoint de telemetría = no se reporta nada a Microsoft ni a terceros por defecto."
+}

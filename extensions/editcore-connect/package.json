@@ -1,0 +1,100 @@
+{
+  "name": "editcore-connect",
+  "displayName": "EditCore Connect — GitHub, Vercel & Supabase",
+  "description": "Panel unificado para conectar repos de GitHub, desplegar en Vercel y vincular proyectos Supabase desde EditCore IDE.",
+  "version": "0.4.0",
+  "publisher": "editcore",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Other"],
+  "activationEvents": [
+    "onStartupFinished",
+    "onView:editcoreConnect.panel",
+    "onView:editcoreConnect.apiAction",
+    "onView:editcoreConnect.reloadAction"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "editcore-connect-sidebar",
+          "title": "EditCore Connect",
+          "icon": "media/activity-connect.svg"
+        },
+        {
+          "id": "editcore-api-sidebar",
+          "title": "Configurar APIs",
+          "icon": "media/activity-api.svg"
+        },
+        {
+          "id": "editcore-reload-sidebar",
+          "title": "Recargar EditCore",
+          "icon": "media/activity-reload.svg"
+        }
+      ]
+    },
+    "views": {
+      "editcore-connect-sidebar": [
+        {
+          "type": "webview",
+          "id": "editcoreConnect.panel",
+          "name": "GitHub, Vercel & Supabase"
+        }
+      ],
+      "editcore-api-sidebar": [
+        {
+          "type": "webview",
+          "id": "editcoreConnect.apiAction",
+          "name": "APIs"
+        }
+      ],
+      "editcore-reload-sidebar": [
+        {
+          "type": "webview",
+          "id": "editcoreConnect.reloadAction",
+          "name": "Recargar"
+        }
+      ]
+    },
+    "commands": [
+      { "command": "editcoreConnect.setVercelToken", "title": "EditCore Connect: Configurar token de Vercel" },
+      { "command": "editcoreConnect.setSupabaseToken", "title": "EditCore Connect: Configurar token de Supabase" },
+      { "command": "editcoreConnect.signInGithub", "title": "EditCore Connect: Iniciar sesión en GitHub" },
+      { "command": "editcoreConnect.cloneRepo", "title": "EditCore Connect: Clonar repositorio de GitHub" },
+      { "command": "editcoreConnect.publishGithub", "title": "EditCore Connect: Publicar repositorio en GitHub" },
+      { "command": "editcoreConnect.ghAuthLogin", "title": "EditCore Connect: GitHub CLI login (gh auth login)" },
+      { "command": "editcoreConnect.deployVercel", "title": "EditCore Connect: Deploy a Vercel" },
+      { "command": "editcoreConnect.linkSupabase", "title": "EditCore Connect: Vincular proyecto Supabase" },
+      { "command": "editcoreConnect.initSupabase", "title": "EditCore Connect: Inicializar Supabase (supabase init)" },
+      { "command": "editcoreConnect.checkCli", "title": "EditCore Connect: Verificar CLIs instaladas" },
+      { "command": "editcoreConnect.listIssues", "title": "EditCore Connect: Listar issues GitHub" },
+      { "command": "editcoreConnect.listPullRequests", "title": "EditCore Connect: Listar PRs GitHub" },
+      { "command": "editcoreConnect.createIssue", "title": "EditCore Connect: Crear issue GitHub" },
+      { "command": "editcoreConnect.refreshGithub", "title": "EditCore Connect: Actualizar info GitHub" },
+      { "command": "editcoreConnect.openApis", "title": "EditCore: Configurar APIs" },
+      { "command": "editcoreConnect.reloadWindow", "title": "EditCore: Recargar cambios" }
+    ],
+    "keybindings": [
+      {
+        "command": "editcoreConnect.reloadWindow",
+        "key": "ctrl+alt+r",
+        "mac": "cmd+alt+r"
+      },
+      {
+        "command": "editcoreConnect.openApis",
+        "key": "ctrl+alt+k",
+        "mac": "cmd+alt+k"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^20.x",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.3.0"
+  }
+}

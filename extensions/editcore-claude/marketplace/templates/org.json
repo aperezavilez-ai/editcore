@@ -1,0 +1,7 @@
+{
+  "name": "Mi organización",
+  "plan": "free",
+  "members": [
+    { "email": "owner@example.com", "role": "owner" }
+  ]
+}

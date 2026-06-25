@@ -1,0 +1,10 @@
+{
+  "servers": [
+    {
+      "name": "example",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."],
+      "comment": "Ejemplo: quita 'comment' y ajusta args a tu carpeta permitida"
+    }
+  ]
+}

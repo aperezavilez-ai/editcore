@@ -1,0 +1,10 @@
+{
+  "name": "gps-platform",
+  "private": true,
+  "workspaces": ["services/*", "apps/*"],
+  "scripts": {
+    "dev:ingest": "npm run dev -w @gps/ingest",
+    "dev:api": "npm run dev -w @gps/api",
+    "dev:dashboard": "npm run dev -w @gps/dashboard"
+  }
+}

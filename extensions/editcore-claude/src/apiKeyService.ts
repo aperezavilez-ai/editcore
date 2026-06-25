@@ -1,0 +1,247 @@
+import * as vscode from "vscode";
+import { createClaudeClient, mapClaudeApiError } from "./anthropicClient";
+import { GPTPRO4ALL_CONFIG } from "./gptpro4all.config";
+import { readSharedKeys } from "./sharedApiKeys";
+
+const SECRET_KEY = "anthropicApiKey";
+const OPENAI_SECRET_KEY = "openaiApiKey";
+const USAGE_KEY = "editcore.usageTotals";
+
+const MODEL_PRICING: Record<string, { input: number; output: number }> = {
+  "claude-sonnet-4-6": { input: 3, output: 15 },
+  "claude-opus-4-6": { input: 15, output: 75 },
+  "claude-opus-4-7": { input: 15, output: 75 },
+  "claude-opus-4-8": { input: 15, output: 75 },
+  "claude-fable-5": { input: 20, output: 90 },
+};
+
+function estimateCostUsd(model: string, inputTokens: number, outputTokens: number): number {
+  const p = MODEL_PRICING[model] ?? MODEL_PRICING[GPTPRO4ALL_CONFIG.claude.defaultModel];
+  return (inputTokens / 1_000_000) * p.input + (outputTokens / 1_000_000) * p.output;
+}
+
+function keyHint(key?: string): string {
+  if (!key) {
+    return "Sin configurar";
+  }
+  if (key.length <= 12) {
+    return "********";
+  }
+  return `${key.slice(0, 7)}...${key.slice(-4)}`;
+}
+
+export interface UsageTotals {
+  inputTokens: number;
+  outputTokens: number;
+  requestCount: number;
+  estimatedCostUsd: number;
+  toolCalls: Record<string, number>;
+}
+
+export interface UsageSnapshot extends UsageTotals {
+  sessionInputTokens: number;
+  sessionOutputTokens: number;
+  sessionRequestCount: number;
+  sessionEstimatedCostUsd: number;
+  sessionToolCalls: Record<string, number>;
+  hasApiKey: boolean;
+  apiKeyHint: string;
+  hasOpenAiKey: boolean;
+  openAiKeyHint: string;
+  model: string;
+  openAiModel: string;
+  fallbackEnabled: boolean;
+}
+
+export class ApiKeyService {
+  private sessionInput = 0;
+  private sessionOutput = 0;
+  private sessionRequests = 0;
+  private sessionCost = 0;
+  private sessionToolCalls: Record<string, number> = {};
+
+  private readonly _onDidChange = new vscode.EventEmitter<void>();
+  readonly onDidChange = this._onDidChange.event;
+
+  constructor(private readonly context: vscode.ExtensionContext) {}
+
+  async hasApiKey(): Promise<boolean> {
+    return Boolean(await this.getApiKey());
+  }
+
+  async hasOpenAiKey(): Promise<boolean> {
+    return Boolean(await this.getOpenAiKey());
+  }
+
+  async hasAnyLlmKey(): Promise<boolean> {
+    return (await this.hasApiKey()) || (await this.hasOpenAiKey());
+  }
+
+  async getApiKey(): Promise<string | undefined> {
+    const shared = readSharedKeys().anthropic?.trim();
+    if (shared) {
+      return shared;
+    }
+    const key = await this.context.secrets.get(SECRET_KEY);
+    return key?.trim() || GPTPRO4ALL_CONFIG.claude.apiKey;
+  }
+
+  async getOpenAiKey(): Promise<string | undefined> {
+    const shared = readSharedKeys().openai?.trim();
+    if (shared) {
+      return shared;
+    }
+    const key = await this.context.secrets.get(OPENAI_SECRET_KEY);
+    return key?.trim() || GPTPRO4ALL_CONFIG.codex.apiKey;
+  }
+
+  async getOpenAiKeyHint(): Promise<string> {
+    return keyHint(await this.getOpenAiKey());
+  }
+
+  async getApiKeyHint(): Promise<string> {
+    return keyHint(await this.getApiKey());
+  }
+
+  async saveApiKey(rawKey: string): Promise<void> {
+    const key = rawKey.trim();
+    if (!key) {
+      throw new Error("La API Key no puede estar vacia.");
+    }
+    if (!key.startsWith("sk-")) {
+      throw new Error("Formato invalido. La key de GPTPRO4ALL debe empezar con sk-");
+    }
+    await this.context.secrets.store(SECRET_KEY, key);
+    const { writeSharedKeys } = await import("./sharedApiKeys");
+    await writeSharedKeys({ anthropic: key });
+    try {
+      await this.validateApiKey(key);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      vscode.window.showWarningMessage(`EditCore: Claude guardada, pero la validación falló: ${message}`);
+    }
+    this._onDidChange.fire();
+  }
+
+  async clearApiKey(): Promise<void> {
+    await this.context.secrets.delete(SECRET_KEY);
+    const { writeSharedKeys } = await import("./sharedApiKeys");
+    await writeSharedKeys({ anthropic: undefined });
+    this._onDidChange.fire();
+  }
+
+  async saveOpenAiKey(rawKey: string): Promise<void> {
+    const key = rawKey.trim();
+    if (!key) {
+      throw new Error("La API Key de GPTPRO4ALL no puede estar vacia.");
+    }
+    if (!key.startsWith("sk-")) {
+      throw new Error("Formato invalido. La key de GPTPRO4ALL debe empezar con sk-");
+    }
+    await this.context.secrets.store(OPENAI_SECRET_KEY, key);
+    const { writeSharedKeys } = await import("./sharedApiKeys");
+    await writeSharedKeys({ openai: key });
+    try {
+      const { validateOpenAiKey } = await import("./openaiClient");
+      await validateOpenAiKey(key);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      vscode.window.showWarningMessage(`EditCore: Codex guardada, pero la validación falló: ${message}`);
+    }
+    this._onDidChange.fire();
+  }
+
+  async clearOpenAiKey(): Promise<void> {
+    await this.context.secrets.delete(OPENAI_SECRET_KEY);
+    const { writeSharedKeys } = await import("./sharedApiKeys");
+    await writeSharedKeys({ openai: undefined });
+    this._onDidChange.fire();
+  }
+
+  async validateApiKey(apiKey: string): Promise<void> {
+    const client = createClaudeClient(apiKey);
+    try {
+      await client.messages.create({
+        model: vscode.workspace
+          .getConfiguration("editcore")
+          .get<string>("model", GPTPRO4ALL_CONFIG.claude.defaultModel),
+        max_tokens: 16,
+        messages: [{ role: "user", content: "ping" }],
+      });
+    } catch (err: unknown) {
+      if ((err as { status?: number })?.status === 429) {
+        return;
+      }
+      throw mapClaudeApiError(err);
+    }
+  }
+
+  recordUsage(inputTokens: number, outputTokens: number): void {
+    const model = vscode.workspace
+      .getConfiguration("editcore")
+      .get<string>("model", GPTPRO4ALL_CONFIG.claude.defaultModel);
+    const cost = estimateCostUsd(model, inputTokens, outputTokens);
+
+    this.sessionInput += inputTokens;
+    this.sessionOutput += outputTokens;
+    this.sessionRequests += 1;
+    this.sessionCost += cost;
+
+    const totals = this.getTotals();
+    totals.inputTokens += inputTokens;
+    totals.outputTokens += outputTokens;
+    totals.requestCount += 1;
+    totals.estimatedCostUsd += cost;
+    void this.context.globalState.update(USAGE_KEY, totals);
+    this._onDidChange.fire();
+  }
+
+  recordToolCall(toolName: string): void {
+    this.sessionToolCalls[toolName] = (this.sessionToolCalls[toolName] ?? 0) + 1;
+    const totals = this.getTotals();
+    totals.toolCalls[toolName] = (totals.toolCalls[toolName] ?? 0) + 1;
+    void this.context.globalState.update(USAGE_KEY, totals);
+    this._onDidChange.fire();
+  }
+
+  getTotals(): UsageTotals {
+    return (
+      this.context.globalState.get<UsageTotals>(USAGE_KEY) ?? {
+        inputTokens: 0,
+        outputTokens: 0,
+        requestCount: 0,
+        estimatedCostUsd: 0,
+        toolCalls: {},
+      }
+    );
+  }
+
+  resetSessionUsage(): void {
+    this.sessionInput = 0;
+    this.sessionOutput = 0;
+    this.sessionRequests = 0;
+    this.sessionCost = 0;
+    this.sessionToolCalls = {};
+    this._onDidChange.fire();
+  }
+
+  async getSnapshot(): Promise<UsageSnapshot> {
+    const totals = this.getTotals();
+    const config = vscode.workspace.getConfiguration("editcore");
+    return {
+      ...totals,
+      sessionInputTokens: this.sessionInput,
+      sessionOutputTokens: this.sessionOutput,
+      sessionRequestCount: this.sessionRequests,
+      sessionEstimatedCostUsd: this.sessionCost,
+      sessionToolCalls: { ...this.sessionToolCalls },
+      hasApiKey: await this.hasApiKey(),
+      apiKeyHint: await this.getApiKeyHint(),
+      hasOpenAiKey: await this.hasOpenAiKey(),
+      openAiKeyHint: await this.getOpenAiKeyHint(),
+      model: config.get<string>("model", GPTPRO4ALL_CONFIG.claude.defaultModel),
+      openAiModel: config.get<string>("openai.model", GPTPRO4ALL_CONFIG.codex.defaultModel),
+      fallbackEnabled: config.get<boolean>("fallback.enabled", true),
+    };
+  }
+}

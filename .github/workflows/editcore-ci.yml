@@ -1,0 +1,38 @@
+name: EditCore CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  extensions:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Compile editcore-claude
+        working-directory: extensions/editcore-claude
+        run: |
+          npm install
+          npm run compile
+          npm test
+
+      - name: Compile editcore-connect
+        working-directory: extensions/editcore-connect
+        run: |
+          npm install
+          npm run compile
+
+      - name: Validate patch script
+        run: node scripts/apply-editcore-patches.js editcore-src
+        continue-on-error: true
+
+      - name: RAG utils tests
+        working-directory: extensions/editcore-claude
+        run: node --test test/rag-utils.test.js

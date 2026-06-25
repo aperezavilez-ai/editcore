@@ -1,0 +1,12 @@
+{
+  "name": "@gps/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "fastify": "^5.0.0"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "@saas/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "build": "echo build api",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "fastify": "^5.0.0",
+    "@fastify/jwt": "^9.0.0"
+  }
+}

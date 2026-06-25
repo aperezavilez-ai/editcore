@@ -1,0 +1,88 @@
+{
+  "version": 2,
+  "items": [
+    {
+      "id": "agent-architect-pro",
+      "type": "agent",
+      "name": "Arquitecto Pro",
+      "description": "Agente especializado en ADRs, diagramas y deuda técnica.",
+      "author": "EditCore",
+      "tier": "free",
+      "role": "architect",
+      "promptFile": "prompts/architect-pro.md"
+    },
+    {
+      "id": "agent-gps-expert",
+      "type": "agent",
+      "name": "GPS / Flotas Expert",
+      "description": "Teltonika, geocercas, telemetría, protocolos GPS y plataformas de monitoreo.",
+      "author": "EditCore",
+      "tier": "pro",
+      "role": "gps",
+      "promptFile": "prompts/gps-expert.md"
+    },
+    {
+      "id": "agent-founder",
+      "type": "agent",
+      "name": "Modo Fundador",
+      "description": "MVP, mercado, modelo de negocio y roadmap para founders.",
+      "author": "EditCore",
+      "tier": "free",
+      "role": "founder",
+      "promptFile": "prompts/founder.md"
+    },
+    {
+      "id": "agent-security",
+      "type": "agent",
+      "name": "Security Expert",
+      "description": "OWASP, hardening, secretos, auth y revisión de dependencias.",
+      "author": "EditCore",
+      "tier": "pro",
+      "role": "architect",
+      "promptFile": "prompts/security-expert.md"
+    },
+    {
+      "id": "agent-compliance",
+      "type": "agent",
+      "name": "Compliance",
+      "description": "GDPR orientativo, audit trail, políticas y controles.",
+      "author": "EditCore",
+      "tier": "team",
+      "role": "cto",
+      "promptFile": "prompts/compliance.md"
+    },
+    {
+      "id": "template-saas-starter",
+      "type": "template",
+      "name": "SaaS Starter",
+      "description": "Monorepo: API Fastify + React/Vite + Docker Postgres.",
+      "author": "EditCore",
+      "tier": "pro",
+      "vertical": "saas",
+      "scaffoldDir": "verticals/saas-starter"
+    },
+    {
+      "id": "template-gps-platform",
+      "type": "template",
+      "name": "GPS Platform",
+      "description": "Ingesta TCP, API posiciones, dashboard React, PostGIS.",
+      "author": "EditCore",
+      "tier": "business",
+      "vertical": "gps",
+      "scaffoldDir": "verticals/gps-platform"
+    },
+    {
+      "id": "mcp-filesystem",
+      "type": "mcp",
+      "name": "MCP Filesystem",
+      "description": "Servidor MCP de sistema de archivos (ejemplo).",
+      "author": "EditCore",
+      "tier": "free",
+      "mcpServer": {
+        "name": "filesystem",
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-filesystem", "."]
+      }
+    }
+  ]
+}

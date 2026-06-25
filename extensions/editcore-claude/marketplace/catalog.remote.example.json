@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "items": [
+    {
+      "id": "agent-remote-demo",
+      "type": "agent",
+      "name": "Remote Demo Agent",
+      "description": "Ejemplo de ítem que solo existe en catálogo remoto.",
+      "author": "EditCore Remote",
+      "tier": "free",
+      "role": "fullstack",
+      "promptFile": "prompts/architect-pro.md"
+    }
+  ]
+}

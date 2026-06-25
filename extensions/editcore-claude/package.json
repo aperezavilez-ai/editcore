@@ -1,0 +1,441 @@
+{
+  "name": "editcore-claude",
+  "displayName": "EditCore - Claude Assistant",
+  "description": "Chat con Claude via GPTPRO4ALL integrado nativamente en EditCore IDE.",
+  "version": "1.1.0",
+  "publisher": "editcore",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Machine Learning"
+  ],
+  "enabledApiProposals": [
+    "defaultChatParticipant",
+    "chatParticipantAdditions",
+    "chatProvider"
+  ],
+  "activationEvents": [
+    "*",
+    "onStartupFinished",
+    "onLanguageModelChatProvider:gptpro4all",
+    "onChatParticipant:editcore.claude",
+    "onView:editcore.homeView",
+    "onView:editcore.accountView",
+    "onView:editcore.marketplaceView"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "chatParticipants": [
+      {
+        "id": "editcore.claude",
+        "name": "claude",
+        "fullName": "Claude",
+        "description": "Asistente de codigo con Claude via GPTPRO4ALL",
+        "isDefault": true,
+        "modes": [
+          "ask",
+          "agent"
+        ]
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "editcore-sidebar",
+          "title": "EditCore",
+          "icon": "media/editcore-activity.png"
+        }
+      ]
+    },
+    "views": {
+      "editcore-sidebar": [
+        {
+          "type": "webview",
+          "id": "editcore.homeView",
+          "name": "Inicio"
+        },
+        {
+          "type": "webview",
+          "id": "editcore.accountView",
+          "name": "Cuenta & API"
+        },
+        {
+          "type": "webview",
+          "id": "editcore.chatView",
+          "name": "Chat con Claude"
+        },
+        {
+          "type": "webview",
+          "id": "editcore.marketplaceView",
+          "name": "Marketplace"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "editcore.openAccountPanel",
+        "title": "EditCore: Configurar APIs",
+        "shortTitle": "Configurar APIs"
+      },
+      {
+        "command": "editcore.openChat",
+        "title": "EditCore: Abrir chat @claude"
+      },
+      {
+        "command": "editcore.focusChatInput",
+        "title": "EditCore: Enfocar chat Claude"
+      },
+      {
+        "command": "editcore.explainSelection",
+        "title": "EditCore: Explicar seleccion"
+      },
+      {
+        "command": "editcore.fixSelection",
+        "title": "EditCore: Corregir seleccion"
+      },
+      {
+        "command": "editcore.setApiKey",
+        "title": "EditCore: Configurar API Key de GPTPRO4ALL"
+      },
+      {
+        "command": "editcore.openAgent",
+        "title": "EditCore: Abrir Agente"
+      },
+      {
+        "command": "editcore.reindexWorkspace",
+        "title": "EditCore: Reindexar workspace (keyword + RAG)"
+      },
+      {
+        "command": "editcore.buildRagIndex",
+        "title": "EditCore: Construir indice RAG"
+      },
+      {
+        "command": "editcore.refreshMcp",
+        "title": "EditCore: Reconectar servidores MCP"
+      },
+      {
+        "command": "editcore.updateDigitalTwin",
+        "title": "EditCore: Actualizar gemelo digital"
+      },
+      {
+        "command": "editcore.warRoom",
+        "title": "EditCore: Sala de guerra (incidente produccion)"
+      },
+      {
+        "command": "editcore.deployAutonomous",
+        "title": "EditCore: Deploy autonomo (test + build + Vercel)"
+      },
+      {
+        "command": "editcore.openMarketplace",
+        "title": "EditCore: Abrir Marketplace"
+      },
+      {
+        "command": "editcore.founderMode",
+        "title": "EditCore: Modo Fundador"
+      },
+      {
+        "command": "editcore.ctoMode",
+        "title": "EditCore: Modo CTO"
+      },
+      {
+        "command": "editcore.saasBuilder",
+        "title": "EditCore: SaaS Builder"
+      },
+      {
+        "command": "editcore.gpsBuilder",
+        "title": "EditCore: GPS Builder"
+      },
+      {
+        "command": "editcore.scaffoldVertical",
+        "title": "EditCore: Abrir plantilla vertical"
+      },
+      {
+        "command": "editcore.showAuditLog",
+        "title": "EditCore: Ver audit log"
+      },
+      {
+        "command": "editcore.showSessions",
+        "title": "EditCore: Sesiones de agente"
+      },
+      {
+        "command": "editcore.initOrg",
+        "title": "EditCore: Inicializar org.json"
+      },
+      {
+        "command": "editcore.initWorkspace",
+        "title": "EditCore: Inicializar workspace (.editcore)"
+      },
+      {
+        "command": "editcore.exportSessions",
+        "title": "EditCore: Exportar sesiones a Markdown"
+      },
+      {
+        "command": "editcore.refreshMarketplace",
+        "title": "EditCore: Actualizar catalogo Marketplace"
+      },
+      {
+        "command": "editcore.commandHub",
+        "title": "EditCore: Command Hub"
+      },
+      {
+        "command": "editcore.resumeSession",
+        "title": "EditCore: Reanudar sesion de agente"
+      },
+      {
+        "command": "editcore.about",
+        "title": "EditCore: Acerca de / estado plataforma"
+      },
+      {
+        "command": "editcore.selfDiagnostic",
+        "title": "EditCore: Autodiagnostico"
+      },
+      {
+        "command": "editcore.selfDiagnostic.quick",
+        "title": "EditCore: Autodiagnostico rapido (sin Claude)"
+      },
+      {
+        "command": "editcore.selfDiagnostic.export",
+        "title": "EditCore: Exportar ultimo autodiagnostico"
+      },
+      {
+        "command": "editcore.reloadWindow",
+        "title": "EditCore: Recargar cambios",
+        "shortTitle": "Recargar cambios",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "editcore.diagnoseNativeModels",
+        "title": "EditCore: Diagnosticar modelos GPTPRO4ALL",
+        "shortTitle": "Diagnosticar GPTPRO4ALL"
+      }
+    ],
+    "menus": {
+      "menubar/help": [
+        {
+          "command": "editcore.openAccountPanel",
+          "group": "9_editcore@1"
+        },
+        {
+          "command": "editcore.reloadWindow",
+          "group": "9_editcore@2"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "editcore.reloadWindow",
+          "when": "view =~ /^editcore\\./",
+          "group": "navigation@0"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "editcore.explainSelection",
+          "when": "editorHasSelection",
+          "group": "editcore@1"
+        },
+        {
+          "command": "editcore.fixSelection",
+          "when": "editorHasSelection",
+          "group": "editcore@2"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "EditCore Claude",
+      "properties": {
+        "editcore.model": {
+          "type": "string",
+          "enum": [
+            "claude-sonnet-4-6",
+            "claude-opus-4-6",
+            "claude-opus-4-7",
+            "claude-opus-4-8",
+            "claude-fable-5"
+          ],
+          "enumDescriptions": [
+            "Default GPTPRO4ALL",
+            "Mas potente",
+            "Mas potente",
+            "Claude mas potente",
+            "Premium"
+          ],
+          "default": "claude-sonnet-4-6",
+          "description": "Modelo Claude usado por chat, agente y @claude via GPTPRO4ALL"
+        },
+        "editcore.openai.model": {
+          "type": "string",
+          "enum": [
+            "gpt-5.5"
+          ],
+          "enumDescriptions": [
+            "Default Codex/GPT de GPTPRO4ALL"
+          ],
+          "default": "gpt-5.5",
+          "description": "Modelo Codex/GPT usado como respaldo o proveedor principal via GPTPRO4ALL"
+        },
+        "editcore.fallback.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Si Claude falla y hay key Codex/GPT, cambiar automaticamente a Codex/GPT via GPTPRO4ALL"
+        },
+        "editcore.maxTokens": {
+          "type": "number",
+          "default": 8096,
+          "minimum": 256,
+          "maximum": 64000,
+          "description": "Maximo de tokens por respuesta"
+        },
+        "editcore.orchestrator.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "En modo Agent: plan -> ejecucion -> revision automatica"
+        },
+        "editcore.plan": {
+          "type": "string",
+          "enum": [
+            "free",
+            "pro",
+            "team",
+            "business",
+            "enterprise"
+          ],
+          "default": "free",
+          "description": "Plan EditCore (controla items del marketplace local)"
+        },
+        "editcore.marketplace.remoteUrl": {
+          "type": "string",
+          "default": "",
+          "description": "URL opcional de catalogo JSON remoto (se fusiona con el bundled)"
+        },
+        "editcore.rag.useEmbeddings": {
+          "type": "boolean",
+          "default": true,
+          "description": "Si hay Voyage API Key, re-rankear RAG con embeddings reales"
+        },
+        "editcore.rag.embeddingModel": {
+          "type": "string",
+          "default": "voyage-3-lite",
+          "enum": [
+            "voyage-3-lite",
+            "voyage-3",
+            "voyage-code-3"
+          ],
+          "description": "Modelo Voyage para embeddings de codigo"
+        },
+        "editcore.sessions.autoSummary": {
+          "type": "boolean",
+          "default": true,
+          "description": "Tras cada sesion Agent, generar resumen con GPTPRO4ALL (async)"
+        },
+        "editcore.diagnostics.useClaude": {
+          "type": "boolean",
+          "default": true,
+          "description": "En autodiagnostico completo, analizar resultados con Claude"
+        },
+        "editcore.diagnostics.model": {
+          "type": "string",
+          "default": "claude-sonnet-4-6",
+          "enum": [
+            "claude-sonnet-4-6",
+            "claude-opus-4-6",
+            "claude-opus-4-7",
+            "claude-opus-4-8",
+            "claude-fable-5"
+          ],
+          "description": "Modelo Claude GPTPRO4ALL para analisis de autodiagnostico"
+        },
+        "editcore.diagnostics.maxTokens": {
+          "type": "number",
+          "default": 2048,
+          "minimum": 256,
+          "maximum": 8192,
+          "description": "Tokens maximos del analisis de autodiagnostico"
+        },
+        "editcore.mcp.servers": {
+          "type": "array",
+          "default": [],
+          "description": "Servidores MCP adicionales (ademas de .editcore/mcp.json)",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "command": {
+                "type": "string"
+              },
+              "args": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "configurationDefaults": {
+      "chat.agent.enabled": true,
+      "chat.agentHost.enabled": false,
+      "chat.newSession.defaultMode": "agent",
+      "chat.agentsControl.enabled": "hidden",
+      "chat.unifiedAgentsBar.enabled": false,
+      "chat.customizations.harnessSelector.enabled": false,
+      "chat.extensionTools.enabled": false,
+      "chat.generalPurposeAgent.enabled": false
+    },
+    "keybindings": [
+      {
+        "command": "editcore.focusChatInput",
+        "key": "ctrl+alt+i",
+        "mac": "cmd+alt+i",
+        "when": "editorTextFocus || !editorFocus"
+      },
+      {
+        "command": "editcore.commandHub",
+        "key": "ctrl+alt+e",
+        "mac": "cmd+alt+e",
+        "when": "editorTextFocus || !editorFocus"
+      },
+      {
+        "command": "editcore.selfDiagnostic",
+        "key": "ctrl+alt+d",
+        "mac": "cmd+alt+d",
+        "when": "editorTextFocus || !editorFocus"
+      },
+      {
+        "command": "editcore.reloadWindow",
+        "key": "ctrl+alt+r",
+        "mac": "cmd+alt+r",
+        "when": "editorTextFocus || !editorFocus"
+      }
+    ],
+    "languageModelChatProviders": [
+      {
+        "vendor": "gptpro4all",
+        "displayName": "GPTPRO4ALL",
+        "configuration": {
+          "type": "object",
+          "properties": {}
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "node --test test/*.test.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.x",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.0"
+  }
+}

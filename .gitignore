@@ -1,0 +1,41 @@
+# Clon de Code-OSS generado por scripts/build-editcore.ps1 (varios GB)
+editcore-src/
+
+# Build portable / instalador generado localmente
+VSCode-win32-x64/
+
+# Dependencias
+extensions/*/node_modules/
+extensions/*/out/
+scripts/node_modules/
+
+# Artefactos de build / instaladores generados (solo en raíz del repo)
+*.exe
+*.msi
+*.dmg
+*.AppImage
+/EditCore-*/
+
+# Caché de Python
+__pycache__/
+*.pyc
+
+# Secretos y configuración local
+.env
+.env.local
+api-keys.json
+**/api-keys.json
+
+# Debug / assets temporales
+_debug-*
+
+# Herramientas locales del IDE
+.agents/
+.cursor/
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+npm-debug.log*
