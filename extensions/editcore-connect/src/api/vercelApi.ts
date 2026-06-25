@@ -25,19 +25,97 @@ export interface VercelEnvVar {
 const VERCEL_API = "https://api.vercel.com";
 
 function authHeaders(token: string): Record<string, string> {
-  return { Authorization: `Bearer ${token}` };
+  return { Authorization: `Bearer ${token.trim()}` };
+}
+
+export interface VercelTokenCheck {
+  ok: boolean;
+  error?: string;
+}
+
+/** Valida token probando user, proyectos personales y equipos (tokens con scope de team). */
+export async function verifyVercelToken(token: string): Promise<VercelTokenCheck> {
+  const t = token.trim();
+  if (!t) {
+    return { ok: false, error: "Token vacío" };
+  }
+  if (t.length < 24) {
+    return {
+      ok: false,
+      error: "Token muy corto. Copiá el secreto completo (solo visible al crear el token en Vercel).",
+    };
+  }
+
+  const headers = authHeaders(t);
+
+  const userRes = await httpJson(`${VERCEL_API}/v2/user`, { headers });
+  if (userRes.ok) {
+    return { ok: true };
+  }
+
+  const projectsRes = await httpJson<{ projects: VercelProject[] }>(
+    `${VERCEL_API}/v9/projects?limit=1`,
+    { headers }
+  );
+  if (projectsRes.ok) {
+    return { ok: true };
+  }
+
+  const teamsRes = await httpJson<{ teams: { id: string }[] }>(`${VERCEL_API}/v2/teams`, { headers });
+  if (teamsRes.ok && teamsRes.data?.teams?.length) {
+    for (const team of teamsRes.data.teams) {
+      const teamProjects = await httpJson(`${VERCEL_API}/v9/projects?teamId=${team.id}&limit=1`, {
+        headers,
+      });
+      if (teamProjects.ok) {
+        return { ok: true };
+      }
+    }
+  }
+
+  const detail =
+    userRes.error ??
+    projectsRes.error ??
+    teamsRes.error ??
+    "No se pudo verificar con la API de Vercel";
+  return { ok: false, error: detail };
 }
 
 export async function listVercelProjects(token: string): Promise<VercelProject[]> {
-  const res = await httpJson<{ projects: VercelProject[] }>(`${VERCEL_API}/v9/projects`, {
-    headers: authHeaders(token),
-  });
-  return res.ok ? res.data?.projects ?? [] : [];
-}
+  const headers = authHeaders(token);
+  const seen = new Set<string>();
+  const all: VercelProject[] = [];
 
-export async function verifyVercelToken(token: string): Promise<boolean> {
-  const res = await httpJson(`${VERCEL_API}/v2/user`, { headers: authHeaders(token) });
-  return res.ok;
+  const add = (items: VercelProject[] | undefined) => {
+    for (const p of items ?? []) {
+      if (!seen.has(p.id)) {
+        seen.add(p.id);
+        all.push(p);
+      }
+    }
+  };
+
+  const personal = await httpJson<{ projects: VercelProject[] }>(`${VERCEL_API}/v9/projects`, {
+    headers,
+  });
+  if (personal.ok) {
+    add(personal.data?.projects);
+  }
+
+  const teams = await httpJson<{ teams: { id: string }[] }>(`${VERCEL_API}/v2/teams`, { headers });
+  if (teams.ok) {
+    for (const team of teams.data?.teams ?? []) {
+      const tp = await httpJson<{ projects: VercelProject[] }>(
+        `${VERCEL_API}/v9/projects?teamId=${team.id}`,
+        { headers }
+      );
+      if (tp.ok) {
+        add(tp.data?.projects);
+      }
+    }
+  }
+
+  return all;
 }
 
 export async function getVercelProject(

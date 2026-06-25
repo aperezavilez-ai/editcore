@@ -23,12 +23,21 @@ import { getVercelProjectState } from "./vercelService";
 import { registerApiCommands } from "./apiCommands";
 import { registerGlobalAutoConnect, syncWorkspaceConnect } from "./globalConnect";
 import { autoLinkVercelProject } from "./vercelAutoLink";
-import { autoLinkSupabaseProject } from "./supabaseAutoLink";
+import { autoLinkSupabaseWorkspace } from "./supabaseAutoLink";
+import {
+  migrateLegacySupabaseToken,
+  addSupabaseAccount,
+  hasSupabaseAccounts,
+  manageSupabaseAccounts,
+  getSupabaseTokenForWorkspace,
+} from "./supabaseAccountStore";
 
 const execAsync = promisify(exec);
 
 export function activate(context: vscode.ExtensionContext) {
   const panel = new ConnectPanelProvider(context);
+
+  void migrateLegacySupabaseToken(context);
 
   const apiKeysPanel = new ApiKeysPanelProvider(context);
   registerApiCommands(context);
@@ -59,15 +68,30 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand("editcoreConnect.setVercelToken", async () => {
       const token = await vscode.window.showInputBox({
-        prompt: "Pega tu Vercel Access Token (vercel.com/account/tokens)",
+        prompt: "Pega el TOKEN SECRETO de Vercel (no el nombre «editcore» — el valor que solo se muestra una vez al crear)",
+        placeHolder: "vercel.com/account/settings/tokens → Create → copiar el secreto",
         password: true,
         ignoreFocusOut: true,
       });
-      if (token) {
-        await context.secrets.store("vercelToken", token);
-        vscode.window.showInformationMessage("EditCore: cuenta Vercel conectada.");
-        await syncWorkspaceConnect(context, panel, { silent: false });
+      if (!token) return;
+
+      const trimmed = token.trim();
+      const { validateVercelAccount } = await import("./vercelAutoLink");
+      const check = await validateVercelAccount(trimmed);
+      if (!check.ok) {
+        await vscode.window.showErrorMessage(
+          check.error ??
+            "Token rechazado por Vercel. Creá uno nuevo con Scope «Full Account» y copiá el secreto al instante.",
+          { modal: true }
+        );
+        return;
       }
+
+      await context.secrets.store("vercelToken", trimmed);
+      vscode.window.showInformationMessage(
+        `EditCore: cuenta Vercel conectada (${check.projects.length} proyecto(s) detectados).`
+      );
+      await syncWorkspaceConnect(context, panel, { silent: false });
     })
   );
 
@@ -92,44 +116,87 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("editcoreConnect.setSupabaseToken", async () => {
+    vscode.commands.registerCommand("editcoreConnect.addSupabaseAccount", async () => {
+      const label = await vscode.window.showInputBox({
+        prompt: "Nombre para esta cuenta Supabase (ej: icloud, gmail trabajo)",
+        placeHolder: "Cuenta 1",
+        ignoreFocusOut: true,
+      });
+      if (!label?.trim()) return;
+
       const token = await vscode.window.showInputBox({
-        prompt: "Pega tu Supabase Access Token (supabase.com/dashboard/account/tokens)",
+        prompt: `Token de Supabase para «${label}» (dashboard/account/tokens)`,
         password: true,
         ignoreFocusOut: true,
       });
-      if (token) {
-        await context.secrets.store("supabaseToken", token);
-        vscode.window.showInformationMessage("EditCore: cuenta Supabase conectada.");
-        await syncWorkspaceConnect(context, panel, { silent: false });
+      if (!token) return;
+
+      const result = await addSupabaseAccount(context, label, token);
+      if (!result.ok) {
+        await vscode.window.showErrorMessage(result.error ?? "No se pudo añadir la cuenta.", {
+          modal: true,
+        });
+        return;
       }
+      vscode.window.showInformationMessage(
+        `Supabase: «${result.account!.label}» añadida (${result.account!.projectCount} proyectos).`
+      );
+      await syncWorkspaceConnect(context, panel, { silent: false });
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("editcoreConnect.setSupabaseToken", async () => {
+      await vscode.commands.executeCommand("editcoreConnect.addSupabaseAccount");
     })
   );
 
   context.subscriptions.push(
     vscode.commands.registerCommand("editcoreConnect.signInSupabase", async () => {
-      await vscode.commands.executeCommand("editcoreConnect.setSupabaseToken");
+      const has = await hasSupabaseAccounts(context);
+      if (has) {
+        const choice = await vscode.window.showQuickPick(
+          [
+            { label: "Añadir otra cuenta Supabase", action: "add" },
+            { label: "Gestionar cuentas", action: "manage" },
+          ],
+          { placeHolder: "Supabase — varias cuentas gratis" }
+        );
+        if (choice?.action === "manage") {
+          await manageSupabaseAccounts(context, () => {
+            void syncWorkspaceConnect(context, panel, { silent: true });
+          });
+        } else if (choice?.action === "add") {
+          await vscode.commands.executeCommand("editcoreConnect.addSupabaseAccount");
+        }
+      } else {
+        await vscode.commands.executeCommand("editcoreConnect.addSupabaseAccount");
+      }
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("editcoreConnect.manageSupabaseAccounts", async () => {
+      await manageSupabaseAccounts(context, () => {
+        void syncWorkspaceConnect(context, panel, { silent: true });
+        void panel.refreshStatus();
+      });
     })
   );
 
   context.subscriptions.push(
     vscode.commands.registerCommand("editcoreConnect.clearSupabaseToken", async () => {
-      const ok = await vscode.window.showWarningMessage(
-        "¿Desconectar cuenta Supabase de EditCore?",
-        { modal: true },
-        "Desconectar"
-      );
-      if (ok !== "Desconectar") return;
-      await context.secrets.delete("supabaseToken");
-      vscode.window.showInformationMessage("EditCore: cuenta Supabase desconectada.");
-      await panel.refreshStatus();
+      await vscode.commands.executeCommand("editcoreConnect.manageSupabaseAccounts");
     })
   );
 
   context.subscriptions.push(
     vscode.commands.registerCommand("editcoreConnect.syncWorkspace", async () => {
-      await syncWorkspaceConnect(context, panel, { silent: false });
-      vscode.window.showInformationMessage("EditCore: proyecto sincronizado con Vercel/Supabase.");
+      const hasFolder = Boolean(vscode.workspace.workspaceFolders?.length);
+      await syncWorkspaceConnect(context, panel, { silent: !hasFolder });
+      if (hasFolder) {
+        vscode.window.showInformationMessage("EditCore: carpeta sincronizada con Vercel/Supabase.");
+      }
     })
   );
 
@@ -149,12 +216,12 @@ export function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(
     vscode.commands.registerCommand("editcoreConnect.pickSupabaseProject", async () => {
-      const token = await context.secrets.get("supabaseToken");
       const cwd = getWorkspaceRoot();
-      if (!token || !cwd) return;
-      const link = await autoLinkSupabaseProject(context, cwd, token, { forcePick: true, silent: false });
+      if (!cwd) return;
+      const link = await autoLinkSupabaseWorkspace(context, cwd, { forcePick: true, silent: false });
       if (link.linked) {
-        vscode.window.showInformationMessage(`Supabase: proyecto «${link.projectName}» vinculado.`);
+        const acc = link.accountLabel ? ` (${link.accountLabel})` : "";
+        vscode.window.showInformationMessage(`Supabase${acc}: «${link.projectName}» vinculado.`);
         await panel.refreshStatus();
       }
     })
@@ -237,8 +304,8 @@ export function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(
     vscode.commands.registerCommand("editcoreConnect.connectSupabase", async () => {
-      const token = await context.secrets.get("supabaseToken");
-      if (!token) {
+      const has = await hasSupabaseAccounts(context);
+      if (!has) {
         await vscode.commands.executeCommand("editcoreConnect.signInSupabase");
         return;
       }
@@ -318,19 +385,17 @@ export function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(
     vscode.commands.registerCommand("editcoreConnect.initSupabase", async () => {
-      const token = await context.secrets.get("supabaseToken");
+      const cwd = getWorkspaceRoot();
+      if (!cwd) return;
+      const token = await getSupabaseTokenForWorkspace(context, cwd);
       if (!token) {
         const choice = await vscode.window.showWarningMessage(
-          "No has configurado tu token de Supabase.",
-          "Configurar ahora"
+          "No hay cuenta Supabase para este proyecto.",
+          "Añadir cuenta"
         );
-        if (choice === "Configurar ahora") {
-          await vscode.commands.executeCommand("editcoreConnect.setSupabaseToken");
+        if (choice === "Añadir cuenta") {
+          await vscode.commands.executeCommand("editcoreConnect.addSupabaseAccount");
         }
-        return;
-      }
-      const cwd = getWorkspaceRoot();
-      if (!cwd) {
         return;
       }
       const terminal = vscode.window.createTerminal({

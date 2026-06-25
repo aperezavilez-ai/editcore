@@ -1,16 +1,20 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
-import { listSupabaseProjects, SupabaseProject } from "./api/supabaseApi";
+import { listSupabaseProjects, verifySupabaseToken, SupabaseProject } from "./api/supabaseApi";
 import { getWorkspaceHints, scoreNameMatch } from "./workspaceHints";
 
 const WORKSPACE_SUPABASE_KEY = "editcoreConnect.supabaseProjectRef";
 
 export async function validateSupabaseAccount(
   token: string
-): Promise<{ ok: boolean; projects: SupabaseProject[] }> {
+): Promise<{ ok: boolean; projects: SupabaseProject[]; error?: string }> {
+  const check = await verifySupabaseToken(token);
+  if (!check.ok) {
+    return { ok: false, projects: [], error: check.error };
+  }
   const projects = await listSupabaseProjects(token);
-  return { ok: projects.length > 0, projects };
+  return { ok: true, projects };
 }
 
 export async function writeSupabaseProjectLink(cwd: string, project: SupabaseProject): Promise<void> {
@@ -46,9 +50,21 @@ function pickBestSupabaseProject(
   hints: string[],
   savedRef?: string
 ): SupabaseProject | undefined {
+  return pickBestSupabaseProjectForHints(projects, hints, savedRef);
+}
+
+export function pickBestSupabaseProjectForHints(
+  projects: SupabaseProject[],
+  hints: string[],
+  savedRef?: string
+): SupabaseProject | undefined {
   if (savedRef) {
     const saved = projects.find((p) => p.id === savedRef);
     if (saved) return saved;
+  }
+
+  if (projects.length === 1) {
+    return projects[0];
   }
 
   const scored = projects
@@ -57,7 +73,7 @@ function pickBestSupabaseProject(
     .sort((a, b) => b.score - a.score);
 
   if (scored.length === 1 && scored[0].score >= 40) return scored[0].p;
-  if (scored.length > 0 && scored[0].score >= 100) return scored[0].p;
+  if (scored.length > 0 && scored[0].score >= 60) return scored[0].p;
   return undefined;
 }
 
@@ -121,4 +137,49 @@ export async function autoLinkSupabaseProject(
   await context.workspaceState.update(WORKSPACE_SUPABASE_KEY, project.id);
 
   return { linked: true, projectName: project.name };
+}
+
+/** Auto-vincula usando la cuenta Supabase resuelta para este workspace (multi-cuenta). */
+export async function autoLinkSupabaseWorkspace(
+  context: vscode.ExtensionContext,
+  cwd: string,
+  options: { silent?: boolean; forcePick?: boolean; accountId?: string } = {}
+): Promise<{
+  linked: boolean;
+  projectName?: string;
+  accountLabel?: string;
+  message?: string;
+}> {
+  const { resolveSupabaseForWorkspace, getAccountToken, setWorkspaceAccount, pickSupabaseAccount } =
+    await import("./supabaseAccountStore");
+
+  let resolved = options.accountId
+    ? await (async () => {
+        const token = await getAccountToken(context, options.accountId!);
+        const { listSupabaseAccounts } = await import("./supabaseAccountStore");
+        const acc = (await listSupabaseAccounts(context)).find((a) => a.id === options.accountId);
+        return token && acc
+          ? { accountId: acc.id, label: acc.label, token }
+          : undefined;
+      })()
+    : await resolveSupabaseForWorkspace(context, cwd);
+
+  if (!resolved && !options.silent && !options.forcePick) {
+    const acc = await pickSupabaseAccount(context, "¿Qué cuenta Supabase tiene este proyecto?");
+    if (acc) {
+      await setWorkspaceAccount(context, cwd, acc.id);
+      const token = await getAccountToken(context, acc.id);
+      if (token) resolved = { accountId: acc.id, label: acc.label, token };
+    }
+  }
+
+  if (!resolved) {
+    return {
+      linked: false,
+      message: "Sin cuenta Supabase. Añadí al menos una en Connect.",
+    };
+  }
+
+  const link = await autoLinkSupabaseProject(context, cwd, resolved.token, options);
+  return { ...link, accountLabel: resolved.label };
 }

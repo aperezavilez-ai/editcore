@@ -20,6 +20,7 @@ import {
   dockerComposeDown,
 } from "./api/dockerService";
 import { detectDatabaseFromWorkspace } from "./api/dbClients";
+import { getSupabaseTokenForWorkspace } from "./supabaseAccountStore";
 import { getVercelProjectState } from "./vercelService";
 
 async function getGithubToken(): Promise<string | undefined> {
@@ -102,7 +103,10 @@ export function registerApiCommands(context: vscode.ExtensionContext): void {
     }),
 
     vscode.commands.registerCommand("editcoreConnect.apiListSupabaseProjects", async () => {
-      const token = await context.secrets.get("supabaseToken");
+      const token = await getSupabaseTokenForWorkspace(
+        context,
+        vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
+      );
       if (!token) return;
       const projects = await listSupabaseProjects(token);
       const msg = projects.map((p) => `${p.name} (${p.region})`).join("\n") || "Sin proyectos";
@@ -110,7 +114,10 @@ export function registerApiCommands(context: vscode.ExtensionContext): void {
     }),
 
     vscode.commands.registerCommand("editcoreConnect.apiSupabaseSecrets", async () => {
-      const token = await context.secrets.get("supabaseToken");
+      const token = await getSupabaseTokenForWorkspace(
+        context,
+        vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
+      );
       const ref = await vscode.window.showInputBox({ prompt: "Project ref de Supabase" });
       if (!token || !ref) return;
       const secrets = await listSupabaseSecrets(token, ref);

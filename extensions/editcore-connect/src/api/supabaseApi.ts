@@ -20,6 +20,18 @@ function authHeaders(token: string): Record<string, string> {
   return { Authorization: `Bearer ${token}` };
 }
 
+export async function verifySupabaseToken(token: string): Promise<{ ok: boolean; error?: string }> {
+  const t = token.trim();
+  if (!t) return { ok: false, error: "Token vacío" };
+  const res = await httpJson<SupabaseProject[]>(`${SUPABASE_API}/projects`, {
+    headers: authHeaders(t),
+  });
+  if (res.status === 401 || res.status === 403) {
+    return { ok: false, error: res.error ?? "Token inválido o sin permisos" };
+  }
+  return res.ok ? { ok: true } : { ok: false, error: res.error ?? "Error de API Supabase" };
+}
+
 export async function listSupabaseProjects(token: string): Promise<SupabaseProject[]> {
   const res = await httpJson<SupabaseProject[]>(`${SUPABASE_API}/projects`, {
     headers: authHeaders(token),

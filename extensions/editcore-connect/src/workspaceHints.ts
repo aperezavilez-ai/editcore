@@ -9,7 +9,19 @@ export interface WorkspaceHints {
   folderName: string;
   packageName?: string;
   gitRepoName?: string;
+  gitRemoteSlug?: string;
   all: string[];
+}
+
+/** Normaliza remote GitHub a "owner/repo" en minúsculas. */
+export function normalizeGithubSlug(input: string): string | undefined {
+  const s = input.trim().toLowerCase();
+  const ssh = s.match(/github\.com[:/]([^/]+\/[^/]+?)(?:\.git)?$/);
+  if (ssh) return ssh[1];
+  const https = s.match(/github\.com\/([^/]+\/[^/]+?)(?:\.git)?$/);
+  if (https) return https[1];
+  if (/^[^/]+\/[^/]+$/.test(s)) return s;
+  return undefined;
 }
 
 export async function getWorkspaceHints(cwd: string): Promise<WorkspaceHints> {
@@ -31,6 +43,7 @@ export async function getWorkspaceHints(cwd: string): Promise<WorkspaceHints> {
   }
 
   let gitRepoName: string | undefined;
+  let gitRemoteSlug: string | undefined;
   try {
     const { stdout } = await execAsync("git remote get-url origin", {
       cwd,
@@ -38,10 +51,15 @@ export async function getWorkspaceHints(cwd: string): Promise<WorkspaceHints> {
       shell: process.platform === "win32" ? "cmd.exe" : "/bin/sh",
     });
     const url = stdout.trim();
+    gitRemoteSlug = normalizeGithubSlug(url);
     const m = url.match(/\/([^/]+?)(?:\.git)?$/);
     if (m) {
       gitRepoName = m[1];
       hints.add(gitRepoName);
+    }
+    if (gitRemoteSlug) {
+      hints.add(gitRemoteSlug.split("/").pop() ?? "");
+      hints.add(gitRemoteSlug.replace("/", "-"));
     }
   } catch {
     // no git
@@ -51,6 +69,7 @@ export async function getWorkspaceHints(cwd: string): Promise<WorkspaceHints> {
     folderName,
     packageName: [...hints].find((h) => h !== folderName),
     gitRepoName,
+    gitRemoteSlug,
     all: [...hints].filter(Boolean),
   };
 }

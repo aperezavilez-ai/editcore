@@ -2,14 +2,18 @@ import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 import { listVercelProjects, listVercelEnvVars, verifyVercelToken, VercelProject } from "./api/vercelApi";
-import { getWorkspaceHints, scoreNameMatch } from "./workspaceHints";
+import { getWorkspaceHints, scoreNameMatch, normalizeGithubSlug } from "./workspaceHints";
 import { getVercelProjectState } from "./vercelService";
 
 const WORKSPACE_PROJECT_KEY = "editcoreConnect.vercelProjectId";
 
-export async function validateVercelAccount(token: string): Promise<{ ok: boolean; projects: VercelProject[] }> {
-  const valid = await verifyVercelToken(token);
-  if (!valid) return { ok: false, projects: [] };
+export async function validateVercelAccount(
+  token: string
+): Promise<{ ok: boolean; projects: VercelProject[]; error?: string }> {
+  const check = await verifyVercelToken(token);
+  if (!check.ok) {
+    return { ok: false, projects: [], error: check.error };
+  }
   const projects = await listVercelProjects(token);
   return { ok: true, projects };
 }
@@ -70,11 +74,29 @@ async function pullDevEnvVars(
 function pickBestProject(
   projects: VercelProject[],
   hints: string[],
+  gitRemoteSlug?: string,
   savedId?: string
 ): VercelProject | undefined {
   if (savedId) {
     const saved = projects.find((p) => p.id === savedId);
     if (saved) return saved;
+  }
+
+  if (gitRemoteSlug) {
+    const slug = normalizeGithubSlug(gitRemoteSlug);
+    if (slug) {
+      const byRepo = projects.find((p) => {
+        const link = p.link?.repo;
+        if (!link) return false;
+        const linkSlug = normalizeGithubSlug(link);
+        return linkSlug === slug;
+      });
+      if (byRepo) return byRepo;
+    }
+  }
+
+  if (projects.length === 1) {
+    return projects[0];
   }
 
   const scored = projects
@@ -83,7 +105,7 @@ function pickBestProject(
     .sort((a, b) => b.score - a.score);
 
   if (scored.length === 1 && scored[0].score >= 40) return scored[0].p;
-  if (scored.length > 0 && scored[0].score >= 100) return scored[0].p;
+  if (scored.length > 0 && scored[0].score >= 60) return scored[0].p;
   return undefined;
 }
 
@@ -106,11 +128,19 @@ export async function autoLinkVercelProject(
   const hints = await getWorkspaceHints(cwd);
   const savedId = context.workspaceState.get<string>(WORKSPACE_PROJECT_KEY);
 
-  let project = options.forcePick ? undefined : pickBestProject(projects, hints.all, savedId);
+  let project = options.forcePick
+    ? undefined
+    : pickBestProject(projects, hints.all, hints.gitRemoteSlug, savedId);
 
   if (!project) {
     if (options.silent && !options.forcePick) {
-      return { linked: false, message: "Sin coincidencia automática de proyecto Vercel." };
+      return {
+        linked: false,
+        message:
+          projects.length === 0
+            ? "No hay proyectos en tu cuenta Vercel."
+            : "Abrí la carpeta del repo o usá «Cambiar proyecto» si el nombre no coincide.",
+      };
     }
 
     const pick = await vscode.window.showQuickPick(

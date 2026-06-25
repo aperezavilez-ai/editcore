@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { getGithubSessionLabel } from "./githubAuth";
 import type { VercelProjectState } from "./vercelService";
+import { hasSupabaseAccounts } from "./supabaseAccountStore";
 import type { GlobalConnectStatus } from "./globalConnect";
 
 interface CliStatus {
@@ -25,6 +26,9 @@ export class ConnectPanelProvider implements vscode.WebviewViewProvider {
     supabaseAccountOk: false,
     workspaceLinkedVercel: false,
     workspaceLinkedSupabase: false,
+    hasWorkspace: false,
+    vercelProjectCount: 0,
+    supabaseAccountCount: 0,
   };
 
   constructor(private readonly context: vscode.ExtensionContext) {}
@@ -59,8 +63,11 @@ export class ConnectPanelProvider implements vscode.WebviewViewProvider {
         case "signInVercel":
           void vscode.commands.executeCommand("editcoreConnect.signInVercel");
           break;
-        case "signInSupabase":
-          void vscode.commands.executeCommand("editcoreConnect.signInSupabase");
+        case "manageSupabase":
+          void vscode.commands.executeCommand("editcoreConnect.manageSupabaseAccounts");
+          break;
+        case "addSupabaseAccount":
+          void vscode.commands.executeCommand("editcoreConnect.addSupabaseAccount");
           break;
         case "changeVercelToken":
           void vscode.commands.executeCommand("editcoreConnect.setVercelToken");
@@ -95,6 +102,15 @@ export class ConnectPanelProvider implements vscode.WebviewViewProvider {
         case "recheckCli":
           void vscode.commands.executeCommand("editcoreConnect.checkCli");
           break;
+        case "openProject":
+          void vscode.commands.executeCommand("workbench.action.files.openFolder");
+          break;
+      }
+    });
+
+    webviewView.onDidChangeVisibility(() => {
+      if (webviewView.visible) {
+        void vscode.commands.executeCommand("editcoreConnect.syncWorkspace");
       }
     });
   }
@@ -105,8 +121,8 @@ export class ConnectPanelProvider implements vscode.WebviewViewProvider {
   }
 
   async refreshStatus() {
+    const hasSupabase = await hasSupabaseAccounts(this.context);
     const hasVercel = !!(await this.context.secrets.get("vercelToken"));
-    const hasSupabase = !!(await this.context.secrets.get("supabaseToken"));
     const githubAccount = await getGithubSessionLabel();
     await this.render({
       hasVercelToken: hasVercel,
@@ -118,7 +134,8 @@ export class ConnectPanelProvider implements vscode.WebviewViewProvider {
   private async render(status?: PanelStatus) {
     if (!this.view) return;
     const hasVercel = status?.hasVercelToken ?? !!(await this.context.secrets.get("vercelToken"));
-    const hasSupabase = status?.hasSupabaseToken ?? !!(await this.context.secrets.get("supabaseToken"));
+    const hasSupabase =
+      status?.hasSupabaseToken ?? (await hasSupabaseAccounts(this.context));
     const githubAccount = status?.githubAccount ?? (await getGithubSessionLabel());
     this.view.webview.html = this.getHtml(hasVercel, hasSupabase, githubAccount);
   }
@@ -139,9 +156,49 @@ export class ConnectPanelProvider implements vscode.WebviewViewProvider {
     const githubSignedIn = Boolean(githubAccount);
     const vercelGlobal = vToken && g.vercelAccountOk;
     const supabaseGlobal = sToken && g.supabaseAccountOk;
+    const supabaseAccountsLabel =
+      g.supabaseAccountCount > 0
+        ? `${g.supabaseAccountCount} cuenta(s)`
+        : undefined;
     const vercelProject =
       g.vercelProjectName ?? this.vercelState.projectName ?? (g.workspaceLinkedVercel ? "Vinculado" : undefined);
     const vercelReady = vercelGlobal && (g.workspaceLinkedVercel || this.vercelState.linked);
+    const hasWorkspace = g.hasWorkspace;
+    const projectSection = !hasWorkspace
+      ? `<div class="card">
+    <div class="hint" style="margin-top:0;opacity:0.9;">
+      <strong>No hay carpeta abierta.</strong><br>
+      Tu cuenta Vercel ya da acceso a <strong>${g.vercelProjectCount}</strong> proyecto(s).
+      Abrí la carpeta del código y EditCore la vincula sola (por repo GitHub o nombre).
+    </div>
+    <button onclick="send('openProject')">Abrir proyecto…</button>
+  </div>`
+      : `<div class="card">
+    <div class="hint" style="margin-top:0;margin-bottom:8px;">Detectado automáticamente al abrir esta carpeta. No hace falta elegir cuenta otra vez.</div>
+    <div class="row">
+      <span class="name">Vercel</span>
+      ${vercelReady ? this.badge(true, vercelProject ?? "Listo", "") : vercelGlobal ? this.badge(false, "", "Detectando…") : this.badge(false, "", "—")}
+    </div>
+    <div class="row">
+      <span class="name">Supabase</span>
+      ${g.workspaceLinkedSupabase ? this.badge(true, (g.supabaseProjectName ?? "Listo") + (g.supabaseAccountLabel ? ` · ${g.supabaseAccountLabel}` : ""), "") : supabaseGlobal ? this.badge(false, "", "Detectando…") : this.badge(false, "", "—")}
+    </div>
+    ${this.vercelState.lastDeployUrl ? `<div class="hint">Último deploy: <code>${escapeHtml(this.vercelState.lastDeployUrl)}</code></div>` : ""}
+    ${
+      vercelGlobal
+        ? `<div class="actions-row">
+            <button class="secondary" onclick="send('syncWorkspace')">Sincronizar ahora</button>
+            <button class="secondary" onclick="send('deployVercel')" ${!vercelReady ? "disabled" : ""}>Deploy</button>
+            <button class="secondary" onclick="send('openVercelPreview')" ${!this.vercelState.lastDeployUrl ? "disabled" : ""}>Abrir sitio</button>
+          </div>
+          <div class="actions-row">
+            <button class="secondary" onclick="send('pickVercelProject')">Cambiar proyecto Vercel</button>
+            <button class="secondary" onclick="send('pickSupabaseProject')" ${!supabaseGlobal ? "disabled" : ""}>Cambiar Supabase</button>
+          </div>`
+        : `<div class="hint">Conectá tu cuenta arriba primero.</div>`
+    }
+    <div class="hint">Dominio propio: <a href="#" onclick="send('showDomainGuide');return false;">guía DNS</a></div>
+  </div>`;
 
     return /* html */ `<!DOCTYPE html>
 <html>
@@ -182,7 +239,7 @@ export class ConnectPanelProvider implements vscode.WebviewViewProvider {
 
   <h3>Tu cuenta EditCore</h3>
   <div class="card">
-    <div class="hint" style="margin-top:0;margin-bottom:10px;">Conectá una vez. Cada proyecto se vincula solo al abrir la carpeta (como Cursor).</div>
+    <div class="hint" style="margin-top:0;margin-bottom:10px;">Conectá <strong>una vez</strong> tu cuenta. Al abrir cada carpeta, EditCore usa el repo de GitHub para saber qué proyecto es.</div>
     <div class="row">
       <span class="name">Vercel</span>
       ${vercelGlobal ? this.badge(true, "Cuenta conectada", "") : vToken ? this.badge(false, "", "Token inválido") : this.badge(false, "", "Sin conectar")}
@@ -197,44 +254,20 @@ export class ConnectPanelProvider implements vscode.WebviewViewProvider {
     }
     <div class="row" style="margin-top:10px">
       <span class="name">Supabase</span>
-      ${supabaseGlobal ? this.badge(true, "Cuenta conectada", "") : sToken ? this.badge(false, "", "Token inválido") : this.badge(false, "", "Sin conectar")}
+      ${supabaseGlobal ? this.badge(true, supabaseAccountsLabel ?? "Cuenta conectada", "") : sToken ? this.badge(false, "", "Token inválido") : this.badge(false, "", "Sin conectar")}
     </div>
     ${
       supabaseGlobal
         ? `<div class="actions-row">
-            <button class="secondary" onclick="send('changeSupabaseToken')">Cambiar token</button>
-            <button class="danger" onclick="send('disconnectSupabase')">Desconectar</button>
+            <button class="secondary" onclick="send('addSupabaseAccount')">Añadir cuenta</button>
+            <button class="secondary" onclick="send('manageSupabase')">Gestionar</button>
           </div>`
-        : `<button onclick="send('signInSupabase')">Conectar cuenta Supabase</button>`
+        : `<button onclick="send('addSupabaseAccount')">Añadir cuenta Supabase</button>`
     }
   </div>
 
-  <h3>Este proyecto</h3>
-  <div class="card">
-    <div class="row">
-      <span class="name">Vercel</span>
-      ${vercelReady ? this.badge(true, vercelProject ?? "Listo", "") : vercelGlobal ? this.badge(false, "", "Sin vincular") : this.badge(false, "", "—")}
-    </div>
-    <div class="row">
-      <span class="name">Supabase</span>
-      ${g.workspaceLinkedSupabase ? this.badge(true, g.supabaseProjectName ?? "Listo", "") : supabaseGlobal ? this.badge(false, "", "Sin vincular") : this.badge(false, "", "—")}
-    </div>
-    ${this.vercelState.lastDeployUrl ? `<div class="hint">Último deploy: <code>${escapeHtml(this.vercelState.lastDeployUrl)}</code></div>` : ""}
-    ${
-      vercelGlobal
-        ? `<div class="actions-row">
-            <button class="secondary" onclick="send('pickVercelProject')">Elegir proyecto Vercel</button>
-            <button class="secondary" onclick="send('pickSupabaseProject')" ${!supabaseGlobal ? "disabled" : ""}>Elegir Supabase</button>
-          </div>
-          <div class="actions-row">
-            <button class="secondary" onclick="send('syncWorkspace')">Sincronizar ahora</button>
-            <button class="secondary" onclick="send('deployVercel')" ${!vercelReady ? "disabled" : ""}>Deploy</button>
-            <button class="secondary" onclick="send('openVercelPreview')" ${!this.vercelState.lastDeployUrl ? "disabled" : ""}>Abrir sitio</button>
-          </div>`
-        : `<div class="hint">Conectá Vercel arriba para deploy automático en este proyecto.</div>`
-    }
-    <div class="hint">Dominio propio: <a href="#" onclick="send('showDomainGuide');return false;">guía DNS</a></div>
-  </div>
+  <h3>Carpeta abierta</h3>
+  ${projectSection}
 
   <h3>GitHub</h3>
   <div class="card">
