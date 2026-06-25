@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
+import { guessDevPort } from "../preview/projectDevServer";
 
 export interface WorkspaceSnapshot {
   name: string;
@@ -72,9 +73,7 @@ export async function getWorkspaceSnapshot(): Promise<WorkspaceSnapshot | undefi
   }
 
   const devPort = guessDevPort(root);
-  if (devPort) {
-    lines.push(`Preview local habitual: http://localhost:${devPort} (Browser: Ctrl+Alt+/ o comando "EditCore: Abrir browser").`);
-  }
+  lines.push(`Preview local habitual: http://localhost:${devPort} (Browser: Ctrl+Alt+/ o "EditCore: Preview local").`);
 
   return { name, root, summary: lines.join("\n") };
 }
@@ -91,22 +90,4 @@ export async function getWorkspaceContextBlock(): Promise<string | undefined> {
     "No pidas al usuario que comparta archivos si el workspace ya está abierto.",
     "===================================",
   ].join("\n");
-}
-
-function guessDevPort(root: string): number | undefined {
-  const pkgPath = path.join(root, "package.json");
-  if (!fs.existsSync(pkgPath)) {
-    return 3000;
-  }
-  try {
-    const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8")) as { scripts?: Record<string, string> };
-    const dev = pkg.scripts?.dev ?? "";
-    const m = dev.match(/(?:--port|-p)\s+(\d{2,5})/) ?? dev.match(/:(\d{2,5})/);
-    if (m) {
-      return Number(m[1]);
-    }
-  } catch {
-    // ignore
-  }
-  return 3000;
 }

@@ -5,6 +5,7 @@ import { readSharedKeys } from "./sharedApiKeys";
 
 const SECRET_KEY = "anthropicApiKey";
 const OPENAI_SECRET_KEY = "openaiApiKey";
+const OPENROUTER_SECRET_KEY = "openrouterApiKey";
 const USAGE_KEY = "editcore.usageTotals";
 
 const MODEL_PRICING: Record<string, { input: number; output: number }> = {
@@ -75,8 +76,29 @@ export class ApiKeyService {
     return Boolean(await this.getOpenAiKey());
   }
 
+  async hasOpenRouterKey(): Promise<boolean> {
+    return Boolean(await this.getOpenRouterKey());
+  }
+
+  async getOpenRouterKey(): Promise<string | undefined> {
+    const key = await this.context.secrets.get(OPENROUTER_SECRET_KEY);
+    return key?.trim() || undefined;
+  }
+
+  async saveOpenRouterKey(rawKey: string): Promise<void> {
+    const key = rawKey.trim();
+    if (!key) throw new Error("La API Key de OpenRouter no puede estar vacía.");
+    await this.context.secrets.store(OPENROUTER_SECRET_KEY, key);
+    this._onDidChange.fire();
+  }
+
+  async clearOpenRouterKey(): Promise<void> {
+    await this.context.secrets.delete(OPENROUTER_SECRET_KEY);
+    this._onDidChange.fire();
+  }
+
   async hasAnyLlmKey(): Promise<boolean> {
-    return (await this.hasApiKey()) || (await this.hasOpenAiKey());
+    return (await this.hasApiKey()) || (await this.hasOpenAiKey()) || (await this.hasOpenRouterKey());
   }
 
   async getApiKey(): Promise<string | undefined> {

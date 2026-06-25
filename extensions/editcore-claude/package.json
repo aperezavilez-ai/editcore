@@ -2,7 +2,7 @@
   "name": "editcore-claude",
   "displayName": "EditCore - Claude Assistant",
   "description": "Chat con Claude (Anthropic) y OpenAI integrado nativamente en EditCore IDE.",
-  "version": "1.3.4",
+  "version": "1.4.0",
   "publisher": "editcore",
   "engines": {
     "vscode": "^1.85.0"
@@ -22,7 +22,8 @@
     "defaultChatParticipant",
     "chatParticipantAdditions",
     "chatProvider",
-    "chatContextProvider"
+    "chatContextProvider",
+    "chatReferenceBinaryData"
   ],
   "activationEvents": [
     "onStartupFinished",
@@ -89,6 +90,12 @@
         "icon": "$(globe)"
       },
       {
+        "command": "editcore.previewLocal",
+        "title": "EditCore: Preview local (dev + browser)",
+        "shortTitle": "Preview local",
+        "icon": "$(globe)"
+      },
+      {
         "command": "editcore.showWelcome",
         "title": "EditCore: Pantalla de inicio",
         "shortTitle": "Inicio"
@@ -100,11 +107,15 @@
       },
       {
         "command": "editcore.openChat",
-        "title": "EditCore: Abrir chat @claude"
+        "title": "EditCore: Nuevo chat @claude"
+      },
+      {
+        "command": "editcore.newChat",
+        "title": "EditCore: Nuevo chat (vacío)"
       },
       {
         "command": "editcore.focusChatInput",
-        "title": "EditCore: Enfocar chat Claude"
+        "title": "EditCore: Nuevo chat @claude (atajo)"
       },
       {
         "command": "editcore.explainSelection",
@@ -201,6 +212,42 @@
       {
         "command": "editcore.resumeSession",
         "title": "EditCore: Reanudar sesion de agente"
+      },
+      {
+        "command": "editcore.audit",
+        "title": "EditCore: Auditoría completa del proyecto"
+      },
+      {
+        "command": "editcore.validateProject",
+        "title": "EditCore: Validar build y tests"
+      },
+      {
+        "command": "editcore.showLastAudit",
+        "title": "EditCore: Ver última auditoría"
+      },
+      {
+        "command": "editcore.globalMemory",
+        "title": "EditCore: Memoria global"
+      },
+      {
+        "command": "editcore.syncGlobalMemory",
+        "title": "EditCore: Sincronizar memoria a global"
+      },
+      {
+        "command": "editcore.addGlobalMemory",
+        "title": "EditCore: Añadir memoria global"
+      },
+      {
+        "command": "editcore.searchGlobalMemory",
+        "title": "EditCore: Buscar memoria global"
+      },
+      {
+        "command": "editcore.projectIntelligence",
+        "title": "EditCore: Project Intelligence (cross-proyecto)"
+      },
+      {
+        "command": "editcore.observability",
+        "title": "EditCore: Ver observabilidad"
       },
       {
         "command": "editcore.about",
@@ -311,7 +358,48 @@
         "editcore.orchestrator.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "En modo Agent: plan -> ejecucion -> revision automatica"
+          "description": "En modo Agent: plan -> aprobación -> ejecución -> validación -> revisión"
+        },
+        "editcore.plan.requireApproval": {
+          "type": "boolean",
+          "default": true,
+          "description": "Pedir aprobación del plan antes de ejecutar en modo Agent"
+        },
+        "editcore.validation.afterAgent": {
+          "type": "boolean",
+          "default": true,
+          "description": "Tras el agente, ejecutar build/test automáticamente"
+        },
+        "editcore.validation.commands": {
+          "type": "array",
+          "default": [],
+          "description": "Comandos custom de validación (vacío = detectar npm run build/test)",
+          "items": { "type": "string" }
+        },
+        "editcore.multiAgent.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Pipeline multiagente: Arquitecto -> Programador -> QA -> DevOps"
+        },
+        "editcore.router.autoSelect": {
+          "type": "boolean",
+          "default": false,
+          "description": "Selección automática de proveedor/modelo según tipo de tarea (chat ask)"
+        },
+        "editcore.ollama.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Habilitar Ollama como proveedor local"
+        },
+        "editcore.ollama.baseUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:11434",
+          "description": "URL base de Ollama"
+        },
+        "editcore.openrouter.model": {
+          "type": "string",
+          "default": "deepseek/deepseek-chat",
+          "description": "Modelo por defecto en OpenRouter"
         },
         "editcore.plan": {
           "type": "string",
@@ -408,10 +496,14 @@
     },
     "keybindings": [
       {
+        "command": "-workbench.action.chat.open",
+        "key": "ctrl+alt+i",
+        "mac": "cmd+alt+i"
+      },
+      {
         "command": "editcore.focusChatInput",
         "key": "ctrl+alt+i",
-        "mac": "cmd+alt+i",
-        "when": "editorTextFocus || !editorFocus"
+        "mac": "cmd+alt+i"
       },
       {
         "command": "editcore.commandHub",

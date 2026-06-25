@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { LLM_CONFIG } from "./llmConfig";
 import { isValidOpenAiModelId } from "./models";
 import type { ChatMessage } from "./anthropicClient";
+import { toOpenAiMessageContent } from "./chat/multimodalContent";
 
 export interface OpenAiUsage {
   inputTokens: number;
@@ -104,7 +105,10 @@ export async function callOpenAI(
       body: JSON.stringify({
         model,
         max_tokens: maxTokens,
-        messages: messages.map((m) => ({ role: m.role, content: m.content })),
+        messages: messages.map((m) => ({
+          role: m.role,
+          content: toOpenAiMessageContent(m.content),
+        })),
       }),
     });
   } catch (err) {
@@ -148,7 +152,10 @@ export async function streamOpenAI(
         max_tokens: maxTokens,
         stream: true,
         stream_options: { include_usage: true },
-        messages: messages.map((m) => ({ role: m.role, content: m.content })),
+        messages: messages.map((m) => ({
+          role: m.role,
+          content: toOpenAiMessageContent(m.content),
+        })),
       }),
     });
   } catch (err) {

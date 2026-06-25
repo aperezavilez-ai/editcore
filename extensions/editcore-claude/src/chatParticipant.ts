@@ -6,6 +6,7 @@ import { CLAUDE_MODELS, OPENAI_MODELS } from "./models";
 import type { ChatMessage } from "./anthropicClient";
 import { runAgentTask, AgentEvent } from "./agent/agentLoop";
 import { runOrchestratedTask, OrchestratorEvent } from "./agent/orchestrator";
+import { runMultiAgentPipeline, MultiAgentEvent, isMultiAgentEnabled } from "./agent/multiAgentOrchestrator";
 import { detectRoleFromPrompt } from "./agents/roles";
 import { isAgentMode } from "./chatRequestTypes";
 import { appendAudit } from "./enterprise/orgConfig";
@@ -13,6 +14,12 @@ import { getSessionStore } from "./sessions/agentSessionStore";
 import { enrichSessionSummary } from "./sessions/sessionSummarizer";
 import { getWorkspaceContextBlock } from "./workspace/workspaceContext";
 import { prependWorkspaceContext } from "./workspace/workspaceMessages";
+import {
+  buildUserContent,
+  messageHasText,
+  resolveImagesFromReferences,
+} from "./chat/multimodalContent";
+import { callExtendedProvider, getActiveRouteDescription } from "./providers/providerBridge";
 
 export function registerClaudeChatParticipant(
   context: vscode.ExtensionContext,
@@ -55,25 +62,39 @@ export function registerClaudeChatParticipant(
         );
       }
 
-      const messages = await buildMessages(chatContext.history, request.prompt);
+      const messages = await buildMessages(
+        chatContext.history,
+        request.prompt,
+        request.references
+      );
       let fullText = "";
+      const routeHint = getActiveRouteDescription(request.prompt);
+      if (routeHint) {
+        stream.markdown(`_Router: ${routeHint}_\n\n`);
+      }
 
       try {
-        const usage = await streamForSelectedModel(
-          apiKeyService,
-          messages,
-          selectedModelId,
-          (chunk) => {
-            if (token.isCancellationRequested) {
-              return;
-            }
-            fullText += chunk;
-            stream.markdown(chunk);
-          },
-          { allowFallback: false }
-        );
-
-        apiKeyService.recordUsage(usage.inputTokens, usage.outputTokens);
+        const extended = await callExtendedProvider(apiKeyService, messages, request.prompt);
+        if (extended) {
+          fullText = extended.text;
+          stream.markdown(fullText);
+          apiKeyService.recordUsage(extended.usage.inputTokens, extended.usage.outputTokens);
+        } else {
+          const usage = await streamForSelectedModel(
+            apiKeyService,
+            messages,
+            selectedModelId,
+            (chunk) => {
+              if (token.isCancellationRequested) {
+                return;
+              }
+              fullText += chunk;
+              stream.markdown(chunk);
+            },
+            { allowFallback: false }
+          );
+          apiKeyService.recordUsage(usage.inputTokens, usage.outputTokens);
+        }
 
         if (!fullText.trim()) {
           stream.markdown("_(Sin respuesta de texto)_");
@@ -123,15 +144,29 @@ async function handleAgentRequest(
   };
 
   const hasAnthropic = Boolean(apiKey?.trim());
+  const useMultiAgent = hasAnthropic && isMultiAgentEnabled();
   const useOrchestrator =
     hasAnthropic &&
+    !useMultiAgent &&
     vscode.workspace.getConfiguration("editcore").get<boolean>("orchestrator.enabled", true);
 
   try {
-    const run = useOrchestrator
+    const run = useMultiAgent
+      ? runMultiAgentPipeline(apiKey, task, (event: MultiAgentEvent) => {
+          if (token.isCancellationRequested) return;
+          if (event.type === "phase") {
+            stream.markdown(`\n**${event.agent}** — ${event.message}\n`);
+            return;
+          }
+          streamAgentEvent(event, stream, (text) => {
+            assistantSummary += text;
+          });
+        }, abortController.signal, onUsage, onTool)
+      : useOrchestrator
       ? runOrchestratedTask(apiKey, task, (event: OrchestratorEvent) => {
           if (token.isCancellationRequested) return;
           if (event.type === "phase") {
+            stream.markdown(`\n_${event.message}_\n`);
             return;
           }
           streamAgentEvent(event, stream, (text) => {
@@ -264,6 +299,17 @@ async function buildAgentTaskAsync(
 }
 
 function formatReference(ref: vscode.ChatPromptReference): string | undefined {
+  const value = ref.value as unknown;
+  if (
+    value &&
+    typeof value === "object" &&
+    "mimeType" in value &&
+    "data" in value &&
+    typeof (value as { data: unknown }).data === "function"
+  ) {
+    const mime = (value as { mimeType?: string }).mimeType ?? "image";
+    return `- ${ref.id}: imagen adjunta (${mime})`;
+  }
   if (typeof ref.value === "string") {
     return `- ${ref.id}: ${ref.value}`;
   }
@@ -308,21 +354,25 @@ function formatHistoryForAgent(
 
 function buildMessages(
   history: ReadonlyArray<vscode.ChatRequestTurn | vscode.ChatResponseTurn>,
-  prompt: string
+  prompt: string,
+  references: readonly vscode.ChatPromptReference[]
 ): Promise<ChatMessage[]> {
-  return buildMessagesAsync(history, prompt);
+  return buildMessagesAsync(history, prompt, references);
 }
 
 async function buildMessagesAsync(
   history: ReadonlyArray<vscode.ChatRequestTurn | vscode.ChatResponseTurn>,
-  prompt: string
+  prompt: string,
+  references: readonly vscode.ChatPromptReference[]
 ): Promise<ChatMessage[]> {
   const messages: ChatMessage[] = [];
 
   for (const turn of history) {
     if (turn instanceof vscode.ChatRequestTurn) {
-      if (turn.prompt.trim()) {
-        messages.push({ role: "user", content: turn.prompt });
+      const images = await resolveImagesFromReferences(turn.references);
+      const content = buildUserContent(turn.prompt, images);
+      if (messageHasText(content) || images.length > 0) {
+        messages.push({ role: "user", content });
       }
       continue;
     }
@@ -339,7 +389,8 @@ async function buildMessagesAsync(
     }
   }
 
-  messages.push({ role: "user", content: prompt });
+  const images = await resolveImagesFromReferences(references);
+  messages.push({ role: "user", content: buildUserContent(prompt, images) });
   return prependWorkspaceContext(messages);
 }
 

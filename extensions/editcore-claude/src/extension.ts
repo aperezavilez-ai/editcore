@@ -35,11 +35,18 @@ import { registerDiagnosticCommands } from "./diagnostics/diagnosticCommands";
 import { registerQuickActionsBar } from "./hub/quickActionsBar";
 import { registerWelcomePanel, showWelcomeIfNeeded } from "./welcome/welcomePanel";
 import { setDiagnosticRuntime } from "./diagnostics/diagnosticRuntime";
+import { openFreshClaudeChat } from "./chat/openFreshChat";
+import { registerChatEditorGuard } from "./chat/chatEditorGuard";
+import { registerPlatformCommands } from "./platform/platformCommands";
+import { registerGlobalCommands } from "./global/globalCommands";
 
 export function activate(context: vscode.ExtensionContext) {
   void writeActivationProbe(context);
   registerQuickActionsBar(context);
   registerWelcomePanel(context);
+  registerChatEditorGuard(context);
+  registerPlatformCommands(context);
+  registerGlobalCommands(context);
   void showWelcomeIfNeeded(context);
 
   const apiKeyService = new ApiKeyService(context);
@@ -213,20 +220,16 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("editcore.openChat", async () => {
-      await vscode.commands.executeCommand("workbench.action.chat.open", {
-        query: "@claude ",
-      });
-    })
+    vscode.commands.registerCommand("editcore.openChat", () => openFreshClaudeChat())
   );
 
-  // Prefijar @claude en chats nuevos (estilo Cursor).
   context.subscriptions.push(
-    vscode.commands.registerCommand("editcore.focusChatInput", async () => {
-      await vscode.commands.executeCommand("workbench.action.chat.open", {
-        query: "@claude ",
-      });
-    })
+    vscode.commands.registerCommand("editcore.newChat", () => openFreshClaudeChat())
+  );
+
+  // Ctrl+Alt+I: siempre sesión nueva vacía (no restaurar la anterior).
+  context.subscriptions.push(
+    vscode.commands.registerCommand("editcore.focusChatInput", () => openFreshClaudeChat())
   );
 
   context.subscriptions.push(

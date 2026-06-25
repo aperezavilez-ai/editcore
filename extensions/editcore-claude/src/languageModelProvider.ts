@@ -5,6 +5,11 @@ import type { ChatMessage } from "./anthropicClient";
 import { LLM_VENDOR } from "./llmConfig";
 import { CLAUDE_MODELS, OPENAI_MODELS } from "./models";
 import { prependWorkspaceContext } from "./workspace/workspaceMessages";
+import {
+  buildUserContent,
+  extractImagesFromLanguageModelParts,
+  messageHasText,
+} from "./chat/multimodalContent";
 
 type NativeModelKind = "claude" | "openai";
 
@@ -13,56 +18,63 @@ interface NativeLanguageModelInformation extends vscode.LanguageModelChatInforma
   isDefault?: boolean;
 }
 
+function buildModelList(
+  apiKeyService: ApiKeyService
+): Promise<NativeLanguageModelInformation[]> {
+  return Promise.all([apiKeyService.hasApiKey(), apiKeyService.hasOpenAiKey()]).then(
+    ([hasAnthropic, hasOpenAi]) => {
+      const claudeModels = CLAUDE_MODELS.map((model, index): NativeLanguageModelInformation => ({
+        id: model.id,
+        name: model.label,
+        family: "claude",
+        version: "anthropic",
+        tooltip: model.description,
+        detail: "Anthropic Claude",
+        maxInputTokens: 200_000,
+        maxOutputTokens: 64_000,
+        capabilities: {
+          toolCalling: true,
+          imageInput: true,
+        },
+        kind: "claude",
+        isDefault: index === 0,
+      }));
+
+      const openAiModels = OPENAI_MODELS.map((model, index): NativeLanguageModelInformation => ({
+        id: model.id,
+        name: model.label,
+        family: "gpt",
+        version: "openai",
+        tooltip: model.description,
+        detail: "OpenAI",
+        maxInputTokens: 200_000,
+        maxOutputTokens: 64_000,
+        capabilities: {
+          toolCalling: true,
+          imageInput: true,
+        },
+        kind: "openai",
+        isDefault: !hasAnthropic && index === 0,
+      }));
+
+      return [...claudeModels, ...openAiModels];
+    }
+  );
+}
+
 export function registerClaudeLanguageModelProvider(
   context: vscode.ExtensionContext,
   apiKeyService: ApiKeyService
 ): void {
+  const onDidChangeLanguageModelChatInformation = new vscode.EventEmitter<void>();
+
   context.subscriptions.push(
+    onDidChangeLanguageModelChatInformation,
     vscode.lm.registerLanguageModelChatProvider(LLM_VENDOR, {
-      async provideLanguageModelChatInformation(options, _token) {
-        // VS Code re-invokes configurable providers per group (editcore/group/id vs editcore/id).
-        // Models are registered only on the ungrouped call to avoid duplicates in the picker.
-        const opts = options as { group?: string; configuration?: unknown };
-        if (opts.group || opts.configuration) {
-          return [];
-        }
+      onDidChangeLanguageModelChatInformation: onDidChangeLanguageModelChatInformation.event,
 
-        const hasAnthropic = await apiKeyService.hasApiKey();
-        const hasOpenAi = await apiKeyService.hasOpenAiKey();
-
-        const claudeModels = CLAUDE_MODELS.map((model, index): NativeLanguageModelInformation => ({
-          id: model.id,
-          name: model.label,
-          family: "claude",
-          version: "anthropic",
-          tooltip: model.description,
-          detail: "Anthropic Claude",
-          maxInputTokens: 200_000,
-          maxOutputTokens: 64_000,
-          capabilities: {
-            toolCalling: true,
-          },
-          kind: "claude",
-          isDefault: index === 0,
-        }));
-
-        const openAiModels = OPENAI_MODELS.map((model, index): NativeLanguageModelInformation => ({
-          id: model.id,
-          name: model.label,
-          family: "gpt",
-          version: "openai",
-          tooltip: model.description,
-          detail: "OpenAI",
-          maxInputTokens: 200_000,
-          maxOutputTokens: 64_000,
-          capabilities: {
-            toolCalling: true,
-          },
-          kind: "openai",
-          isDefault: !hasAnthropic && index === 0,
-        }));
-
-        return [...claudeModels, ...openAiModels];
+      provideLanguageModelChatInformation(_options, _token) {
+        return buildModelList(apiKeyService);
       },
 
       async provideLanguageModelChatResponse(model, messages, _options, progress, token) {
@@ -95,17 +107,21 @@ export function registerClaudeLanguageModelProvider(
       },
     })
   );
+
+  // Fuerza a VS Code a resolver modelos en _modelCache tras el registro del provider.
+  void Promise.resolve().then(() => onDidChangeLanguageModelChatInformation.fire());
 }
 
 function toChatMessages(messages: readonly vscode.LanguageModelChatRequestMessage[]): ChatMessage[] {
   const result: ChatMessage[] = [];
   for (const message of messages) {
-    const content = flattenLanguageModelParts(message.content).trim();
-    if (!content) {
+    const { text, images } = extractImagesFromLanguageModelParts(message.content);
+    const content = buildUserContent(text, images);
+    if (!messageHasText(content) && images.length === 0) {
       continue;
     }
     if (message.role === vscode.LanguageModelChatMessageRole.Assistant) {
-      result.push({ role: "assistant", content });
+      result.push({ role: "assistant", content: typeof content === "string" ? content : text });
     } else {
       result.push({ role: "user", content });
     }
@@ -114,19 +130,5 @@ function toChatMessages(messages: readonly vscode.LanguageModelChatRequestMessag
 }
 
 function flattenLanguageModelParts(parts: ReadonlyArray<unknown>): string {
-  return parts
-    .map((part) => {
-      if (typeof part === "string") {
-        return part;
-      }
-      if (part instanceof vscode.LanguageModelTextPart) {
-        return part.value;
-      }
-      if (part && typeof part === "object" && "value" in part) {
-        const value = (part as { value?: unknown }).value;
-        return typeof value === "string" ? value : "";
-      }
-      return "";
-    })
-    .join("");
+  return extractImagesFromLanguageModelParts(parts).text;
 }

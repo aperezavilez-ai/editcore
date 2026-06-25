@@ -103,7 +103,7 @@ tryPatch({
               }
             }
           }
-          languageModelsGroups.push({ group: group2, modelIdentifiers: [] });
+          languageModelsGroups.push({ group: group2, modelIdentifiers: allModels.map((model) => model.identifier) });
           continue;
         }
         if (vendorId === "gptpro4all" && allModels.length > 0) {`,

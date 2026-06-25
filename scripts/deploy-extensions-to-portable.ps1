@@ -77,15 +77,42 @@ $cleanChatUi = Join-Path $Root "scripts\patch-portable-chat-clean-ui.js"
 if (Test-Path $cleanChatUi) {
   node $cleanChatUi
 }
+$cursorChatUi = Join-Path $Root "scripts\patch-portable-chat-cursor-ui.js"
+if (Test-Path $cursorChatUi) {
+  node $cursorChatUi
+}
+$blockChatEditor = Join-Path $Root "scripts\patch-portable-chat-block-editor.js"
+if (Test-Path $blockChatEditor) {
+  node $blockChatEditor
+}
 
 $modelPicker = Join-Path $Root "scripts\patch-portable-chat-model-picker.js"
 if (Test-Path $modelPicker) {
   node $modelPicker
 }
 
+$lmResolve = Join-Path $Root "scripts\patch-portable-lm-resolve-on-register.js"
+if (Test-Path $lmResolve) {
+  node $lmResolve
+}
+
+$lmGroups = Join-Path $Root "scripts\patch-portable-fix-editcore-lm-groups.js"
+if (Test-Path $lmGroups) {
+  node $lmGroups
+}
+
+$chatBrowserCtx = Join-Path $Root "scripts\patch-portable-chat-browser-context.js"
+if (Test-Path $chatBrowserCtx) {
+  node $chatBrowserCtx
+}
+
 $browserTitlebar = Join-Path $Root "scripts\patch-portable-browser-titlebar.js"
 if (Test-Path $browserTitlebar) {
   node $browserTitlebar
+}
+$watermarkBrowser = Join-Path $Root "scripts\patch-portable-editor-watermark-browser.js"
+if (Test-Path $watermarkBrowser) {
+  node $watermarkBrowser
 }
 
 $removeGptpro4all = Join-Path $Root "scripts\patch-portable-remove-gptpro4all.js"

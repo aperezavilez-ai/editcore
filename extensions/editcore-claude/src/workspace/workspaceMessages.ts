@@ -1,5 +1,6 @@
 import type { ChatMessage } from "../anthropicClient";
 import { getWorkspaceContextBlock } from "./workspaceContext";
+import { contentToPlainText } from "../chat/multimodalContent";
 
 /** Prefija mensajes con el resumen del workspace abierto (Claude y OpenAI). */
 export async function prependWorkspaceContext(
@@ -13,7 +14,7 @@ export async function prependWorkspaceContext(
   const primer = messages[0];
   if (
     primer?.role === "user" &&
-    primer.content.includes("=== WORKSPACE ABIERTO EN EDITCORE ===")
+    contentToPlainText(primer.content).includes("=== WORKSPACE ABIERTO EN EDITCORE ===")
   ) {
     return messages;
   }

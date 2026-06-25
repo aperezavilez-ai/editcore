@@ -1,3 +1,5 @@
+import * as fs from "fs";
+import * as path from "path";
 import * as vscode from "vscode";
 import { exec } from "child_process";
 import { promisify } from "util";
@@ -12,6 +14,16 @@ import {
   listGithubIssues,
   listGithubPullRequests,
 } from "./githubService";
+import {
+  openLastVercelDeploy,
+  runVercelDeploy,
+  showVercelDomainsGuide,
+} from "./vercelCommands";
+import { getVercelProjectState } from "./vercelService";
+import { registerApiCommands } from "./apiCommands";
+import { registerGlobalAutoConnect, syncWorkspaceConnect } from "./globalConnect";
+import { autoLinkVercelProject } from "./vercelAutoLink";
+import { autoLinkSupabaseProject } from "./supabaseAutoLink";
 
 const execAsync = promisify(exec);
 
@@ -19,6 +31,7 @@ export function activate(context: vscode.ExtensionContext) {
   const panel = new ConnectPanelProvider(context);
 
   const apiKeysPanel = new ApiKeysPanelProvider(context);
+  registerApiCommands(context);
 
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider("editcoreConnect.panel", panel),
@@ -52,9 +65,29 @@ export function activate(context: vscode.ExtensionContext) {
       });
       if (token) {
         await context.secrets.store("vercelToken", token);
-        vscode.window.showInformationMessage("EditCore Connect: token de Vercel guardado.");
-        panel.refreshStatus();
+        vscode.window.showInformationMessage("EditCore: cuenta Vercel conectada.");
+        await syncWorkspaceConnect(context, panel, { silent: false });
       }
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("editcoreConnect.signInVercel", async () => {
+      await vscode.commands.executeCommand("editcoreConnect.setVercelToken");
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("editcoreConnect.clearVercelToken", async () => {
+      const ok = await vscode.window.showWarningMessage(
+        "¿Desconectar cuenta Vercel de EditCore?",
+        { modal: true },
+        "Desconectar"
+      );
+      if (ok !== "Desconectar") return;
+      await context.secrets.delete("vercelToken");
+      vscode.window.showInformationMessage("EditCore: cuenta Vercel desconectada.");
+      await panel.refreshStatus();
     })
   );
 
@@ -67,8 +100,62 @@ export function activate(context: vscode.ExtensionContext) {
       });
       if (token) {
         await context.secrets.store("supabaseToken", token);
-        vscode.window.showInformationMessage("EditCore Connect: token de Supabase guardado.");
-        panel.refreshStatus();
+        vscode.window.showInformationMessage("EditCore: cuenta Supabase conectada.");
+        await syncWorkspaceConnect(context, panel, { silent: false });
+      }
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("editcoreConnect.signInSupabase", async () => {
+      await vscode.commands.executeCommand("editcoreConnect.setSupabaseToken");
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("editcoreConnect.clearSupabaseToken", async () => {
+      const ok = await vscode.window.showWarningMessage(
+        "¿Desconectar cuenta Supabase de EditCore?",
+        { modal: true },
+        "Desconectar"
+      );
+      if (ok !== "Desconectar") return;
+      await context.secrets.delete("supabaseToken");
+      vscode.window.showInformationMessage("EditCore: cuenta Supabase desconectada.");
+      await panel.refreshStatus();
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("editcoreConnect.syncWorkspace", async () => {
+      await syncWorkspaceConnect(context, panel, { silent: false });
+      vscode.window.showInformationMessage("EditCore: proyecto sincronizado con Vercel/Supabase.");
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("editcoreConnect.pickVercelProject", async () => {
+      const token = await context.secrets.get("vercelToken");
+      const cwd = getWorkspaceRoot();
+      if (!token || !cwd) return;
+      const link = await autoLinkVercelProject(context, cwd, token, { forcePick: true, silent: false });
+      if (link.linked) {
+        vscode.window.showInformationMessage(`Vercel: proyecto «${link.projectName}» vinculado.`);
+        await refreshVercelPanel(panel, context);
+        await panel.refreshStatus();
+      }
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("editcoreConnect.pickSupabaseProject", async () => {
+      const token = await context.secrets.get("supabaseToken");
+      const cwd = getWorkspaceRoot();
+      if (!token || !cwd) return;
+      const link = await autoLinkSupabaseProject(context, cwd, token, { forcePick: true, silent: false });
+      if (link.linked) {
+        vscode.window.showInformationMessage(`Supabase: proyecto «${link.projectName}» vinculado.`);
+        await panel.refreshStatus();
       }
     })
   );
@@ -137,6 +224,30 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push(
+    vscode.commands.registerCommand("editcoreConnect.connectVercel", async () => {
+      const token = await context.secrets.get("vercelToken");
+      if (!token) {
+        await vscode.commands.executeCommand("editcoreConnect.signInVercel");
+        return;
+      }
+      if (!getWorkspaceRoot()) return;
+      await syncWorkspaceConnect(context, panel, { silent: false });
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("editcoreConnect.connectSupabase", async () => {
+      const token = await context.secrets.get("supabaseToken");
+      if (!token) {
+        await vscode.commands.executeCommand("editcoreConnect.signInSupabase");
+        return;
+      }
+      if (!getWorkspaceRoot()) return;
+      await syncWorkspaceConnect(context, panel, { silent: false });
+    })
+  );
+
+  context.subscriptions.push(
     vscode.commands.registerCommand("editcoreConnect.deployVercel", async () => {
       const token = await context.secrets.get("vercelToken");
       if (!token) {
@@ -153,48 +264,55 @@ export function activate(context: vscode.ExtensionContext) {
       if (!cwd) {
         return;
       }
+      await syncWorkspaceConnect(context, panel, { silent: true });
       if (!(await isCliAvailable("vercel"))) {
         vscode.window.showWarningMessage("Instala Vercel CLI: npm i -g vercel");
         return;
       }
-      const terminal = vscode.window.createTerminal({
-        name: "EditCore — Vercel Deploy",
-        cwd,
-        env: { VERCEL_TOKEN: token },
-      });
-      terminal.show();
-      terminal.sendText("vercel --yes");
+      await runVercelDeploy(context, cwd, token, { refreshVercel: () => panel.refreshVercel() });
     })
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("editcoreConnect.linkSupabase", async () => {
-      const token = await context.secrets.get("supabaseToken");
+    vscode.commands.registerCommand("editcoreConnect.linkVercel", async () => {
+      await vscode.commands.executeCommand("editcoreConnect.pickVercelProject");
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("editcoreConnect.openVercelPreview", async () => {
+      const cwd = getWorkspaceRoot();
+      if (!cwd) {
+        return;
+      }
+      await openLastVercelDeploy(context, cwd);
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("editcoreConnect.showDomainGuide", async () => {
+      const token = await context.secrets.get("vercelToken");
       if (!token) {
-        const choice = await vscode.window.showWarningMessage(
-          "No has configurado tu token de Supabase.",
-          "Configurar ahora"
-        );
-        if (choice === "Configurar ahora") {
-          await vscode.commands.executeCommand("editcoreConnect.setSupabaseToken");
-        }
+        await vscode.commands.executeCommand("editcoreConnect.setVercelToken");
         return;
       }
       const cwd = getWorkspaceRoot();
       if (!cwd) {
         return;
       }
-      if (!(await isCliAvailable("supabase"))) {
-        vscode.window.showWarningMessage("Instala Supabase CLI: npm i -g supabase");
-        return;
-      }
-      const terminal = vscode.window.createTerminal({
-        name: "EditCore — Supabase Link",
-        cwd,
-        env: { SUPABASE_ACCESS_TOKEN: token },
-      });
-      terminal.show();
-      terminal.sendText("supabase link");
+      await showVercelDomainsGuide(context, cwd, token);
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("editcoreConnect.refreshVercelStatus", async () => {
+      await refreshVercelPanel(panel, context);
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("editcoreConnect.linkSupabase", async () => {
+      await vscode.commands.executeCommand("editcoreConnect.pickSupabaseProject");
     })
   );
 
@@ -309,6 +427,21 @@ export function activate(context: vscode.ExtensionContext) {
 
   checkAndReportCli(panel, true).catch(() => void 0);
   panel.refreshStatus();
+  void refreshVercelPanel(panel, context);
+  registerGlobalAutoConnect(context, panel);
+}
+
+async function refreshVercelPanel(
+  panel: ConnectPanelProvider,
+  context: vscode.ExtensionContext
+): Promise<void> {
+  const cwd = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  if (!cwd) {
+    panel.setVercelState({ linked: false });
+    return;
+  }
+  const state = await getVercelProjectState(cwd, context);
+  panel.setVercelState(state);
 }
 
 interface CliStatus {

@@ -1,5 +1,7 @@
 import * as vscode from "vscode";
 import { getGithubSessionLabel } from "./githubAuth";
+import type { VercelProjectState } from "./vercelService";
+import type { GlobalConnectStatus } from "./globalConnect";
 
 interface CliStatus {
   vercel: boolean;
@@ -12,90 +14,86 @@ interface PanelStatus {
   hasVercelToken: boolean;
   hasSupabaseToken: boolean;
   githubAccount?: string;
-  githubRepo?: string;
-  githubIssues?: string;
-  githubPrs?: string;
 }
 
 export class ConnectPanelProvider implements vscode.WebviewViewProvider {
   private view?: vscode.WebviewView;
   private cliStatus: CliStatus = { vercel: false, supabase: false, git: false, gh: false };
-  private githubRepo?: string;
-  private githubIssues = "";
-  private githubPrs = "";
+  private vercelState: VercelProjectState = { linked: false };
+  private globalStatus: GlobalConnectStatus = {
+    vercelAccountOk: false,
+    supabaseAccountOk: false,
+    workspaceLinkedVercel: false,
+    workspaceLinkedSupabase: false,
+  };
 
   constructor(private readonly context: vscode.ExtensionContext) {}
 
-  setGithubRepoInfo(info?: string) {
-    this.githubRepo = info;
-  }
-
-  setGithubLists(issues: string, prs: string) {
-    this.githubIssues = issues;
-    this.githubPrs = prs;
+  setVercelState(state: VercelProjectState) {
+    this.vercelState = state;
     this.render();
   }
+
+  setGlobalStatus(status: GlobalConnectStatus) {
+    this.globalStatus = status;
+    this.render();
+  }
+
+  refreshVercel() {
+    void vscode.commands.executeCommand("editcoreConnect.refreshVercelStatus");
+  }
+
+  setGithubRepoInfo(_info?: string) {}
+  setGithubLists(_issues: string, _prs: string) {}
 
   resolveWebviewView(webviewView: vscode.WebviewView) {
     this.view = webviewView;
     webviewView.webview.options = { enableScripts: true };
     this.render();
 
-    webviewView.webview.onDidReceiveMessage(async (msg) => {
+    webviewView.webview.onDidReceiveMessage((msg) => {
       switch (msg.type) {
-        case "setVercelToken":
-          vscode.commands.executeCommand("editcoreConnect.setVercelToken");
+        case "connectGithub":
+          void vscode.commands.executeCommand("editcoreConnect.signInGithub");
           break;
-        case "setSupabaseToken":
-          vscode.commands.executeCommand("editcoreConnect.setSupabaseToken");
+        case "signInVercel":
+          void vscode.commands.executeCommand("editcoreConnect.signInVercel");
+          break;
+        case "signInSupabase":
+          void vscode.commands.executeCommand("editcoreConnect.signInSupabase");
+          break;
+        case "changeVercelToken":
+          void vscode.commands.executeCommand("editcoreConnect.setVercelToken");
+          break;
+        case "changeSupabaseToken":
+          void vscode.commands.executeCommand("editcoreConnect.setSupabaseToken");
+          break;
+        case "disconnectVercel":
+          void vscode.commands.executeCommand("editcoreConnect.clearVercelToken");
+          break;
+        case "disconnectSupabase":
+          void vscode.commands.executeCommand("editcoreConnect.clearSupabaseToken");
+          break;
+        case "pickVercelProject":
+          void vscode.commands.executeCommand("editcoreConnect.pickVercelProject");
+          break;
+        case "pickSupabaseProject":
+          void vscode.commands.executeCommand("editcoreConnect.pickSupabaseProject");
+          break;
+        case "syncWorkspace":
+          void vscode.commands.executeCommand("editcoreConnect.syncWorkspace");
           break;
         case "deployVercel":
-          vscode.commands.executeCommand("editcoreConnect.deployVercel");
+          void vscode.commands.executeCommand("editcoreConnect.deployVercel");
           break;
-        case "linkSupabase":
-          vscode.commands.executeCommand("editcoreConnect.linkSupabase");
+        case "openVercelPreview":
+          void vscode.commands.executeCommand("editcoreConnect.openVercelPreview");
           break;
-        case "initSupabase":
-          vscode.commands.executeCommand("editcoreConnect.initSupabase");
+        case "showDomainGuide":
+          void vscode.commands.executeCommand("editcoreConnect.showDomainGuide");
           break;
         case "recheckCli":
-          vscode.commands.executeCommand("editcoreConnect.checkCli");
-          break;
-        case "signInGithub":
-          vscode.commands.executeCommand("editcoreConnect.signInGithub");
-          break;
-        case "cloneRepo":
-          vscode.commands.executeCommand("editcoreConnect.cloneRepo");
-          break;
-        case "publishGithub":
-          vscode.commands.executeCommand("editcoreConnect.publishGithub");
-          break;
-        case "ghAuthLogin":
-          vscode.commands.executeCommand("editcoreConnect.ghAuthLogin");
-          break;
-        case "listIssues":
-          vscode.commands.executeCommand("editcoreConnect.listIssues");
-          break;
-        case "listPRs":
-          vscode.commands.executeCommand("editcoreConnect.listPullRequests");
-          break;
-        case "createIssue":
-          vscode.commands.executeCommand("editcoreConnect.createIssue");
-          break;
-        case "refreshGithub":
-          vscode.commands.executeCommand("editcoreConnect.refreshGithub");
-          break;
-        case "warRoom":
-          vscode.commands.executeCommand("editcore.warRoom");
-          break;
-        case "deployAutonomous":
-          vscode.commands.executeCommand("editcore.deployAutonomous");
-          break;
-        case "openMarketplace":
-          vscode.commands.executeCommand("editcore.openMarketplace");
-          break;
-        case "commandHub":
-          vscode.commands.executeCommand("editcore.commandHub");
+          void vscode.commands.executeCommand("editcoreConnect.checkCli");
           break;
       }
     });
@@ -122,14 +120,7 @@ export class ConnectPanelProvider implements vscode.WebviewViewProvider {
     const hasVercel = status?.hasVercelToken ?? !!(await this.context.secrets.get("vercelToken"));
     const hasSupabase = status?.hasSupabaseToken ?? !!(await this.context.secrets.get("supabaseToken"));
     const githubAccount = status?.githubAccount ?? (await getGithubSessionLabel());
-    this.view.webview.html = this.getHtml(
-      hasVercel,
-      hasSupabase,
-      githubAccount,
-      this.githubRepo,
-      this.githubIssues,
-      this.githubPrs
-    );
+    this.view.webview.html = this.getHtml(hasVercel, hasSupabase, githubAccount);
   }
 
   private badge(ok: boolean, labelOk: string, labelBad: string): string {
@@ -138,16 +129,20 @@ export class ConnectPanelProvider implements vscode.WebviewViewProvider {
       : `<span class="badge bad">${labelBad}</span>`;
   }
 
-  private getHtml(
-    vToken: boolean,
-    sToken: boolean,
-    githubAccount?: string,
-    githubRepo?: string,
-    githubIssues?: string,
-    githubPrs?: string
-  ): string {
+  private cliChip(name: string, ok: boolean): string {
+    return `<span class="chip ${ok ? "ok" : "bad"}">${name}</span>`;
+  }
+
+  private getHtml(vToken: boolean, sToken: boolean, githubAccount?: string): string {
     const cli = this.cliStatus;
+    const g = this.globalStatus;
     const githubSignedIn = Boolean(githubAccount);
+    const vercelGlobal = vToken && g.vercelAccountOk;
+    const supabaseGlobal = sToken && g.supabaseAccountOk;
+    const vercelProject =
+      g.vercelProjectName ?? this.vercelState.projectName ?? (g.workspaceLinkedVercel ? "Vinculado" : undefined);
+    const vercelReady = vercelGlobal && (g.workspaceLinkedVercel || this.vercelState.linked);
+
     return /* html */ `<!DOCTYPE html>
 <html>
 <head>
@@ -155,7 +150,7 @@ export class ConnectPanelProvider implements vscode.WebviewViewProvider {
 <style>
   body { font-family: var(--vscode-font-family); color: var(--vscode-foreground);
     background: var(--vscode-sideBar-background); margin:0; padding:14px; font-size:13px; }
-  h3 { font-size:12px; text-transform:uppercase; letter-spacing:0.5px; opacity:0.65; margin:18px 0 8px; }
+  h3 { font-size:12px; text-transform:uppercase; letter-spacing:0.5px; opacity:0.65; margin:16px 0 8px; }
   h3:first-child { margin-top:0; }
   .card { background: var(--vscode-editor-inactiveSelectionBackground); border-radius:8px;
     padding:12px; margin-bottom:10px; }
@@ -165,82 +160,101 @@ export class ConnectPanelProvider implements vscode.WebviewViewProvider {
   .badge { font-size:11px; padding:2px 8px; border-radius:10px; white-space:nowrap; }
   .badge.ok { background: rgba(50,180,90,0.18); color:#3fb950; }
   .badge.bad { background: rgba(220,80,80,0.18); color:#e5534b; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
+  .chip { font-size:10px; padding:2px 7px; border-radius:8px; }
+  .chip.ok { background: rgba(50,180,90,0.15); color:#3fb950; }
+  .chip.bad { background: rgba(220,80,80,0.15); color:#e5534b; }
   button { font-size:12px; background: var(--vscode-button-background); color: var(--vscode-button-foreground);
-    border:none; border-radius:4px; padding:6px 10px; cursor:pointer; width:100%; margin-top:6px; }
+    border:none; border-radius:4px; padding:8px 10px; cursor:pointer; width:100%; margin-top:6px; }
   button:hover { background: var(--vscode-button-hoverBackground); }
-  button.secondary { background:none; border:1px solid var(--vscode-button-border, var(--vscode-panel-border)); color: var(--vscode-foreground); }
+  button.secondary { background:none; border:1px solid var(--vscode-button-border, var(--vscode-panel-border));
+    color: var(--vscode-foreground); padding:6px 10px; }
+  button.danger { background:none; border:1px solid rgba(220,80,80,0.5); color:#e5534b; padding:6px 10px; }
   button:disabled { opacity:0.45; cursor:not-allowed; }
+  .actions-row { display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; }
+  .actions-row button { margin-top:0; flex:1; min-width:45%; }
   .hint { font-size:11px; opacity:0.6; margin-top:8px; line-height:1.5; }
-  code { background: var(--vscode-textCodeBlock-background); padding:1px 5px; border-radius:3px; }
-  .account { font-size:11px; opacity:0.85; text-align:right; overflow:hidden; text-overflow:ellipsis; }
+  .account { font-size:11px; opacity:0.85; text-align:right; overflow:hidden; text-overflow:ellipsis; max-width:58%; }
+  .global-ok { font-size:12px; color:#3fb950; margin-bottom:6px; }
 </style>
 </head>
 <body>
 
-  <h3>Herramientas del sistema</h3>
+  <h3>Tu cuenta EditCore</h3>
   <div class="card">
-    <div class="row"><span class="name">Git</span>${this.badge(cli.git, "Instalado", "Falta")}</div>
-    <div class="row"><span class="name">GitHub CLI</span>${this.badge(cli.gh, "Instalado", "Falta")}</div>
-    <div class="row"><span class="name">Vercel CLI</span>${this.badge(cli.vercel, "Instalado", "Falta")}</div>
-    <div class="row"><span class="name">Supabase CLI</span>${this.badge(cli.supabase, "Instalado", "Falta")}</div>
-    <button class="secondary" onclick="send('recheckCli')">Volver a verificar</button>
+    <div class="hint" style="margin-top:0;margin-bottom:10px;">Conectá una vez. Cada proyecto se vincula solo al abrir la carpeta (como Cursor).</div>
+    <div class="row">
+      <span class="name">Vercel</span>
+      ${vercelGlobal ? this.badge(true, "Cuenta conectada", "") : vToken ? this.badge(false, "", "Token inválido") : this.badge(false, "", "Sin conectar")}
+    </div>
     ${
-      !cli.vercel || !cli.supabase || !cli.gh || !cli.git
-        ? `<div class="hint">Instala lo que falte:<br>
-           ${!cli.git ? "<code>winget install Git.Git</code><br>" : ""}
-           ${!cli.gh ? "<code>winget install GitHub.cli</code><br>" : ""}
-           ${!cli.vercel ? "<code>npm i -g vercel</code><br>" : ""}
-           ${!cli.supabase ? "<code>npm i -g supabase</code>" : ""}
-           </div>`
-        : ""
+      vercelGlobal
+        ? `<div class="actions-row">
+            <button class="secondary" onclick="send('changeVercelToken')">Cambiar token</button>
+            <button class="danger" onclick="send('disconnectVercel')">Desconectar</button>
+          </div>`
+        : `<button onclick="send('signInVercel')">Conectar cuenta Vercel</button>`
     }
+    <div class="row" style="margin-top:10px">
+      <span class="name">Supabase</span>
+      ${supabaseGlobal ? this.badge(true, "Cuenta conectada", "") : sToken ? this.badge(false, "", "Token inválido") : this.badge(false, "", "Sin conectar")}
+    </div>
+    ${
+      supabaseGlobal
+        ? `<div class="actions-row">
+            <button class="secondary" onclick="send('changeSupabaseToken')">Cambiar token</button>
+            <button class="danger" onclick="send('disconnectSupabase')">Desconectar</button>
+          </div>`
+        : `<button onclick="send('signInSupabase')">Conectar cuenta Supabase</button>`
+    }
+  </div>
+
+  <h3>Este proyecto</h3>
+  <div class="card">
+    <div class="row">
+      <span class="name">Vercel</span>
+      ${vercelReady ? this.badge(true, vercelProject ?? "Listo", "") : vercelGlobal ? this.badge(false, "", "Sin vincular") : this.badge(false, "", "—")}
+    </div>
+    <div class="row">
+      <span class="name">Supabase</span>
+      ${g.workspaceLinkedSupabase ? this.badge(true, g.supabaseProjectName ?? "Listo", "") : supabaseGlobal ? this.badge(false, "", "Sin vincular") : this.badge(false, "", "—")}
+    </div>
+    ${this.vercelState.lastDeployUrl ? `<div class="hint">Último deploy: <code>${escapeHtml(this.vercelState.lastDeployUrl)}</code></div>` : ""}
+    ${
+      vercelGlobal
+        ? `<div class="actions-row">
+            <button class="secondary" onclick="send('pickVercelProject')">Elegir proyecto Vercel</button>
+            <button class="secondary" onclick="send('pickSupabaseProject')" ${!supabaseGlobal ? "disabled" : ""}>Elegir Supabase</button>
+          </div>
+          <div class="actions-row">
+            <button class="secondary" onclick="send('syncWorkspace')">Sincronizar ahora</button>
+            <button class="secondary" onclick="send('deployVercel')" ${!vercelReady ? "disabled" : ""}>Deploy</button>
+            <button class="secondary" onclick="send('openVercelPreview')" ${!this.vercelState.lastDeployUrl ? "disabled" : ""}>Abrir sitio</button>
+          </div>`
+        : `<div class="hint">Conectá Vercel arriba para deploy automático en este proyecto.</div>`
+    }
+    <div class="hint">Dominio propio: <a href="#" onclick="send('showDomainGuide');return false;">guía DNS</a></div>
   </div>
 
   <h3>GitHub</h3>
   <div class="card">
     <div class="row">
-      <span class="name">Cuenta IDE</span>
+      <span class="name">Cuenta</span>
       ${githubSignedIn ? `<span class="account">${escapeHtml(githubAccount!)}</span>` : this.badge(false, "", "Sin sesión")}
     </div>
-    <div class="row"><span class="name">Extensión GitHub</span>${this.badge(true, "Incluida", "Falta")}</div>
-    <button onclick="send('signInGithub')">${githubSignedIn ? "Renovar sesión GitHub" : "Iniciar sesión en GitHub"}</button>
-    <button class="secondary" onclick="send('cloneRepo')">Clonar repositorio</button>
-    <button class="secondary" onclick="send('publishGithub')" ${!githubSignedIn ? "disabled" : ""}>Publicar repo en GitHub</button>
-    <button class="secondary" onclick="send('ghAuthLogin')" ${!cli.gh ? "disabled" : ""}>gh auth login (CLI)</button>
-    <button class="secondary" onclick="send('refreshGithub')" ${!cli.gh ? "disabled" : ""}>Actualizar repo (gh)</button>
-    <button class="secondary" onclick="send('listIssues')" ${!cli.gh ? "disabled" : ""}>Ver issues</button>
-    <button class="secondary" onclick="send('listPRs')" ${!cli.gh ? "disabled" : ""}>Ver pull requests</button>
-    <button class="secondary" onclick="send('createIssue')" ${!cli.gh ? "disabled" : ""}>Crear issue</button>
-    ${githubRepo ? `<div class="hint">Repo: ${escapeHtml(githubRepo)}</div>` : ""}
-    ${githubIssues ? `<div class="hint">Issues recientes:<br><pre style="white-space:pre-wrap;font-size:11px">${escapeHtml(githubIssues)}</pre></div>` : ""}
-    ${githubPrs ? `<div class="hint">PRs recientes:<br><pre style="white-space:pre-wrap;font-size:11px">${escapeHtml(githubPrs)}</pre></div>` : ""}
-    <div class="hint">La extensión <code>vscode.github</code> y autenticación OAuth vienen integradas en EditCore. Los tokens se guardan en el llavero del sistema.</div>
+    <button onclick="send('connectGithub')">${githubSignedIn ? "Renovar sesión" : "Conectar GitHub"}</button>
   </div>
 
-  <h3>Vercel</h3>
+  <h3>Herramientas</h3>
   <div class="card">
-    <div class="row"><span class="name">Token</span>${this.badge(vToken, "Configurado", "Sin configurar")}</div>
-    <button onclick="send('setVercelToken')">${vToken ? "Cambiar token" : "Configurar token"}</button>
-    <button class="secondary" onclick="send('deployVercel')" ${!vToken || !cli.vercel ? "disabled" : ""}>Deploy a Vercel</button>
-    <div class="hint">Token en <a href="https://vercel.com/account/tokens">vercel.com/account/tokens</a>. Se usa vía <code>VERCEL_TOKEN</code> sin exponerlo en la terminal.</div>
-  </div>
-
-  <h3>Supabase</h3>
-  <div class="card">
-    <div class="row"><span class="name">Token</span>${this.badge(sToken, "Configurado", "Sin configurar")}</div>
-    <button onclick="send('setSupabaseToken')">${sToken ? "Cambiar token" : "Configurar token"}</button>
-    <button class="secondary" onclick="send('initSupabase')" ${!sToken || !cli.supabase ? "disabled" : ""}>supabase init</button>
-    <button class="secondary" onclick="send('linkSupabase')" ${!sToken || !cli.supabase ? "disabled" : ""}>Vincular proyecto (link)</button>
-    <div class="hint">Token en <a href="https://supabase.com/dashboard/account/tokens">supabase.com/dashboard/account/tokens</a>. Se usa vía <code>SUPABASE_ACCESS_TOKEN</code>.</div>
-  </div>
-
-  <h3>EditCore Ops</h3>
-  <div class="card">
-    <button onclick="send('warRoom')">Sala de guerra (incidente)</button>
-    <button class="secondary" onclick="send('deployAutonomous')">Deploy autónomo</button>
-    <button class="secondary" onclick="send('openMarketplace')">Marketplace</button>
-    <button class="secondary" onclick="send('commandHub')">Command Hub</button>
-    <div class="hint">Accesos rápidos al agente y ops de EditCore Claude.</div>
+    <div class="chips">
+      ${this.cliChip("Git", cli.git)}
+      ${this.cliChip("gh", cli.gh)}
+      ${this.cliChip("Vercel CLI", cli.vercel)}
+      ${this.cliChip("Supabase CLI", cli.supabase)}
+    </div>
+    <button class="secondary" onclick="send('recheckCli')">Verificar</button>
+    <div class="hint">Deploy usa API cuando puede; las CLIs son opcionales para comandos avanzados.</div>
   </div>
 
 <script>

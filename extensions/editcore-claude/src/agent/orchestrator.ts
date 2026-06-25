@@ -4,13 +4,31 @@ import { runAgentTask, AgentEvent } from './agentLoop';
 import { AgentRoleId } from '../agents/roles';
 import { createClaudeClient, mapClaudeApiError } from '../anthropicClient';
 import { LLM_CONFIG } from '../llmConfig';
+import {
+  parseStructuredPlan,
+  formatPlanForDisplay,
+  requestPlanApproval,
+  savePlan,
+  isPlanApprovalEnabled,
+} from '../platform/planApproval';
+import {
+  runPostChangeValidation,
+  saveValidationReport,
+  formatValidationMarkdown,
+  isPostChangeValidationEnabled,
+} from '../platform/postChangeValidator';
 
 export type OrchestratorEvent =
-  | { type: 'phase'; phase: 'plan' | 'execute' | 'review'; message: string }
+  | { type: 'phase'; phase: 'plan' | 'execute' | 'review' | 'validate'; message: string }
   | AgentEvent;
 
+const PLAN_SYSTEM =
+  'Sos el orquestador de EditCore. Generá un plan estructurado en Markdown con estas secciones:\n' +
+  '## Objetivo\n## Plan (pasos numerados, máx 8)\n## Riesgos\n## Beneficios\n## Reversión\n' +
+  'Sé concreto con archivos y comandos. No ejecutes nada, solo el plan.';
+
 /**
- * Orquestador v1: plan → ejecución agent → revisión breve.
+ * Orquestador v1: plan → aprobación → ejecución agent → validación → revisión.
  */
 export async function runOrchestratedTask(
   apiKey: string,
@@ -24,6 +42,7 @@ export async function runOrchestratedTask(
   const config = vscode.workspace.getConfiguration('editcore');
   const model = config.get<string>('model', LLM_CONFIG.claude.defaultModel);
   const client = createClaudeClient(apiKey);
+  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
 
   onEvent({ type: 'phase', phase: 'plan', message: 'Generando plan de trabajo…' });
 
@@ -33,9 +52,7 @@ export async function runOrchestratedTask(
       {
         model,
         max_tokens: 2048,
-        system:
-          'Sos el orquestador de EditCore. Generá un plan numerado (máx 8 pasos) para la tarea. ' +
-          'Solo el plan, sin ejecutar nada. Sé concreto con archivos/comandos.',
+        system: PLAN_SYSTEM,
         messages: [{ role: 'user', content: userTask }],
       },
       { signal: abortSignal }
@@ -45,10 +62,32 @@ export async function runOrchestratedTask(
       .filter((b): b is Anthropic.Messages.TextBlock => b.type === 'text')
       .map((b) => b.text)
       .join('\n');
-    onEvent({ type: 'assistant_text', text: `## Plan\n\n${planText}\n\n---\n\n` });
+    onEvent({ type: 'assistant_text', text: `${formatPlanForDisplay(parseStructuredPlan(planText, userTask))}\n\n---\n\n` });
   } catch (err: any) {
     onEvent({ type: 'error', message: mapClaudeApiError(err).message });
     return;
+  }
+
+  const structuredPlan = parseStructuredPlan(planText, userTask);
+  if (workspaceRoot) {
+    await savePlan(structuredPlan, workspaceRoot).catch(() => undefined);
+  }
+
+  if (isPlanApprovalEnabled()) {
+    const approval = await requestPlanApproval(structuredPlan);
+    if (approval === 'rejected') {
+      onEvent({ type: 'assistant_text', text: '\n_Plan rechazado. No se ejecutó ningún cambio._\n' });
+      onEvent({ type: 'done', reason: 'finished' });
+      return;
+    }
+    if (approval === 'edit') {
+      onEvent({
+        type: 'assistant_text',
+        text: '\n_Editá el plan en el chat y volvé a enviar la tarea._\n',
+      });
+      onEvent({ type: 'done', reason: 'finished' });
+      return;
+    }
   }
 
   onEvent({ type: 'phase', phase: 'execute', message: 'Ejecutando plan…' });
@@ -64,6 +103,18 @@ export async function runOrchestratedTask(
     onToolCall,
     roleId
   );
+
+  if (isPostChangeValidationEnabled()) {
+    onEvent({ type: 'phase', phase: 'validate', message: 'Validando build y tests…' });
+    const validation = await runPostChangeValidation();
+    if (validation) {
+      await saveValidationReport(validation).catch(() => undefined);
+      onEvent({
+        type: 'assistant_text',
+        text: `\n\n## Validación\n\n${formatValidationMarkdown(validation)}\n`,
+      });
+    }
+  }
 
   onEvent({ type: 'phase', phase: 'review', message: 'Revisión final…' });
 

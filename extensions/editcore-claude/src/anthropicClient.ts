@@ -3,9 +3,12 @@ import Anthropic from "@anthropic-ai/sdk";
 import { LLM_CONFIG } from "./llmConfig";
 import { isValidModelId, resolveClaudeModelId } from "./models";
 
+import type { ChatMessageContent } from "./chat/multimodalContent";
+import { toAnthropicMessageContent } from "./chat/multimodalContent";
+
 export interface ChatMessage {
   role: "user" | "assistant";
-  content: string;
+  content: ChatMessageContent;
 }
 
 export interface ClaudeUsage {
@@ -73,7 +76,10 @@ export async function callClaude(
     const response = await client.messages.create({
       model,
       max_tokens: maxTokens,
-      messages: messages.map((m) => ({ role: m.role, content: m.content })),
+      messages: messages.map((m) => ({
+        role: m.role,
+        content: toAnthropicMessageContent(m.content) as Anthropic.MessageParam["content"],
+      })),
     });
 
     const textBlock = response.content.find((b) => b.type === "text");
@@ -105,7 +111,10 @@ export async function streamClaude(
     const stream = client.messages.stream({
       model,
       max_tokens: maxTokens,
-      messages: messages.map((m) => ({ role: m.role, content: m.content })),
+      messages: messages.map((m) => ({
+        role: m.role,
+        content: toAnthropicMessageContent(m.content) as Anthropic.MessageParam["content"],
+      })),
     });
 
     stream.on("text", (text) => onToken(text));

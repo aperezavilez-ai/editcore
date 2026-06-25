@@ -53,7 +53,8 @@
       "defaultChatParticipant",
       "chatParticipantAdditions",
       "chatProvider",
-      "chatContextProvider"
+      "chatContextProvider",
+      "chatReferenceBinaryData"
     ]
   },
   "checksumFailMoreInfoUrl": "https://github.com/editcore/editcore#readme",
