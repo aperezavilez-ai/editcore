@@ -63,6 +63,11 @@ if (Test-Path $removeGptpro4all) {
   node $removeGptpro4all
 }
 
+$skipCopilotSetup = Join-Path $Root "scripts\patch-portable-skip-copilot-chat-setup.js"
+if (Test-Path $skipCopilotSetup) {
+  node $skipCopilotSetup
+}
+
 $fixStartup = Join-Path $Root "scripts\fix-startup-settings.js"
 if (Test-Path $fixStartup) {
   node $fixStartup

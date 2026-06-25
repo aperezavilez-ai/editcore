@@ -57,14 +57,26 @@ function fixDb(dbPath) {
   if (chatRow?.value) {
     try {
       const ctx = JSON.parse(chatRow.value);
+      let touch = false;
       if (ctx.disabled || !ctx.installed) {
         ctx.disabled = false;
         ctx.installed = true;
+        touch = true;
+      }
+      if (!ctx.completed) {
+        ctx.completed = true;
+        touch = true;
+      }
+      if (ctx.entitlement === 1 || ctx.entitlement === 3) {
+        ctx.entitlement = 5;
+        touch = true;
+      }
+      if (touch) {
         db.prepare("INSERT OR REPLACE INTO ItemTable (key, value) VALUES (?, ?)").run(
           "chat.setupContext",
           JSON.stringify(ctx)
         );
-        console.log("OK: chat.setupContext -> disabled=false, installed=true");
+        console.log("OK: chat.setupContext -> installed, completed, sin forzar Copilot");
         changed = true;
       }
     } catch (e) {
@@ -74,15 +86,17 @@ function fixDb(dbPath) {
     db.prepare("INSERT OR REPLACE INTO ItemTable (key, value) VALUES (?, ?)").run(
       "chat.setupContext",
       JSON.stringify({
-        entitlement: 1,
+        entitlement: 5,
         installed: true,
         disabled: false,
+        completed: true,
         untrusted: false,
         disabledInWorkspace: false,
         hidden: false,
+        registered: true,
       })
     );
-    console.log("OK: chat.setupContext creado");
+    console.log("OK: chat.setupContext creado (setup completado)");
     changed = true;
   }
 
