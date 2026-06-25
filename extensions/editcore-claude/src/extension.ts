@@ -30,12 +30,16 @@ import { showCommandHub } from "./hub/commandHub";
 import { createStatusBarItem, showAbout } from "./hub/statusBar";
 import { initVoyageService } from "./rag/voyageService";
 import { registerDiagnosticCommands } from "./diagnostics/diagnosticCommands";
-import { registerQuickActionsBar, openEditCoreHome } from "./hub/quickActionsBar";
+import { registerQuickActionsBar } from "./hub/quickActionsBar";
+import { registerRecentWorkspaceTracking } from "./welcome/recentWorkspaces";
+import { registerWelcomePanel, showWelcomeIfNeeded } from "./welcome/welcomePanel";
 import { setDiagnosticRuntime } from "./diagnostics/diagnosticRuntime";
 
 export function activate(context: vscode.ExtensionContext) {
   void writeActivationProbe(context);
   registerQuickActionsBar(context);
+  registerRecentWorkspaceTracking(context);
+  registerWelcomePanel(context);
 
   const apiKeyService = new ApiKeyService(context);
   setDiagnosticRuntime(context, apiKeyService);
@@ -278,7 +282,10 @@ export function activate(context: vscode.ExtensionContext) {
     })
   );
 
-  void openEditCoreHome();
+  // Pantalla de inicio (estilo Cursor) cuando no hay carpeta abierta.
+  setTimeout(() => {
+    void showWelcomeIfNeeded(context);
+  }, 250);
 }
 
 async function writeActivationProbe(context: vscode.ExtensionContext): Promise<void> {

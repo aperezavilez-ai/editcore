@@ -1,6 +1,7 @@
 {
   "workbench.browser.showInTitleBar": true,
   "workbench.browser.openLocalhostLinks": true,
+  "workbench.startupEditor": "none",
   "workbench.welcomePage.experimentalOnboarding": false,
   "chat.titleBar.signIn.enabled": false,
   "chat.agentHost.enabled": false,

@@ -54,5 +54,10 @@ if (Test-Path $clearCache) {
   node $clearCache
 }
 
+$applySettings = Join-Path $Root "scripts\apply-portable-user-settings.js"
+if (Test-Path $applySettings) {
+  node $applySettings
+}
+
 Write-Host ""
 Write-Host "Deploy completo. Abre VSCode-win32-x64\EditCore.exe y recarga (Ctrl+Alt+R)." -ForegroundColor Cyan
