@@ -148,26 +148,6 @@
       transition: color 0.15s, background 0.15s;
     }
     nav a:hover, .nav-btn:hover { color: var(--cyan); background: rgba(0, 229, 255, 0.06); }
-    .avatar {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      border: 1px solid var(--border-neon);
-      background:
-        radial-gradient(circle at 35% 30%, #6a7a8f 0%, #3d4a5c 35%, #1e2633 70%),
-        linear-gradient(160deg, #4a5568, #1a2030);
-      margin-left: 0.5rem;
-      box-shadow: 0 0 14px var(--neon-soft);
-      flex-shrink: 0;
-      overflow: hidden;
-    }
-    .avatar::after {
-      content: "";
-      display: block;
-      width: 100%;
-      height: 100%;
-      background: radial-gradient(ellipse 60% 45% at 50% 38%, rgba(180,195,210,0.35), transparent 55%);
-    }
 
     /* Hero */
     .hero {
@@ -462,9 +442,7 @@
         <nav>
           <a href="#descargar">Descargar</a>
           <button type="button" class="nav-btn" data-pdf-open>Guía</button>
-          <a href="https://github.com/aperezavilez-ai/editcore" target="_blank" rel="noopener noreferrer">GitHub</a>
         </nav>
-        <div class="avatar" title="Perfil" aria-hidden="true"></div>
       </div>
     </header>
 
