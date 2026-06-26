@@ -12,9 +12,9 @@ $VERSION = (Get-Content (Join-Path $ROOT "VERSION") -Raw).Trim()
 $DIST = Join-Path $ROOT "dist"
 $PORTABLE_DIR = Join-Path $ROOT "VSCode-win32-x64"
 
-$iconScript = Join-Path $ROOT "scripts\generate-win32-ico.js"
+$iconScript = Join-Path $ROOT "scripts\generate-editcore-icons.py"
 if (Test-Path $iconScript) {
-  node $iconScript 2>&1 | Out-Host
+  python $iconScript 2>&1 | Out-Host
 }
 
 $iconIco = Join-Path $ROOT "branding\icons\win32\code.ico"

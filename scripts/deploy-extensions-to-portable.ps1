@@ -6,6 +6,11 @@ param(
 $ErrorActionPreference = "Stop"
 $Portable = Join-Path $Root "VSCode-win32-x64\resources\app\extensions"
 
+$genIcons = Join-Path $Root "scripts\generate-editcore-icons.py"
+if (Test-Path $genIcons) {
+  python $genIcons 2>&1 | Out-Host
+}
+
 function Invoke-Npm {
   param([Parameter(Mandatory = $true)][string[]]$Arguments)
 

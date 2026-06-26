@@ -11,7 +11,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "branding" / "icons" / "editcore-logo-source.png"
+SOURCE = ROOT / "branding" / "icons" / "editcore-logo-web.png"
 FALLBACK = ROOT / "branding" / "icons" / "editcore-logo.png"
 OUT = ROOT / "branding" / "icons" / "win32" / "code.ico"
 SIZES = [16, 32, 48, 64, 128, 256]
@@ -44,18 +44,16 @@ def load_logo() -> Image.Image:
     if not src.exists():
         raise SystemExit(f"Falta logo: {src}")
     rgba = Image.open(src).convert("RGBA")
-    if has_rounded_alpha(rgba):
-        w, h = rgba.size
-        side = min(w, h)
-        left = (w - side) // 2
-        top = (h - side) // 2
-        return rgba.crop((left, top, left + side, top + side))
-    logo = round_logo(rgba)
-    w, h = logo.size
+    w, h = rgba.size
     side = min(w, h)
     left = (w - side) // 2
     top = (h - side) // 2
-    return logo.crop((left, top, left + side, top + side))
+    square = rgba.crop((left, top, left + side, top + side))
+    mask = Image.new("L", (side, side), 0)
+    ImageDraw.Draw(mask).ellipse((0, 0, side - 1, side - 1), fill=255)
+    out = Image.new("RGBA", (side, side), (0, 0, 0, 0))
+    out.paste(square, mask=mask)
+    return out
 
 
 def rgba_icon(size: int, logo: Image.Image) -> Image.Image:

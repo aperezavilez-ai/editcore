@@ -91,15 +91,22 @@ def apply_rounded_corners(img: Image.Image, radius_ratio: float = 0.22) -> Image
     return out
 
 
-def apply_circular_mask(img: Image.Image) -> Image.Image:
-    """Recorta a circulo perfecto (mismo aspecto que editcore.mx)."""
+def apply_circular_mask(img: Image.Image, feather: float = 1.0) -> Image.Image:
+    """Recorta a circulo perfecto; elimina halo cuadrado fuera del disco."""
     square = crop_square(img.convert("RGBA"))
     w, h = square.size
-    mask = Image.new("L", (w, h), 0)
-    ImageDraw.Draw(mask).ellipse((0, 0, w - 1, h - 1), fill=255)
-    out = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-    out.paste(square, mask=mask)
-    return out
+    cx, cy = (w - 1) / 2.0, (h - 1) / 2.0
+    radius = min(cx, cy)
+    arr = np.array(square, dtype=np.float32)
+    ys, xs = np.ogrid[:h, :w]
+    dist = np.sqrt((xs - cx) ** 2 + (ys - cy) ** 2)
+    if feather > 0:
+        alpha_scale = np.clip((radius - dist) / feather, 0.0, 1.0)
+    else:
+        alpha_scale = (dist <= radius).astype(np.float32)
+    arr[:, :, 3] *= alpha_scale
+    arr[arr[:, :, 3] < 1, :3] = 0
+    return Image.fromarray(arr.astype(np.uint8))
 
 
 def normalize_logo(img: Image.Image) -> Image.Image:
@@ -126,13 +133,13 @@ def flatten_on_black(img: Image.Image, size: int) -> Image.Image:
 
 
 def center_on_canvas(img: Image.Image, size: int) -> Image.Image:
-    thumb = img.copy()
+    thumb = apply_circular_mask(img)
     pad = min(48, max(2, size // 8))
     inner = max(1, size - pad)
     thumb.thumbnail((inner, inner), Image.Resampling.LANCZOS)
     canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     canvas.paste(thumb, ((size - thumb.width) // 2, (size - thumb.height) // 2), thumb)
-    return apply_rounded_corners(canvas, radius_ratio=0.22)
+    return canvas
 
 
 def write_text(path: Path, content: str) -> None:
@@ -170,12 +177,8 @@ def has_rounded_alpha(img: Image.Image) -> bool:
 
 
 def prepare_logo(img: Image.Image) -> Image.Image:
-    """Usa el alpha nativo del maestro; solo redondea si el PNG es cuadrado opaco."""
-    rgba = img.convert("RGBA")
-    if has_rounded_alpha(rgba):
-        return crop_square(rgba)
-    normalized = normalize_logo(rgba)
-    return apply_rounded_corners(crop_square(normalized))
+    """Normaliza el maestro a circulo (mismo aspecto que editcore.mx)."""
+    return apply_circular_mask(img)
 
 
 def load_master_logo() -> Image.Image:
@@ -282,13 +285,15 @@ def main() -> None:
     logo = load_master_logo()
     circular = load_circular_logo()
     write_web_favicons(circular)
-    canvas512 = center_on_canvas(logo, 512)
+    brand_letterpress = ICON_DIR / "letterpress"
+    brand_letterpress.mkdir(parents=True, exist_ok=True)
+    canvas512 = center_on_canvas(circular, 512)
     canvas512.save(ICON_DIR / "editcore-logo-512.png")
     print(f"wrote {ICON_DIR / 'editcore-logo-512.png'}")
 
-    svg24 = svg_embedded("0 0 24 24", png_b64(logo.resize((24, 24), Image.Resampling.LANCZOS)))
-    svg512 = svg_embedded("0 0 512 512", png_b64(canvas512))
-    svg1024 = svg_embedded("0 0 1024 1024", png_b64(center_on_canvas(logo, 1024)))
+    svg24 = svg_embedded("0 0 24 24", png_b64(circular.resize((24, 24), Image.Resampling.LANCZOS)))
+    svg512 = svg_embedded("0 0 512 512", png_b64(center_on_canvas(circular, 512)))
+    svg1024 = svg_embedded("0 0 1024 1024", png_b64(center_on_canvas(circular, 1024)))
 
     for rel in (
         "branding/icons/editcore-icon.svg",
@@ -301,6 +306,18 @@ def main() -> None:
     ):
         write_text(ROOT / rel, svg24)
 
+    activity_png = apply_circular_mask(circular).resize((28, 28), Image.Resampling.LANCZOS)
+    for rel in (
+        "extensions/editcore-claude/media/editcore-activity.png",
+        "editcore-src/extensions/editcore-claude/media/editcore-activity.png",
+        "VSCode-win32-x64/resources/app/extensions/editcore-claude/media/editcore-activity.png",
+    ):
+        path = ROOT / rel
+        if path.parent.exists() or "extensions" in rel:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            activity_png.save(path)
+            print(f"wrote {path}")
+
     write_text(ICON_DIR / "app-icon-source.svg", svg512)
 
     workbench_svg = ROOT / "editcore-src/src/vs/workbench/browser/media/code-icon.svg"
@@ -311,11 +328,11 @@ def main() -> None:
     if sessions_svg.parent.exists():
         write_text(
             sessions_svg,
-            svg_embedded("0 0 96 96", png_b64(logo.resize((96, 96), Image.Resampling.LANCZOS))),
+            svg_embedded("0 0 96 96", png_b64(circular.resize((96, 96), Image.Resampling.LANCZOS))),
         )
 
     sessions_logo_svg = svg_embedded(
-        "0 0 128 128", png_b64(logo.resize((128, 128), Image.Resampling.LANCZOS))
+        "0 0 128 128", png_b64(circular.resize((128, 128), Image.Resampling.LANCZOS))
     )
     sessions_logo_dirs = [
         ROOT / "editcore-src/src/vs/sessions/browser/media",
@@ -346,6 +363,7 @@ def main() -> None:
     ]
     for name, opacity in letterpress_files.items():
         content = svg_letterpress(circular, opacity)
+        write_text(brand_letterpress / name, content)
         for d in letterpress_dirs:
             if d.parent.exists() or "editcore-src/src" in str(d):
                 write_text(d / name, content)
@@ -380,7 +398,7 @@ def main() -> None:
         if path.parent.exists() or "editcore-src" in str(path):
             path.parent.mkdir(parents=True, exist_ok=True)
             if size in (70, 150):
-                logo.resize((size, size), Image.Resampling.LANCZOS).save(path)
+                apply_circular_mask(logo).resize((size, size), Image.Resampling.LANCZOS).save(path)
             else:
                 flatten_on_black(logo, size).save(path)
             print(f"wrote {path}")
@@ -395,7 +413,7 @@ def main() -> None:
         if ico_path.name == "EditCore.exe":
             continue
         if ico_path.parent.exists() or "editcore-src" in str(ico_path):
-            save_ico(ico_path, logo)
+            save_ico(ico_path, circular)
 
     darwin_dir = ICON_DIR / "darwin" / "code.iconset"
     for name, size in DARWIN_SIZES.items():
