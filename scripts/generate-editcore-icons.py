@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 ICON_DIR = ROOT / "branding" / "icons"
 PNG_PATH = ICON_DIR / "editcore-logo.png"
 SOURCE_PATH = ICON_DIR / "editcore-logo-source.png"
+WEB_PATH = ICON_DIR / "editcore-logo-web.png"
 
 DARWIN_SIZES = {
     "icon_16x16.png": 16,
@@ -87,6 +88,17 @@ def apply_rounded_corners(img: Image.Image, radius_ratio: float = 0.22) -> Image
     draw.rounded_rectangle((0, 0, w - 1, h - 1), radius=radius, fill=255)
     out = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     out.paste(img, mask=mask)
+    return out
+
+
+def apply_circular_mask(img: Image.Image) -> Image.Image:
+    """Recorta a circulo perfecto (mismo aspecto que editcore.mx)."""
+    square = crop_square(img.convert("RGBA"))
+    w, h = square.size
+    mask = Image.new("L", (w, h), 0)
+    ImageDraw.Draw(mask).ellipse((0, 0, w - 1, h - 1), fill=255)
+    out = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    out.paste(square, mask=mask)
     return out
 
 
@@ -177,6 +189,51 @@ def load_master_logo() -> Image.Image:
     return logo
 
 
+def load_circular_logo() -> Image.Image:
+    """Logo circular para watermark del editor y favicon web (editcore-logo-web.png)."""
+    src = WEB_PATH if WEB_PATH.exists() else SOURCE_PATH if SOURCE_PATH.exists() else PNG_PATH
+    if not src.exists():
+        raise SystemExit(f"Missing circular logo: {WEB_PATH}")
+    logo = apply_circular_mask(Image.open(src))
+    WEB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    logo.save(WEB_PATH)
+    web_assets = ROOT / "web" / "assets"
+    if web_assets.parent.exists():
+        web_assets.mkdir(parents=True, exist_ok=True)
+        logo.save(web_assets / "editcore-logo-web.png")
+        print(f"wrote {web_assets / 'editcore-logo-web.png'}")
+    print(f"wrote {WEB_PATH}")
+    return logo
+
+
+def write_web_favicons(circular: Image.Image) -> None:
+    assets = ROOT / "web" / "assets"
+    if not assets.parent.exists():
+        return
+    assets.mkdir(parents=True, exist_ok=True)
+    sizes = {
+        "favicon-16.png": 16,
+        "favicon-32.png": 32,
+        "apple-touch-icon.png": 180,
+    }
+    ico_images = []
+    for name, size in sizes.items():
+        img = circular.resize((size, size), Image.Resampling.LANCZOS)
+        path = assets / name
+        img.save(path)
+        print(f"wrote {path}")
+        if size in (16, 32):
+            ico_images.append(img.convert("RGBA"))
+    ico_path = assets / "favicon.ico"
+    ico_images[1].save(
+        ico_path,
+        format="ICO",
+        sizes=[(16, 16), (32, 32)],
+        append_images=[ico_images[0]],
+    )
+    print(f"wrote {ico_path}")
+
+
 def svg_letterpress(logo: Image.Image, opacity: str) -> str:
     img = logo.resize((260, 260), Image.Resampling.LANCZOS)
     b64 = png_b64(img)
@@ -223,6 +280,8 @@ def cleanup_legacy_icons() -> None:
 def main() -> None:
     cleanup_legacy_icons()
     logo = load_master_logo()
+    circular = load_circular_logo()
+    write_web_favicons(circular)
     canvas512 = center_on_canvas(logo, 512)
     canvas512.save(ICON_DIR / "editcore-logo-512.png")
     print(f"wrote {ICON_DIR / 'editcore-logo-512.png'}")
@@ -286,7 +345,7 @@ def main() -> None:
         ROOT / "VSCode-win32-x64/resources/app/out/media",
     ]
     for name, opacity in letterpress_files.items():
-        content = svg_letterpress(logo, opacity)
+        content = svg_letterpress(circular, opacity)
         for d in letterpress_dirs:
             if d.parent.exists() or "editcore-src/src" in str(d):
                 write_text(d / name, content)
@@ -296,7 +355,7 @@ def main() -> None:
         "letterpress-sessions-dark.svg": "0.3",
     }
     for name, opacity in sessions_letterpress.items():
-        content = svg_letterpress(logo, opacity)
+        content = svg_letterpress(circular, opacity)
         d = ROOT / "editcore-src/src/vs/sessions/contrib/chat/browser/media"
         if d.exists():
             write_text(d / name, content)
@@ -376,7 +435,7 @@ def main() -> None:
     if portable_exe.parent.exists() and checksum_script.exists():
         subprocess.run(["node", str(checksum_script), str(ROOT)], check=False)
     if portable_exe.exists() and apply_icon.exists():
-        subprocess.run(["node", str(apply_icon)], check=True, cwd=ROOT)
+        subprocess.run(["node", str(apply_icon)], check=False, cwd=ROOT)
 
 
 if __name__ == "__main__":

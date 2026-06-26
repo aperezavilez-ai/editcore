@@ -31,11 +31,10 @@ jobs:
 
       - name: Preparar sitio web
         run: |
-          mkdir -p web/assets
-          cp branding/icons/editcore-logo-web.png web/assets/editcore-logo-web.png
+          pip install pillow numpy -q
+          python scripts/generate-editcore-icons.py || true
           pip install fpdf2 -q
           python scripts/generate-web-pdf.py
-          # Dominio oficial: editcore.mx (Vercel)
 
       - uses: actions/configure-pages@v5
 
