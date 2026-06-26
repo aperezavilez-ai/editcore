@@ -3,256 +3,549 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="EditCore IDE — editor con Claude y OpenAI integrados. Descarga gratis para Windows.">
+  <meta name="description" content="EditCore IDE — Claude y OpenAI integrados. Agentes, GitHub, Vercel y Supabase en un solo editor.">
+  <link rel="canonical" href="https://editcore.com/">
   <title>EditCore IDE — Descargar</title>
   <link rel="icon" href="assets/editcore-logo.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0d1117;
-      --bg-card: #161b22;
-      --border: #30363d;
-      --text: #e6edf3;
-      --muted: #8b949e;
-      --accent: #3b82f6;
-      --accent-hover: #2563eb;
-      --glow: rgba(59, 130, 246, 0.35);
+      --bg: #050608;
+      --bg-card: #0a0c10;
+      --text: #f0f4f8;
+      --muted: #8b9aab;
+      --cyan: #00e5ff;
+      --cyan-dim: #00b8d4;
+      --blue: #0288d1;
+      --neon: rgba(0, 229, 255, 0.55);
+      --neon-soft: rgba(0, 229, 255, 0.12);
+      --border-neon: rgba(0, 229, 255, 0.35);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
     body {
-      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      font-family: "Inter", "Segoe UI", system-ui, sans-serif;
       background: var(--bg);
       color: var(--text);
-      line-height: 1.6;
+      line-height: 1.55;
       min-height: 100vh;
+      overflow-x: hidden;
     }
-    .bg-grid {
+
+    /* Fondo cuadricula perspectiva + plasma */
+    .scene {
       position: fixed;
       inset: 0;
-      background-image:
-        radial-gradient(ellipse 80% 50% at 50% -20%, var(--glow), transparent),
-        linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px);
-      background-size: 100% 100%, 48px 48px, 48px 48px;
-      pointer-events: none;
       z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 90% 60% at 50% 0%, rgba(0, 180, 220, 0.14), transparent 55%),
+        radial-gradient(ellipse 50% 40% at 50% 35%, rgba(0, 229, 255, 0.06), transparent 70%),
+        linear-gradient(180deg, #050608 0%, #080a0e 50%, #050608 100%);
     }
-    header, main, footer { position: relative; z-index: 1; }
+    .scene::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0, 229, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 229, 255, 0.04) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black 20%, transparent 75%);
+      transform: perspective(600px) rotateX(58deg) scale(2.2);
+      transform-origin: 50% 0%;
+      opacity: 0.7;
+    }
+    .scene::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 18%;
+      width: 480px;
+      height: 480px;
+      margin-left: -240px;
+      background: radial-gradient(circle, rgba(0, 229, 255, 0.08) 0%, transparent 65%);
+      filter: blur(40px);
+      animation: pulse-glow 4s ease-in-out infinite;
+    }
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 0.6; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.08); }
+    }
+
+    .wrap { position: relative; z-index: 1; max-width: 1120px; margin: 0 auto; padding: 0 1.5rem; }
+
+    /* Header */
     header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      max-width: 1080px;
-      margin: 0 auto;
-      padding: 1.25rem 1.5rem;
+      padding: 1.1rem 0;
+      gap: 1rem;
     }
     .brand {
       display: flex;
       align-items: center;
-      gap: 0.65rem;
+      gap: 0.6rem;
       text-decoration: none;
       color: var(--text);
       font-weight: 700;
-      letter-spacing: 0.12em;
-      font-size: 0.95rem;
+      letter-spacing: 0.14em;
+      font-size: 0.88rem;
+      flex-shrink: 0;
     }
     .brand img {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      box-shadow: 0 0 12px var(--neon-soft);
     }
-    nav a {
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    nav { display: flex; align-items: center; gap: 0.15rem; }
+    nav a, .nav-btn {
       color: var(--muted);
       text-decoration: none;
-      font-size: 0.9rem;
-      margin-left: 1.25rem;
+      font-size: 0.88rem;
+      font-weight: 500;
+      padding: 0.45rem 0.85rem;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-family: inherit;
+      border-radius: 8px;
+      transition: color 0.15s, background 0.15s;
     }
-    nav a:hover { color: var(--text); }
+    nav a:hover, .nav-btn:hover { color: var(--cyan); background: rgba(0, 229, 255, 0.06); }
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid var(--border-neon);
+      background: linear-gradient(135deg, #1a2030 0%, #0d1118 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 0.5rem;
+      box-shadow: 0 0 14px var(--neon-soft);
+      flex-shrink: 0;
+    }
+    .avatar svg { width: 18px; height: 18px; fill: var(--muted); }
+
+    /* Hero */
     .hero {
-      max-width: 1080px;
-      margin: 0 auto;
-      padding: 3rem 1.5rem 4rem;
       text-align: center;
+      padding: 2.5rem 0 3.5rem;
     }
-    .logo-wrap {
+    .logo-stage {
+      position: relative;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 1.5rem;
+      width: 200px;
+      height: 200px;
+      margin-bottom: 1.75rem;
     }
-    .logo-wrap img {
-      width: 120px;
-      height: 120px;
-      border-radius: 28px;
-      box-shadow: 0 0 0 1px var(--border), 0 24px 48px rgba(0,0,0,.45);
+    .plasma {
+      position: absolute;
+      inset: -30%;
+      border-radius: 50%;
+      background:
+        conic-gradient(from 200deg at 50% 50%,
+          transparent 0deg,
+          rgba(0, 229, 255, 0.35) 40deg,
+          transparent 80deg,
+          rgba(0, 136, 209, 0.25) 140deg,
+          transparent 200deg,
+          rgba(0, 229, 255, 0.3) 280deg,
+          transparent 360deg);
+      filter: blur(28px);
+      animation: plasma-spin 10s linear infinite;
+      opacity: 0.85;
+    }
+    .plasma-2 {
+      position: absolute;
+      inset: -15%;
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 35%, rgba(0, 229, 255, 0.2), transparent 55%);
+      filter: blur(18px);
+      animation: plasma-pulse 3s ease-in-out infinite alternate;
+    }
+    @keyframes plasma-spin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes plasma-pulse {
+      from { opacity: 0.5; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1.05); }
+    }
+    .logo-stage img {
+      position: relative;
+      z-index: 2;
+      width: 148px;
+      height: 148px;
+      border-radius: 32px;
+      filter: drop-shadow(0 0 24px rgba(0, 229, 255, 0.35)) drop-shadow(0 20px 40px rgba(0, 0, 0, 0.6));
     }
     .hero h1 {
-      font-size: clamp(2rem, 5vw, 2.75rem);
+      font-size: clamp(2.25rem, 6vw, 3rem);
       font-weight: 800;
-      letter-spacing: 0.14em;
-      margin-bottom: 0.5rem;
+      letter-spacing: 0.18em;
+      margin-bottom: 0.65rem;
+      text-shadow: 0 0 40px rgba(0, 229, 255, 0.15);
     }
     .tagline {
-      font-size: 1.15rem;
+      font-size: 1.05rem;
       color: var(--muted);
-      max-width: 520px;
+      max-width: 540px;
       margin: 0 auto 2rem;
+      font-weight: 400;
+    }
+    .cta-wrap {
+      position: relative;
+      display: inline-block;
     }
     .cta {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 0.5rem;
-      background: linear-gradient(180deg, #4b8df8 0%, var(--accent) 100%);
+      min-width: 260px;
+      padding: 1rem 2.25rem;
+      font-size: 1.05rem;
+      font-weight: 700;
       color: #fff;
       text-decoration: none;
-      font-weight: 700;
-      font-size: 1.1rem;
-      padding: 0.95rem 2rem;
       border-radius: 12px;
-      border: 1px solid rgba(255,255,255,.12);
-      box-shadow: 0 8px 32px var(--glow);
-      transition: transform .15s, box-shadow .15s, background .15s;
+      border: 1px solid rgba(0, 229, 255, 0.45);
+      background: linear-gradient(135deg, var(--cyan) 0%, var(--cyan-dim) 45%, var(--blue) 100%);
+      box-shadow:
+        0 0 20px rgba(0, 229, 255, 0.35),
+        0 8px 32px rgba(0, 136, 209, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+      z-index: 1;
     }
     .cta:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 40px var(--glow);
-      background: linear-gradient(180deg, #5b9bff 0%, var(--accent-hover) 100%);
+      transform: translateY(-3px);
+      box-shadow:
+        0 0 36px rgba(0, 229, 255, 0.55),
+        0 14px 40px rgba(0, 136, 209, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
     }
-    .cta-secondary {
+    .cta-cursor {
+      position: absolute;
+      right: -8px;
+      bottom: -12px;
+      width: 28px;
+      height: 28px;
+      z-index: 3;
+      pointer-events: none;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+      animation: cursor-tap 2.2s ease-in-out infinite;
+    }
+    @keyframes cursor-tap {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      45% { transform: translate(-4px, -4px) scale(0.92); }
+      55% { transform: translate(-2px, -2px) scale(0.96); }
+    }
+    .cta-link {
       display: inline-block;
-      margin-top: 1rem;
-      color: var(--muted);
+      margin-top: 1.1rem;
+      color: var(--cyan-dim);
       font-size: 0.9rem;
       text-decoration: none;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-family: inherit;
+      transition: color 0.15s, text-shadow 0.15s;
     }
-    .cta-secondary:hover { color: var(--accent); }
+    .cta-link:hover {
+      color: var(--cyan);
+      text-shadow: 0 0 12px var(--neon-soft);
+    }
     .version {
       margin-top: 1rem;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       color: var(--muted);
+      letter-spacing: 0.02em;
     }
+
+    /* Feature cards */
     .features {
-      max-width: 1080px;
-      margin: 0 auto;
-      padding: 0 1.5rem 4rem;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      grid-template-columns: repeat(4, 1fr);
       gap: 1rem;
+      padding-bottom: 3rem;
     }
     .card {
       background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 1.25rem 1.35rem;
+      border: 1px solid var(--border-neon);
+      border-radius: 12px;
+      padding: 1.2rem 1.15rem 1.35rem;
+      box-shadow:
+        0 0 20px rgba(0, 229, 255, 0.06),
+        inset 0 1px 0 rgba(0, 229, 255, 0.08);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+      border-color: rgba(0, 229, 255, 0.55);
+      box-shadow: 0 0 28px rgba(0, 229, 255, 0.12);
+    }
+    .card-icon {
+      width: 28px;
+      height: 28px;
+      margin-bottom: 0.65rem;
+      color: var(--cyan);
     }
     .card h3 {
-      font-size: 0.95rem;
-      margin-bottom: 0.35rem;
+      font-size: 0.92rem;
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+      color: var(--text);
     }
     .card p {
-      font-size: 0.88rem;
+      font-size: 0.78rem;
       color: var(--muted);
+      line-height: 1.45;
     }
+
+    /* Footer */
     footer {
-      max-width: 1080px;
-      margin: 0 auto;
-      padding: 2rem 1.5rem 3rem;
-      border-top: 1px solid var(--border);
-      font-size: 0.85rem;
+      padding: 1.75rem 0 2.5rem;
+      border-top: 1px solid rgba(0, 229, 255, 0.12);
+      text-align: center;
+      font-size: 0.82rem;
       color: var(--muted);
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      justify-content: space-between;
-      align-items: center;
     }
-    footer a { color: var(--muted); text-decoration: none; }
-    footer a:hover { color: var(--text); }
-    .legal { display: flex; gap: 1rem; flex-wrap: wrap; }
-    @media (max-width: 600px) {
-      nav { display: none; }
-      .hero { padding-top: 2rem; }
+    footer .legal {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.35rem 1rem;
+      margin-top: 0.35rem;
+    }
+    footer a {
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    footer a:hover { color: var(--cyan); }
+
+    /* Modal PDF */
+    .pdf-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .pdf-modal.open { display: flex; }
+    .pdf-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.82);
+      backdrop-filter: blur(6px);
+    }
+    .pdf-panel {
+      position: relative;
+      width: min(900px, 100%);
+      height: min(85vh, 720px);
+      background: #111;
+      border: 1px solid var(--border-neon);
+      border-radius: 14px;
+      box-shadow: 0 0 48px rgba(0, 229, 255, 0.15);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .pdf-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.65rem 1rem;
+      background: #0a0c10;
+      border-bottom: 1px solid rgba(0, 229, 255, 0.15);
+    }
+    .pdf-toolbar span { font-size: 0.88rem; font-weight: 600; }
+    .pdf-close {
+      border: 1px solid var(--border-neon);
+      background: transparent;
+      color: var(--text);
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+      transition: background 0.15s, color 0.15s;
+    }
+    .pdf-close:hover { background: rgba(0, 229, 255, 0.12); color: var(--cyan); }
+    .pdf-frame {
+      flex: 1;
+      width: 100%;
+      border: none;
+      background: #1a1a1a;
+    }
+
+    @media (max-width: 900px) {
+      .features { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 560px) {
+      .features { grid-template-columns: 1fr; }
+      nav a, .nav-btn { padding: 0.4rem 0.5rem; font-size: 0.8rem; }
+      .brand span { display: none; }
     }
   </style>
 </head>
 <body>
-  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="scene" aria-hidden="true"></div>
 
-  <header>
-    <a class="brand" href="./">
-      <img src="assets/editcore-logo.png" alt="" width="36" height="36">
-      EDITCORE
-    </a>
-    <nav>
-      <a href="#descargar">Descargar</a>
-      <a href="https://github.com/aperezavilez-ai/editcore/blob/main/docs/DOWNLOAD.md">Guía</a>
-      <a href="https://github.com/aperezavilez-ai/editcore">GitHub</a>
-    </nav>
-  </header>
-
-  <main>
-    <section class="hero" id="descargar">
-      <div class="logo-wrap">
-        <img src="assets/editcore-logo.png" alt="EditCore" width="120" height="120">
-      </div>
-      <h1>EDITCORE</h1>
-      <p class="tagline">
-        IDE con Claude y OpenAI integrados. Agentes, GitHub, Vercel y Supabase en un solo editor.
-      </p>
-      <a class="cta" href="https://github.com/aperezavilez-ai/editcore/releases/latest" id="downloadBtn">
-        Descargar EditCore
+  <div class="wrap">
+    <header>
+      <a class="brand" href="./">
+        <img src="assets/editcore-logo.png" alt="" width="34" height="34">
+        <span>EDITCORE</span>
       </a>
-      <br>
-      <a class="cta-secondary" href="https://github.com/aperezavilez-ai/editcore/blob/main/docs/DOWNLOAD.md">
-        Instrucciones de instalación →
-      </a>
-      <p class="version" id="versionLine">Windows 10/11 · 64 bits · Edición comunidad</p>
-    </section>
+      <div class="header-right">
+        <nav>
+          <a href="#descargar">Descargar</a>
+          <button type="button" class="nav-btn" data-pdf-open>Guía</button>
+          <a href="https://vercel.com" target="_blank" rel="noopener noreferrer">Vercel</a>
+        </nav>
+        <div class="avatar" title="Perfil" aria-hidden="true">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+        </div>
+      </div>
+    </header>
 
-    <section class="features">
-      <div class="card">
-        <h3>Chat y agentes IA</h3>
-        <p>Claude y OpenAI nativos. Modo agente con herramientas de código.</p>
-      </div>
-      <div class="card">
-        <h3>EditCore Connect</h3>
-        <p>Vercel, Supabase y GitHub conectados desde el panel lateral.</p>
-      </div>
-      <div class="card">
-        <h3>Basado en VS Code</h3>
-        <p>Terminal, Git, extensiones Open VSX y flujo de desarrollo completo.</p>
-      </div>
-      <div class="card">
-        <h3>Privacidad</h3>
-        <p>Sin telemetría por defecto. Tus API keys quedan en tu equipo.</p>
-      </div>
-    </section>
-  </main>
+    <main>
+      <section class="hero" id="descargar">
+        <div class="logo-stage">
+          <div class="plasma" aria-hidden="true"></div>
+          <div class="plasma-2" aria-hidden="true"></div>
+          <img src="assets/editcore-logo.png" alt="EditCore" width="148" height="148">
+        </div>
+        <h1>EDITCORE</h1>
+        <p class="tagline">
+          IDE con Claude y OpenAI integrados. Agentes, GitHub, Vercel y Supabase en un solo editor.
+        </p>
+        <div class="cta-wrap">
+          <a class="cta" href="https://github.com/aperezavilez-ai/editcore/releases/latest" id="downloadBtn">
+            Descargar EditCore
+          </a>
+          <svg class="cta-cursor" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="#fff" stroke="#111" stroke-width="1.2" d="M5 3l12 8.5-5 .5 2.5 6.5-2.5 1.2-2.5-6.5-5 1.3z"/>
+          </svg>
+        </div>
+        <br>
+        <button type="button" class="cta-link" data-pdf-open>instrucciones de instalacion</button>
+        <p class="version" id="versionLine">Versión 1.0.1 - Windows 10/11 - 64 bits</p>
+      </section>
 
-  <footer>
-    <span>© EditCore IDE</span>
-    <div class="legal">
-      <a href="https://github.com/aperezavilez-ai/editcore/blob/main/docs/TERMS.md">Términos</a>
-      <a href="https://github.com/aperezavilez-ai/editcore/blob/main/docs/PRIVACY.md">Privacidad</a>
-      <a href="https://github.com/aperezavilez-ai/editcore/blob/main/LICENSE.txt">Licencia MIT</a>
+      <section class="features" aria-label="Características">
+        <article class="card">
+          <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/>
+          </svg>
+          <h3>Chat y agentes IA</h3>
+          <p>Chat y agentes IA: Chat con Clàuders y openaiMI integrados. Agentes, GitHub, en solo editor.</p>
+        </article>
+        <article class="card">
+          <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+          </svg>
+          <h3>EditCore Connect</h3>
+          <p>EditCore Connect: EditCore connect adten with control. Agentes, GitHub, Vercel Supabase en un editor.</p>
+        </article>
+        <article class="card">
+          <svg class="card-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M17.5 2.5l-1 4.5h-3l-1.2-4.5h-2.3L9 7H6l-1-4.5H2.5L4 12l-1.5 4.5H6l1-4.5h3l1.2 4.5h2.3l1-4.5h3l1 4.5h2.5L20 12l1.5-4.5h-4z"/>
+          </svg>
+          <h3>Basado en VS Code</h3>
+          <p>Basado en VS Code: EditCore is VS Code eos AI for basia:or ob usen and any ant al development.</p>
+        </article>
+        <article class="card">
+          <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <rect x="9" y="10" width="6" height="5" rx="1" fill="currentColor" stroke="none"/>
+          </svg>
+          <h3>Privacidad</h3>
+          <p>Privacidad: Privacidad AI svelest protection ai from nistici to trollect or prvsuication.</p>
+        </article>
+      </section>
+    </main>
+
+    <footer>
+      <span>© EditCore</span>
+      <div class="legal">
+        <a href="https://github.com/aperezavilez-ai/editcore/blob/main/docs/TERMS.md">Términos</a>
+        <a href="https://github.com/aperezavilez-ai/editcore/blob/main/docs/PRIVACY.md">Privacidad</a>
+        <a href="https://github.com/aperezavilez-ai/editcore/blob/main/LICENSE.txt">Licencia MIT</a>
+      </div>
+    </footer>
+  </div>
+
+  <div class="pdf-modal" id="pdfModal" role="dialog" aria-modal="true" aria-labelledby="pdfTitle" hidden>
+    <div class="pdf-backdrop" data-pdf-close></div>
+    <div class="pdf-panel">
+      <div class="pdf-toolbar">
+        <span id="pdfTitle">Guía de instalación — EditCore</span>
+        <button type="button" class="pdf-close" data-pdf-close aria-label="Cerrar">×</button>
+      </div>
+      <iframe class="pdf-frame" src="about:blank" title="Guía PDF" id="pdfFrame"></iframe>
     </div>
-  </footer>
+  </div>
 
   <script>
     (function () {
+      var PDF_URL = 'assets/guia-instalacion.pdf';
+      var modal = document.getElementById('pdfModal');
+      var frame = document.getElementById('pdfFrame');
+
+      function openPdf() {
+        frame.src = PDF_URL;
+        modal.hidden = false;
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+      }
+      function closePdf() {
+        modal.classList.remove('open');
+        modal.hidden = true;
+        frame.src = 'about:blank';
+        document.body.style.overflow = '';
+      }
+
+      document.querySelectorAll('[data-pdf-open]').forEach(function (el) {
+        el.addEventListener('click', openPdf);
+      });
+      document.querySelectorAll('[data-pdf-close]').forEach(function (el) {
+        el.addEventListener('click', closePdf);
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && modal.classList.contains('open')) closePdf();
+      });
+
       var manifestUrl = 'https://raw.githubusercontent.com/aperezavilez-ai/editcore/main/releases/latest.json';
       fetch(manifestUrl)
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (data) {
           if (!data || !data.version) return;
           var line = document.getElementById('versionLine');
-          if (line) line.textContent = 'Versión ' + data.version + ' · Windows 10/11 · 64 bits';
+          if (line) line.textContent = 'Versión ' + data.version + ' - Windows 10/11 - 64 bits';
           var btn = document.getElementById('downloadBtn');
-          if (btn && data.setup && data.setup.url) {
-            btn.href = data.setup.url;
-          }
+          if (btn && data.setup && data.setup.url) btn.href = data.setup.url;
         })
-        .catch(function () { /* offline / CORS ok */ });
+        .catch(function () {});
     })();
   </script>
 </body>
