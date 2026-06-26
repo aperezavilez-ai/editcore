@@ -2,7 +2,7 @@
   "name": "editcore-connect",
   "displayName": "EditCore Connect — GitHub, Vercel & Supabase",
   "description": "Panel unificado para conectar repos de GitHub, desplegar en Vercel y vincular proyectos Supabase desde EditCore IDE.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "editcore",
   "engines": {
     "vscode": "^1.85.0"

@@ -76,23 +76,7 @@ function main() {
   }
 
   console.log(`Icono aplicado a ${EXE}`);
-
-  const installer = path.join(ROOT, 'EditCoreUserSetup-x64.exe');
-  if (fs.existsSync(installer) && fs.existsSync(ICO)) {
-    const tmpIns = path.join(os.tmpdir(), `EditCoreSetup-icon-${Date.now()}.exe`);
-    fs.copyFileSync(installer, tmpIns);
-    stripSignature(tmpIns);
-    const ri = spawnSync(RCEDIT, [tmpIns, '--set-icon', ICO], { encoding: 'utf8' });
-    if (ri.status === 0) {
-      const bak = installer + '.iconbak';
-      if (fs.existsSync(bak)) fs.unlinkSync(bak);
-      fs.renameSync(installer, bak);
-      fs.copyFileSync(tmpIns, installer);
-      fs.unlinkSync(bak);
-      fs.unlinkSync(tmpIns);
-      console.log(`Icono aplicado a ${installer}`);
-    }
-  }
+  // El instalador Inno ya embebe SetupIconFile=code.ico al compilar; no usar rcedit aqui.
 }
 
 main();

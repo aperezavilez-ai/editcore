@@ -2,7 +2,7 @@
   "name": "editcore-claude",
   "displayName": "EditCore - Claude Assistant",
   "description": "Chat con Claude (Anthropic) y OpenAI integrado nativamente en EditCore IDE.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "editcore",
   "engines": {
     "vscode": "^1.85.0"

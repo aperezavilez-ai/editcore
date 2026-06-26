@@ -16,6 +16,28 @@ $iconScript = Join-Path $ROOT "scripts\generate-win32-ico.js"
 if (Test-Path $iconScript) {
   node $iconScript 2>&1 | Out-Host
 }
+
+$iconIco = Join-Path $ROOT "branding\icons\win32\code.ico"
+$setupSrcRoot = Join-Path $ROOT "EditCoreUserSetup-x64.exe"
+$setupBuilt = Join-Path $ROOT "editcore-src\.build\win32-x64\user-setup\EditCoreUserSetup.exe"
+$buildInstaller = Join-Path $ROOT "scripts\build-win-installer.ps1"
+$repoIco = Join-Path $ROOT "editcore-src\resources\win32\code.ico"
+if ((Test-Path $buildInstaller) -and (Test-Path (Join-Path $ROOT "editcore-src"))) {
+  $needRebuild = $false
+  if (-not (Test-Path $setupBuilt)) { $needRebuild = $true }
+  elseif ((Test-Path $iconIco) -and (Get-Item $iconIco).LastWriteTime -gt (Get-Item $setupBuilt).LastWriteTime) { $needRebuild = $true }
+  elseif ((Test-Path $repoIco) -and (Test-Path $iconIco) -and ((Get-FileHash $repoIco).Hash -ne (Get-FileHash $iconIco).Hash)) { $needRebuild = $true }
+  if ($needRebuild) {
+    Write-Host "Recompilando instalador Inno (logo actualizado)..." -ForegroundColor Cyan
+    & $buildInstaller -SetupOnly
+    if ($LASTEXITCODE -ne 0) { throw "build-win-installer.ps1 fallo con codigo $LASTEXITCODE" }
+  }
+}
+if ((Test-Path $setupBuilt) -and ((Test-Path $setupSrcRoot) -eq $false -or (Get-Item $setupBuilt).Length -gt (Get-Item $setupSrcRoot).Length)) {
+  Copy-Item $setupBuilt $setupSrcRoot -Force
+  Write-Host "Instalador Inno listo: $setupSrcRoot" -ForegroundColor Green
+}
+
 $applyIcon = Join-Path $ROOT "scripts\apply-exe-icon.js"
 if (Test-Path $applyIcon) {
   node $applyIcon 2>&1 | Out-Host
@@ -77,6 +99,8 @@ $notesPath = Join-Path $DIST "RELEASE_NOTES.txt"
 @(
   "EditCore IDE $VERSION"
   "===================="
+  ""
+  "Logo oficial actualizado en instalador, IDE y pagina web."
   ""
   "Descarga: docs/DOWNLOAD.md"
   ""
