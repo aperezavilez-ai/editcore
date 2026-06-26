@@ -1,0 +1,8 @@
+{
+  "version": 2,
+  "outputDirectory": "web",
+  "framework": null,
+  "rewrites": [
+    { "source": "/download", "destination": "/index.html" }
+  ]
+}

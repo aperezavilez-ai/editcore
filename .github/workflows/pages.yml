@@ -35,6 +35,7 @@ jobs:
           cp branding/icons/editcore-logo-web.png web/assets/editcore-logo-web.png
           pip install fpdf2 -q
           python scripts/generate-web-pdf.py
+          # GitHub Pages redirige a Vercel; dominio futuro: editcore.mx
 
       - uses: actions/configure-pages@v5
 

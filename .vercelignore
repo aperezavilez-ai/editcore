@@ -1,0 +1,8 @@
+editcore-src/
+VSCode-win32-x64/
+dist/
+extensions/
+scripts/node_modules/
+**/*.exe
+**/*.zip
+_debug-*
