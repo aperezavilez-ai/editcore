@@ -95,6 +95,34 @@ export function registerProductCommands(context: vscode.ExtensionContext): void 
       const key = generateDevLicenseKey();
       await vscode.env.clipboard.writeText(key);
       vscode.window.showInformationMessage(`Clave de desarrollo copiada: ${key}`);
+    }),
+
+    vscode.commands.registerCommand('editcore.repairChat', async () => {
+      try {
+        await vscode.commands.executeCommand(
+          'workbench.extensions.action.enableExtension',
+          'editcore.editcore-claude'
+        );
+      } catch {
+        // ignore
+      }
+      const hasKey = await context.secrets.get('anthropicApiKey') ||
+        (await context.secrets.get('openaiApiKey'));
+      if (!hasKey) {
+        const go = await vscode.window.showWarningMessage(
+          'Falta API Key de Claude u OpenAI. El chat no puede responder sin ella.',
+          'Configurar APIs'
+        );
+        if (go === 'Configurar APIs') {
+          try {
+            await vscode.commands.executeCommand('editcoreConnect.openApis');
+          } catch {
+            await vscode.commands.executeCommand('editcore.openAccountPanel');
+          }
+        }
+      }
+      await vscode.commands.executeCommand('workbench.action.chat.clear');
+      await vscode.commands.executeCommand('editcoreConnect.reloadWindow');
     })
   );
 }

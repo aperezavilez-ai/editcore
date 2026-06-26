@@ -44,23 +44,25 @@ import { registerPlatformCommands } from "./platform/platformCommands";
 import { registerGlobalCommands } from "./global/globalCommands";
 
 export function activate(context: vscode.ExtensionContext) {
+  const apiKeyService = new ApiKeyService(context);
+  setDiagnosticRuntime(context, apiKeyService);
+
+  // Chat primero: el workbench espera modelos y agente antes de responder.
+  registerClaudeLanguageModelProvider(context, apiKeyService);
+  registerClaudeChatParticipant(context, apiKeyService);
+  registerChatEditorGuard(context);
+
   void writeActivationProbe(context);
   registerQuickActionsBar(context);
   registerWelcomePanel(context);
   registerProductCommands(context);
-  registerChatEditorGuard(context);
   registerPlatformCommands(context);
   registerGlobalCommands(context);
   void showWelcomeIfNeeded(context);
-  void runFirstRunWizardIfNeeded(context);
+  setTimeout(() => void runFirstRunWizardIfNeeded(context), 6000);
   void scheduleUpdateCheck(context);
 
-  const apiKeyService = new ApiKeyService(context);
-  setDiagnosticRuntime(context, apiKeyService);
   initVoyageService(context);
-
-  registerClaudeLanguageModelProvider(context, apiKeyService);
-  registerClaudeChatParticipant(context, apiKeyService);
   registerWorkspaceContextProvider(context);
   void migrateDeprecatedModelSettings();
 

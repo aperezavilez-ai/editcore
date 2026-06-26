@@ -12,6 +12,15 @@ $VERSION = (Get-Content (Join-Path $ROOT "VERSION") -Raw).Trim()
 $DIST = Join-Path $ROOT "dist"
 $PORTABLE_DIR = Join-Path $ROOT "VSCode-win32-x64"
 
+$iconScript = Join-Path $ROOT "scripts\generate-win32-ico.js"
+if (Test-Path $iconScript) {
+  node $iconScript 2>&1 | Out-Host
+}
+$applyIcon = Join-Path $ROOT "scripts\apply-exe-icon.js"
+if (Test-Path $applyIcon) {
+  node $applyIcon 2>&1 | Out-Host
+}
+
 Write-Host ""
 Write-Host "=== EditCore package-release v$VERSION ===" -ForegroundColor Cyan
 

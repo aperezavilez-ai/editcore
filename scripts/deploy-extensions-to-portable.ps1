@@ -96,6 +96,11 @@ if (Test-Path $lmResolve) {
   node $lmResolve
 }
 
+$chatInstant = Join-Path $Root "scripts\patch-portable-chat-instant-ready.js"
+if (Test-Path $chatInstant) {
+  node $chatInstant
+}
+
 $lmGroups = Join-Path $Root "scripts\patch-portable-fix-editcore-lm-groups.js"
 if (Test-Path $lmGroups) {
   node $lmGroups

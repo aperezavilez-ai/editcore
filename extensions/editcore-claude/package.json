@@ -119,6 +119,10 @@
         "title": "EditCore: Estado del producto"
       },
       {
+        "command": "editcore.repairChat",
+        "title": "EditCore: Reparar chat"
+      },
+      {
         "command": "editcore.openAccountPanel",
         "title": "EditCore: Configurar APIs",
         "shortTitle": "Configurar APIs"
