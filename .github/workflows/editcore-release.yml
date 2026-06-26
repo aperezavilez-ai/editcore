@@ -1,0 +1,72 @@
+# EditCore — Release (empaquetado y GitHub Release)
+
+name: EditCore Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Versión (ej. 1.0.0) — solo workflow_dispatch'
+        required: false
+
+jobs:
+  compile-and-manifest:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Sync version from tag
+        shell: pwsh
+        run: |
+          if ("${{ github.ref_type }}" -eq "tag") {
+            $v = "${{ github.ref_name }}" -replace '^v',''
+            Set-Content -Path VERSION -Value $v
+          } elseif ("${{ inputs.version }}") {
+            Set-Content -Path VERSION -Value "${{ inputs.version }}"
+          }
+          node scripts/sync-product-version.js
+
+      - name: Compile extensions (release)
+        shell: pwsh
+        run: ./scripts/compile-extensions-release.ps1
+
+      - name: Package metadata (sin portable en CI)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          $v = Get-Content VERSION -Raw
+          @"
+          EditCore IDE $($v.Trim())
+          Build CI — descarga el ZIP portable desde releases locales o ejecuta package-release.ps1 con VSCode-win32-x64.
+          "@ | Set-Content dist/RELEASE_NOTES.txt
+          node scripts/generate-release-manifest.js
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            releases/latest.json
+            releases/update/win32-x64/stable.json
+            dist/RELEASE_NOTES.txt
+          generate_release_notes: true
+
+  ci:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Compile extensions release
+        shell: pwsh
+        run: ./scripts/compile-extensions-release.ps1

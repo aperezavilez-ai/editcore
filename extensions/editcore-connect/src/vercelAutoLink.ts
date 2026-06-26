@@ -117,7 +117,25 @@ export async function autoLinkVercelProject(
 ): Promise<{ linked: boolean; projectName?: string; message?: string }> {
   const state = await getVercelProjectState(cwd, context);
   if (state.linked && !options.forcePick) {
-    return { linked: true, projectName: state.projectName };
+    const hints = await getWorkspaceHints(cwd);
+    const nameScore = state.projectName ? scoreNameMatch(state.projectName, hints.all) : 0;
+
+    let gitMatches = false;
+    if (hints.gitRemoteSlug && state.projectId) {
+      const { ok, projects } = await validateVercelAccount(token);
+      if (ok) {
+        const linked = projects.find((p) => p.id === state.projectId);
+        const repo = linked?.link?.repo;
+        if (repo) {
+          gitMatches = normalizeGithubSlug(repo) === normalizeGithubSlug(hints.gitRemoteSlug);
+        }
+      }
+    }
+
+    if (nameScore >= 40 || gitMatches) {
+      return { linked: true, projectName: state.projectName };
+    }
+    // Vínculo antiguo de otra carpeta (ej. vercel link en el proyecto equivocado)
   }
 
   const { ok, projects } = await validateVercelAccount(token);

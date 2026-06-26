@@ -2,7 +2,7 @@
   "name": "editcore-claude",
   "displayName": "EditCore - Claude Assistant",
   "description": "Chat con Claude (Anthropic) y OpenAI integrado nativamente en EditCore IDE.",
-  "version": "1.4.0",
+  "version": "1.0.0",
   "publisher": "editcore",
   "engines": {
     "vscode": "^1.85.0"
@@ -13,7 +13,9 @@
     },
     "virtualWorkspaces": true
   },
-  "extensionKind": ["ui"],
+  "extensionKind": [
+    "ui"
+  ],
   "categories": [
     "Other",
     "Machine Learning"
@@ -99,6 +101,22 @@
         "command": "editcore.showWelcome",
         "title": "EditCore: Pantalla de inicio",
         "shortTitle": "Inicio"
+      },
+      {
+        "command": "editcore.checkForUpdates",
+        "title": "EditCore: Buscar actualizaciones"
+      },
+      {
+        "command": "editcore.openDownloadPage",
+        "title": "EditCore: Página de descarga"
+      },
+      {
+        "command": "editcore.activateLicense",
+        "title": "EditCore: Activar licencia"
+      },
+      {
+        "command": "editcore.productHealth",
+        "title": "EditCore: Estado del producto"
       },
       {
         "command": "editcore.openAccountPanel",
@@ -374,7 +392,9 @@
           "type": "array",
           "default": [],
           "description": "Comandos custom de validación (vacío = detectar npm run build/test)",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         "editcore.multiAgent.enabled": {
           "type": "boolean",
@@ -412,6 +432,11 @@
           ],
           "default": "free",
           "description": "Plan EditCore (controla items del marketplace local)"
+        },
+        "editcore.product.checkUpdatesOnStartup": {
+          "type": "boolean",
+          "default": true,
+          "description": "Comprobar nuevas versiones de EditCore al iniciar (cada 12 h)"
         },
         "editcore.marketplace.remoteUrl": {
           "type": "string",
@@ -538,8 +563,9 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
+    "vscode:prepublish": "npm run compile:release",
     "compile": "tsc -p ./",
+    "compile:release": "tsc -p ./tsconfig.release.json",
     "watch": "tsc -watch -p ./",
     "test": "node --test test/*.test.js"
   },

@@ -34,6 +34,9 @@ import { initVoyageService } from "./rag/voyageService";
 import { registerDiagnosticCommands } from "./diagnostics/diagnosticCommands";
 import { registerQuickActionsBar } from "./hub/quickActionsBar";
 import { registerWelcomePanel, showWelcomeIfNeeded } from "./welcome/welcomePanel";
+import { runFirstRunWizardIfNeeded } from "./welcome/firstRunWizard";
+import { registerProductCommands } from "./product/productCommands";
+import { scheduleUpdateCheck } from "./product/updateChecker";
 import { setDiagnosticRuntime } from "./diagnostics/diagnosticRuntime";
 import { openFreshClaudeChat } from "./chat/openFreshChat";
 import { registerChatEditorGuard } from "./chat/chatEditorGuard";
@@ -44,10 +47,13 @@ export function activate(context: vscode.ExtensionContext) {
   void writeActivationProbe(context);
   registerQuickActionsBar(context);
   registerWelcomePanel(context);
+  registerProductCommands(context);
   registerChatEditorGuard(context);
   registerPlatformCommands(context);
   registerGlobalCommands(context);
   void showWelcomeIfNeeded(context);
+  void runFirstRunWizardIfNeeded(context);
+  void scheduleUpdateCheck(context);
 
   const apiKeyService = new ApiKeyService(context);
   setDiagnosticRuntime(context, apiKeyService);

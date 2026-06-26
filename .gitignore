@@ -3,6 +3,7 @@ editcore-src/
 
 # Build portable / instalador generado localmente
 VSCode-win32-x64/
+dist/
 
 # Dependencias
 extensions/*/node_modules/

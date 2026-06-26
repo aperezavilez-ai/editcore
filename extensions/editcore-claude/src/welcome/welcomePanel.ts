@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { getRecentWorkspaces, rememberWorkspace, type RecentWorkspace } from "./recentWorkspaces";
+import { getExtensionVersion, DOWNLOAD_PAGE_URL } from "../product/productVersion";
 
 let currentPanel: vscode.WebviewPanel | undefined;
 
@@ -61,6 +62,10 @@ async function showWelcomePanel(context: vscode.ExtensionContext): Promise<void>
         } catch {
           await vscode.commands.executeCommand("editcore.openAccountPanel");
         }
+      } else if (msg.type === "checkUpdates") {
+        await vscode.commands.executeCommand("editcore.checkForUpdates");
+      } else if (msg.type === "openDownload") {
+        await vscode.env.openExternal(vscode.Uri.parse(DOWNLOAD_PAGE_URL));
       } else if (msg.type === "refresh") {
         await pushState(context);
       }
@@ -110,6 +115,7 @@ async function pushState(context: vscode.ExtensionContext): Promise<void> {
   currentPanel.webview.postMessage({
     type: "state",
     recents: recents.map(formatRecent),
+    version: getExtensionVersion(),
   });
 }
 
@@ -231,7 +237,7 @@ function getHtml(webview: vscode.Webview, context: vscode.ExtensionContext): str
     <div class="brand">
       <img src="${logoUri}" alt="EditCore" />
       <h1>EDITCORE</h1>
-      <p>IDE con Claude y OpenAI integrados</p>
+      <p>IDE con Claude y OpenAI integrados · <span id="versionLabel">v…</span></p>
     </div>
 
     <div class="cards">
@@ -259,6 +265,8 @@ function getHtml(webview: vscode.Webview, context: vscode.ExtensionContext): str
 
     <div class="footer">
       <button id="configureApis">Configurar API Keys</button>
+      <button id="checkUpdates">Buscar actualizaciones</button>
+      <button id="openDownload">Descargar / reinstalar</button>
       <span>Ctrl+Alt+I · Chat</span>
       <span>Ctrl+Alt+R · Recargar</span>
     </div>
@@ -273,12 +281,18 @@ function getHtml(webview: vscode.Webview, context: vscode.ExtensionContext): str
   document.getElementById('connectSsh').onclick = () => { err.textContent = ''; vscode.postMessage({ type: 'connectSsh' }); };
   document.getElementById('openAllRecent').onclick = () => vscode.postMessage({ type: 'openAllRecent' });
   document.getElementById('configureApis').onclick = () => vscode.postMessage({ type: 'configureApis' });
+  document.getElementById('checkUpdates').onclick = () => vscode.postMessage({ type: 'checkUpdates' });
+  document.getElementById('openDownload').onclick = () => vscode.postMessage({ type: 'openDownload' });
 
   window.addEventListener('message', (e) => {
     const msg = e.data;
     if (msg.type === 'error') { err.textContent = msg.text; return; }
     if (msg.type !== 'state') return;
     err.textContent = '';
+    if (msg.version) {
+      const v = document.getElementById('versionLabel');
+      if (v) v.textContent = 'v' + msg.version;
+    }
     const list = document.getElementById('recentList');
     list.innerHTML = '';
     if (!msg.recents || !msg.recents.length) {

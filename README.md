@@ -198,29 +198,41 @@ esto mismo.
 
 ---
 
-## Decisiones de este proyecto (uso personal)
+## Distribución y descarga (producto)
 
-Este fork está pensado para **uso personal, no para distribuir a otros
-usuarios**. Eso simplifica varias cosas que un producto público sí
-necesitaría:
+EditCore se distribuye como **producto descargable** para Windows x64:
 
-- **Claude**: tú pones tu propia API key de Anthropic (`Ctrl+Shift+P` →
-  "EditCore: Configurar API Key de Anthropic"). No hay facturación ni
-  key compartida — pagas directo a Anthropic según tu uso.
-- **Sin sincronización con ningún servidor propio** — no existe
-  "editcore.com"; todo vive en tu máquina y habla directo con
-  Anthropic / Vercel / Supabase / GitHub.
-- **Sin auto-actualización** — cuando quieras una versión nueva,
-  vuelves a correr `build-editcore.ps1` (o `git pull` en
-  `editcore-src/` + recompilar).
-- **Sin firma de código** — al ser solo para ti, el aviso de
-  "publicador desconocido" de Windows no es un problema real; solo
-  haz clic en "More info" → "Run anyway" la primera vez que abras el
-  instalador.
-- **Sin distribución** — el `.exe` que genera el script se queda en
-  tu máquina; no hay que publicarlo en ningún lado.
+| Recurso | Ubicación |
+|---------|-----------|
+| Guía de descarga | [docs/DOWNLOAD.md](docs/DOWNLOAD.md) |
+| Página web | [web/download.html](web/download.html) |
+| Releases | [GitHub Releases](https://github.com/aperezavilez-ai/editcore/releases) |
+| Términos / Privacidad | [docs/TERMS.md](docs/TERMS.md) · [docs/PRIVACY.md](docs/PRIVACY.md) |
 
-Si en algún momento decides compartir EditCore con más gente, estos
-puntos (firma de código, billing compartido, auto-update) son los que
-habría que retomar.
+### Empaquetar una versión
+
+```powershell
+# Tras build-editcore.ps1 y build-win-installer.ps1:
+powershell -ExecutionPolicy Bypass -File scripts\package-release.ps1
+gh release create v1.0.0 dist/* --title "EditCore 1.0.0" --notes-file dist/RELEASE_NOTES.txt
+```
+
+La versión vive en `VERSION` y se sincroniza con extensiones y manifiestos de actualización.
+
+### Actualizaciones dentro del IDE
+
+- `EditCore: Buscar actualizaciones`
+- Manifiesto: `releases/latest.json`
+
+**Precios y facturación:** fase posterior. La descarga actual es edición comunidad.
+
+---
+
+## Decisiones de este proyecto (histórico personal → producto)
+
+Este fork nació para uso personal. La infraestructura de **producto descargable** (releases, onboarding, licencia stub, docs) ya está en el repo. Pendiente para escala comercial:
+
+- Firma de código Windows/macOS
+- Auto-update completo vía instalador Inno
+- Servidor de licencias y **precios** (última fase)
 

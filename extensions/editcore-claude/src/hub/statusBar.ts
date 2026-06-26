@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { LLM_CONFIG } from "../llmConfig";
 import { getRagIndex } from '../rag/chunkIndex';
 import { getWorkspaceIndex } from '../index/workspaceIndex';
+import { getExtensionVersion, PRODUCT_NAME } from '../product/productVersion';
 
 export function createStatusBarItem(
   context: vscode.ExtensionContext
@@ -44,7 +45,7 @@ export async function showAbout(): Promise<void> {
   }
 
   const lines = [
-    '**EditCore IDE — Claude Assistant v1.1.0**',
+    `**${PRODUCT_NAME} — Claude Assistant v${getExtensionVersion()}**`,
     '',
     '- Chat nativo `@claude` (Ask + Agent)',
     '- Autodiagnóstico (Ctrl+Alt+D) — checks + análisis Claude',

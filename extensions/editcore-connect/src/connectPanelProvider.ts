@@ -174,7 +174,7 @@ export class ConnectPanelProvider implements vscode.WebviewViewProvider {
     <button onclick="send('openProject')">Abrir proyecto…</button>
   </div>`
       : `<div class="card">
-    <div class="hint" style="margin-top:0;margin-bottom:8px;">Detectado automáticamente al abrir esta carpeta. No hace falta elegir cuenta otra vez.</div>
+    <div class="hint" style="margin-top:0;margin-bottom:8px;">Detectado automáticamente al abrir esta carpeta. Si ves otro nombre, usá <strong>Cambiar proyecto Vercel</strong>.</div>
     <div class="row">
       <span class="name">Vercel</span>
       ${vercelReady ? this.badge(true, vercelProject ?? "Listo", "") : vercelGlobal ? this.badge(false, "", "Detectando…") : this.badge(false, "", "—")}
