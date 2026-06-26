@@ -204,7 +204,7 @@ EditCore se distribuye como **producto descargable** para Windows x64:
 
 | Recurso | Ubicación |
 |---------|-----------|
-| **Página web** | [web/index.html](web/index.html) → [editcore.vercel.app](https://editcore.vercel.app/) (próximo: `editcore.mx`) |
+| **Página web** | [https://editcore.mx/](https://editcore.mx/) |
 | Guía de descarga | [docs/DOWNLOAD.md](docs/DOWNLOAD.md) |
 | Releases | [GitHub Releases](https://github.com/aperezavilez-ai/editcore/releases) |
 | Términos / Privacidad | [docs/TERMS.md](docs/TERMS.md) · [docs/PRIVACY.md](docs/PRIVACY.md) |

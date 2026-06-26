@@ -1,6 +1,6 @@
 # Descargar EditCore IDE
 
-**Página oficial:** [https://editcore.vercel.app/](https://editcore.vercel.app/) (dominio futuro: `editcore.mx`)
+**Página oficial:** [https://editcore.mx/](https://editcore.mx/)
 
 EditCore es un editor de escritorio para Windows (x64). No requiere instalar VS Code ni extensiones por separado.
 

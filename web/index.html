@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="EditCore IDE — Claude y OpenAI integrados. Agentes, GitHub, Vercel y Supabase en un solo editor.">
-  <link rel="canonical" href="https://editcore.vercel.app/">
+  <link rel="canonical" href="https://editcore.mx/">
   <script>
     (function () {
-      var official = 'https://editcore.vercel.app';
-      if (location.hostname.endsWith('github.io')) {
+      var official = 'https://editcore.mx';
+      if (location.hostname.endsWith('github.io') || location.hostname === 'editcore.vercel.app') {
         var path = location.pathname.replace(/^\/editcore\/?/, '/');
         location.replace(official + (path === '/' ? '' : path) + location.search + location.hash);
       }
