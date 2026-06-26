@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'web/**'
+      - 'branding/icons/editcore-logo-source.png'
       - 'branding/icons/editcore-logo-512.png'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
