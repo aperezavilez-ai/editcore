@@ -202,7 +202,26 @@ def strip_authenticode(exe: Path) -> None:
             return
 
 
+def cleanup_legacy_icons() -> None:
+    """Elimina ICO/PNG de prueba que ya no forman parte del branding."""
+    legacy = [
+        ICON_DIR / "win32" / "code-test2.ico",
+        ICON_DIR / "win32" / "test-P.ico",
+        ICON_DIR / "win32" / "test-RGB.ico",
+        ICON_DIR / "win32" / "_ico-tmp",
+    ]
+    for path in legacy:
+        if not path.exists():
+            continue
+        if path.is_dir():
+            shutil.rmtree(path)
+        else:
+            path.unlink()
+        print(f"removed legacy {path.relative_to(ROOT)}")
+
+
 def main() -> None:
+    cleanup_legacy_icons()
     logo = load_master_logo()
     canvas512 = center_on_canvas(logo, 512)
     canvas512.save(ICON_DIR / "editcore-logo-512.png")

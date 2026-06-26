@@ -1,11 +1,11 @@
 {
   "version": "1.0.0",
   "productVersion": "1.0.0",
-  "publishedAt": "2026-06-26T01:31:02.782Z",
+  "publishedAt": "2026-06-26T01:44:47.995Z",
   "notes": "EditCore IDE 1.0.0",
   "setup": {
     "name": "EditCore-1.0.0-win32-x64-setup.exe",
     "url": "https://github.com/aperezavilez-ai/editcore/releases/download/v1.0.0/EditCore-1.0.0-win32-x64-setup.exe",
-    "sha256": "15e10cc7cd80b67d625882a28d2c93cf491de1dc3ca62d237e2050ed4404bf78"
+    "sha256": "c3617e8e3097e8c318b0b1f4c46f0730ed2660e9188c5fb35ecbb042a8b6bd99"
   }
 }
