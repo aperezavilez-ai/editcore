@@ -7,7 +7,7 @@ on:
       - 'web/**'
       - 'scripts/generate-web-pdf.py'
       - 'branding/icons/editcore-logo-source.png'
-      - 'branding/icons/editcore-logo-512.png'
+      - 'branding/icons/editcore-logo-web.png'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -32,7 +32,7 @@ jobs:
       - name: Preparar sitio web
         run: |
           mkdir -p web/assets
-          cp branding/icons/editcore-logo-512.png web/assets/editcore-logo.png
+          cp branding/icons/editcore-logo-web.png web/assets/editcore-logo-web.png
           pip install fpdf2 -q
           python scripts/generate-web-pdf.py
 
