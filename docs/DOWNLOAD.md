@@ -1,5 +1,7 @@
 # Descargar EditCore IDE
 
+**Página oficial:** [https://aperezavilez-ai.github.io/editcore/](https://aperezavilez-ai.github.io/editcore/)
+
 EditCore es un editor de escritorio para Windows (x64). No requiere instalar VS Code ni extensiones por separado.
 
 ## Requisitos

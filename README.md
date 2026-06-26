@@ -204,8 +204,8 @@ EditCore se distribuye como **producto descargable** para Windows x64:
 
 | Recurso | Ubicación |
 |---------|-----------|
+| **Página web** | [web/index.html](web/index.html) → GitHub Pages: `https://aperezavilez-ai.github.io/editcore/` |
 | Guía de descarga | [docs/DOWNLOAD.md](docs/DOWNLOAD.md) |
-| Página web | [web/download.html](web/download.html) |
 | Releases | [GitHub Releases](https://github.com/aperezavilez-ai/editcore/releases) |
 | Términos / Privacidad | [docs/TERMS.md](docs/TERMS.md) · [docs/PRIVACY.md](docs/PRIVACY.md) |
 

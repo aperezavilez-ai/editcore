@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="EditCore IDE — editor con Claude y OpenAI integrados. Descarga gratis para Windows.">
+  <title>EditCore IDE — Descargar</title>
+  <link rel="icon" href="assets/editcore-logo.png" type="image/png">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --bg-card: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --glow: rgba(59, 130, 246, 0.35);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -20%, var(--glow), transparent),
+        linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px);
+      background-size: 100% 100%, 48px 48px, 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    header, main, footer { position: relative; z-index: 1; }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 1.25rem 1.5rem;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      font-size: 0.95rem;
+    }
+    .brand img {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+    }
+    nav a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      margin-left: 1.25rem;
+    }
+    nav a:hover { color: var(--text); }
+    .hero {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem 4rem;
+      text-align: center;
+    }
+    .logo-wrap {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+    .logo-wrap img {
+      width: 120px;
+      height: 120px;
+      border-radius: 28px;
+      box-shadow: 0 0 0 1px var(--border), 0 24px 48px rgba(0,0,0,.45);
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 2.75rem);
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      margin-bottom: 0.5rem;
+    }
+    .tagline {
+      font-size: 1.15rem;
+      color: var(--muted);
+      max-width: 520px;
+      margin: 0 auto 2rem;
+    }
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: linear-gradient(180deg, #4b8df8 0%, var(--accent) 100%);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 1.1rem;
+      padding: 0.95rem 2rem;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 8px 32px var(--glow);
+      transition: transform .15s, box-shadow .15s, background .15s;
+    }
+    .cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px var(--glow);
+      background: linear-gradient(180deg, #5b9bff 0%, var(--accent-hover) 100%);
+    }
+    .cta-secondary {
+      display: inline-block;
+      margin-top: 1rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+      text-decoration: none;
+    }
+    .cta-secondary:hover { color: var(--accent); }
+    .version {
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .features {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 1.5rem 4rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.25rem 1.35rem;
+    }
+    .card h3 {
+      font-size: 0.95rem;
+      margin-bottom: 0.35rem;
+    }
+    .card p {
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+    footer {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 3rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.85rem;
+      color: var(--muted);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: space-between;
+      align-items: center;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+    .legal { display: flex; gap: 1rem; flex-wrap: wrap; }
+    @media (max-width: 600px) {
+      nav { display: none; }
+      .hero { padding-top: 2rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-grid" aria-hidden="true"></div>
+
+  <header>
+    <a class="brand" href="./">
+      <img src="assets/editcore-logo.png" alt="" width="36" height="36">
+      EDITCORE
+    </a>
+    <nav>
+      <a href="#descargar">Descargar</a>
+      <a href="https://github.com/aperezavilez-ai/editcore/blob/main/docs/DOWNLOAD.md">Guía</a>
+      <a href="https://github.com/aperezavilez-ai/editcore">GitHub</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" id="descargar">
+      <div class="logo-wrap">
+        <img src="assets/editcore-logo.png" alt="EditCore" width="120" height="120">
+      </div>
+      <h1>EDITCORE</h1>
+      <p class="tagline">
+        IDE con Claude y OpenAI integrados. Agentes, GitHub, Vercel y Supabase en un solo editor.
+      </p>
+      <a class="cta" href="https://github.com/aperezavilez-ai/editcore/releases/latest" id="downloadBtn">
+        Descargar EditCore
+      </a>
+      <br>
+      <a class="cta-secondary" href="https://github.com/aperezavilez-ai/editcore/blob/main/docs/DOWNLOAD.md">
+        Instrucciones de instalación →
+      </a>
+      <p class="version" id="versionLine">Windows 10/11 · 64 bits · Edición comunidad</p>
+    </section>
+
+    <section class="features">
+      <div class="card">
+        <h3>Chat y agentes IA</h3>
+        <p>Claude y OpenAI nativos. Modo agente con herramientas de código.</p>
+      </div>
+      <div class="card">
+        <h3>EditCore Connect</h3>
+        <p>Vercel, Supabase y GitHub conectados desde el panel lateral.</p>
+      </div>
+      <div class="card">
+        <h3>Basado en VS Code</h3>
+        <p>Terminal, Git, extensiones Open VSX y flujo de desarrollo completo.</p>
+      </div>
+      <div class="card">
+        <h3>Privacidad</h3>
+        <p>Sin telemetría por defecto. Tus API keys quedan en tu equipo.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>© EditCore IDE</span>
+    <div class="legal">
+      <a href="https://github.com/aperezavilez-ai/editcore/blob/main/docs/TERMS.md">Términos</a>
+      <a href="https://github.com/aperezavilez-ai/editcore/blob/main/docs/PRIVACY.md">Privacidad</a>
+      <a href="https://github.com/aperezavilez-ai/editcore/blob/main/LICENSE.txt">Licencia MIT</a>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var manifestUrl = 'https://raw.githubusercontent.com/aperezavilez-ai/editcore/main/releases/latest.json';
+      fetch(manifestUrl)
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          if (!data || !data.version) return;
+          var line = document.getElementById('versionLine');
+          if (line) line.textContent = 'Versión ' + data.version + ' · Windows 10/11 · 64 bits';
+          var btn = document.getElementById('downloadBtn');
+          if (btn && data.setup && data.setup.url) {
+            btn.href = data.setup.url;
+          }
+        })
+        .catch(function () { /* offline / CORS ok */ });
+    })();
+  </script>
+</body>
+</html>
