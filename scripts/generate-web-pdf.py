@@ -22,8 +22,8 @@ def main() -> None:
     body = (
         "Requisitos: Windows 10 u 11 (64 bits), conexion a internet.\n"
         "Necesitas API key de Anthropic u OpenAI para el chat.\n\n"
-        "1. Descarga EditCore desde editcore.mx o GitHub Releases.\n"
-        "2. Ejecuta EditCore-x.x.x-win32-x64-setup.exe (aprox. 192 MB).\n"
+        "1. Entra a editcore.mx y pulsa Descargar EditCore.\n"
+        "2. Ejecuta el instalador EditCore-x.x.x-win32-x64-setup.exe (aprox. 192 MB).\n"
         "3. Si Windows advierte publicador desconocido:\n"
         "   Mas informacion, luego Ejecutar de todas formas.\n"
         "4. Abre EditCore IDE desde el menu Inicio.\n\n"

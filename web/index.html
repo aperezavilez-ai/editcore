@@ -351,16 +351,23 @@
     footer .legal {
       display: inline;
     }
-    footer .legal a { margin-left: 0.85rem; }
-    footer a {
+    footer .legal a,
+    footer .legal .footer-link { margin-left: 0.85rem; }
+    footer a, .footer-link {
       color: var(--muted);
       text-decoration: none;
       transition: color 0.15s;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: inherit;
+      padding: 0;
     }
-    footer a:hover { color: var(--cyan); }
+    footer a:hover, .footer-link:hover { color: var(--cyan); }
 
-    /* Modal PDF */
-    .pdf-modal {
+    /* Modal informacion */
+    .info-modal {
       position: fixed;
       inset: 0;
       z-index: 1000;
@@ -369,7 +376,7 @@
       justify-content: center;
       padding: 1.5rem;
     }
-    .pdf-modal.open { display: flex; }
+    .info-modal.open { display: flex; }
     .pdf-backdrop {
       position: absolute;
       inset: 0;
@@ -409,13 +416,28 @@
       line-height: 1;
       transition: background 0.15s, color 0.15s;
     }
-    .pdf-close:hover { background: rgba(0, 229, 255, 0.12); color: var(--cyan); }
-    .pdf-frame {
+    .info-close:hover { background: rgba(0, 229, 255, 0.12); color: var(--cyan); }
+    .info-body {
       flex: 1;
-      width: 100%;
-      border: none;
-      background: #1a1a1a;
+      overflow-y: auto;
+      padding: 1.25rem 1.5rem 1.5rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.65;
     }
+    .info-body h2 {
+      color: var(--text);
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin: 1.1rem 0 0.45rem;
+    }
+    .info-body h2:first-child { margin-top: 0; }
+    .info-body p { margin: 0.45rem 0; }
+    .info-body ol, .info-body ul { margin: 0.5rem 0 1rem; padding-left: 1.35rem; }
+    .info-body li { margin-bottom: 0.4rem; }
+    .info-body strong { color: var(--text); }
+    .info-body a { color: var(--cyan-dim); }
+    .info-body a:hover { color: var(--cyan); }
 
     @media (max-width: 900px) {
       .features { grid-template-columns: repeat(2, 1fr); }
@@ -441,7 +463,7 @@
       <div class="header-right">
         <nav>
           <a href="#descargar">Descargar</a>
-          <button type="button" class="nav-btn" data-pdf-open>Guía</button>
+          <button type="button" class="nav-btn" data-info-open="guia">Guía</button>
         </nav>
       </div>
     </header>
@@ -467,7 +489,6 @@
             <path fill="#fff" stroke="#111" stroke-width="1.2" d="M5 3l12 8.5-5 .5 2.5 6.5-2.5 1.2-2.5-6.5-5 1.3z"/>
           </svg>
         </div>
-        <button type="button" class="cta-link" data-pdf-open aria-hidden="true">instrucciones de instalacion</button>
         <p class="version" id="versionLine">Versión 1.0.1 - Windows 10/11 - 64 bits</p>
       </section>
 
@@ -508,51 +529,138 @@
     <footer>
       <span>© EditCore IDE</span>
       <span class="legal">
-        <a href="https://github.com/aperezavilez-ai/editcore/blob/main/docs/TERMS.md">Términos</a>
-        <a href="https://github.com/aperezavilez-ai/editcore/blob/main/docs/PRIVACY.md">Privacidad</a>
-        <a href="https://github.com/aperezavilez-ai/editcore/blob/main/LICENSE.txt">Licencia MIT</a>
+        <button type="button" class="footer-link" data-info-open="guia">Guía</button>
+        <button type="button" class="footer-link" data-info-open="terminos">Términos</button>
+        <button type="button" class="footer-link" data-info-open="privacidad">Privacidad</button>
+        <button type="button" class="footer-link" data-info-open="licencia">Licencia MIT</button>
       </span>
     </footer>
   </div>
 
-  <div class="pdf-modal" id="pdfModal" role="dialog" aria-modal="true" aria-labelledby="pdfTitle" hidden>
-    <div class="pdf-backdrop" data-pdf-close></div>
+  <div class="info-modal pdf-modal" id="infoModal" role="dialog" aria-modal="true" aria-labelledby="infoTitle" hidden>
+    <div class="pdf-backdrop" data-info-close></div>
     <div class="pdf-panel">
       <div class="pdf-toolbar">
-        <span id="pdfTitle">Guía de instalación — EditCore</span>
-        <button type="button" class="pdf-close" data-pdf-close aria-label="Cerrar">×</button>
+        <span id="infoTitle">EditCore</span>
+        <button type="button" class="pdf-close info-close" data-info-close aria-label="Cerrar">×</button>
       </div>
-      <iframe class="pdf-frame" src="about:blank" title="Guía PDF" id="pdfFrame"></iframe>
+      <div class="info-body" id="infoBody"></div>
     </div>
   </div>
 
+  <template id="tpl-guia">
+    <h2>Guía de instalación</h2>
+    <p><strong>Requisitos:</strong> Windows 10 u 11 (64 bits) y conexión a internet. Para el chat necesitas API key de Anthropic u OpenAI.</p>
+    <h2>Pasos</h2>
+    <ol>
+      <li>Entra a <strong>editcore.mx</strong> en tu navegador.</li>
+      <li>Pulsa el botón <strong>Descargar EditCore</strong> en esta página.</li>
+      <li>Guarda el archivo <strong>EditCore-x.x.x-win32-x64-setup.exe</strong> (aprox. 192 MB) en Descargas.</li>
+      <li>Ejecuta el instalador con doble clic.</li>
+      <li>Si Windows muestra «publicador desconocido»: <strong>Más información</strong> → <strong>Ejecutar de todas formas</strong>.</li>
+      <li>Sigue el asistente hasta finalizar.</li>
+      <li>Abre <strong>EditCore IDE</strong> desde el menú Inicio de Windows.</li>
+    </ol>
+    <h2>Primer arranque</h2>
+    <ul>
+      <li>Configura tus API Keys con <strong>Ctrl+Alt+K</strong> o desde el panel Cuenta.</li>
+      <li>Opcional: conecta Vercel, Supabase y GitHub desde <strong>EditCore Connect</strong>.</li>
+    </ul>
+    <p>No necesitas instalar VS Code ni extensiones por separado: todo viene incluido en el instalador.</p>
+  </template>
+
+  <template id="tpl-terminos">
+    <h2>Términos de uso — EditCore IDE</h2>
+    <p><strong>Última actualización:</strong> junio 2026</p>
+    <h2>1. Producto</h2>
+    <p>EditCore IDE es un editor de escritorio basado en Code-OSS (licencia MIT de Microsoft). El código propio de EditCore se distribuye bajo licencia MIT.</p>
+    <h2>2. Uso</h2>
+    <ul>
+      <li>Podés instalar y usar EditCore en tus equipos según la licencia MIT del proyecto.</li>
+      <li>Sos responsable de las API keys y tokens que configures (Anthropic, OpenAI, GitHub, Vercel, Supabase).</li>
+      <li>No está permitido redistribuir builds modificados haciéndose pasar por EditCore oficial sin indicar los cambios.</li>
+    </ul>
+    <h2>3. Servicios de terceros</h2>
+    <p>EditCore se conecta directamente a proveedores externos. Cada uno tiene sus propios términos y costos. EditCore no aloja tus datos de código en servidores propios.</p>
+    <h2>4. Sin garantía</h2>
+    <p>El software se proporciona «tal cual», sin garantías de comerciabilidad o idoneidad para un fin particular.</p>
+    <h2>5. Precios</h2>
+    <p>Los planes de pago se definirán en una actualización posterior. La edición comunidad descargable desde editcore.mx es gratuita.</p>
+  </template>
+
+  <template id="tpl-privacidad">
+    <h2>Política de privacidad — EditCore IDE</h2>
+    <p><strong>Última actualización:</strong> junio 2026</p>
+    <h2>Resumen</h2>
+    <p>EditCore es un IDE <strong>local</strong>. Por defecto <strong>no envía telemetría</strong> a EditCore ni a Microsoft.</p>
+    <h2>Qué se guarda en tu PC</h2>
+    <ul>
+      <li>API keys (Anthropic, OpenAI, etc.) — almacén cifrado del sistema.</li>
+      <li>Tokens Vercel / Supabase — SecretStorage.</li>
+      <li>Configuración del editor — %APPDATA%\EditCore (Windows).</li>
+      <li>Índices RAG y memoria del proyecto — carpeta .editcore en cada workspace.</li>
+    </ul>
+    <h2>Qué sale de tu PC (solo si lo configurás)</h2>
+    <ul>
+      <li>Llamadas a Anthropic / OpenAI con tu API key.</li>
+      <li>GitHub, Vercel, Supabase con tus tokens.</li>
+      <li>Comprobación de actualizaciones (lectura del manifiesto de versión, sin datos personales).</li>
+      <li>Open VSX al instalar extensiones del marketplace abierto.</li>
+    </ul>
+    <h2>Telemetría y crashes</h2>
+    <p>Desactivada por defecto. No hay envío automático de crashes.</p>
+  </template>
+
+  <template id="tpl-licencia">
+    <h2>Licencia MIT — EditCore</h2>
+    <p>Copyright (c) 2026 EditCore</p>
+    <p>Se concede permiso, libre de cargos, a cualquier persona que obtenga una copia de este software y archivos de documentación asociados, para usar el Software sin restricción, incluyendo sin limitación los derechos de usar, copiar, modificar, fusionar, publicar, distribuir, sublicenciar y/o vender copias del Software, y permitir a las personas a quienes se les proporcione el Software hacer lo mismo, sujeto a las siguientes condiciones:</p>
+    <p>El aviso de copyright anterior y este aviso de permiso deben incluirse en todas las copias o partes sustanciales del Software.</p>
+    <p>EL SOFTWARE SE PROPORCIONA «TAL CUAL», SIN GARANTÍA DE NINGÚN TIPO, EXPRESA O IMPLÍCITA, INCLUYENDO PERO NO LIMITADO A GARANTÍAS DE COMERCIABILIDAD, IDONEIDAD PARA UN PROPÓSITO PARTICULAR Y NO INFRACCIÓN. EN NINGÚN CASO LOS AUTORES O TITULARES DE DERECHOS DE AUTOR SERÁN RESPONSABLES DE NINGUNA RECLAMACIÓN, DAÑOS U OTRA RESPONSABILIDAD.</p>
+    <h2>Code-OSS</h2>
+    <p>EditCore es un fork de Code-OSS (Microsoft), también bajo licencia MIT. El código heredado de Code-OSS conserva la licencia MIT original de Microsoft.</p>
+  </template>
+
   <script>
     (function () {
-      var PDF_URL = 'assets/guia-instalacion.pdf';
-      var modal = document.getElementById('pdfModal');
-      var frame = document.getElementById('pdfFrame');
+      var titles = {
+        guia: 'Guía de instalación — EditCore',
+        terminos: 'Términos de uso — EditCore',
+        privacidad: 'Política de privacidad — EditCore',
+        licencia: 'Licencia MIT — EditCore'
+      };
+      var modal = document.getElementById('infoModal');
+      var body = document.getElementById('infoBody');
+      var titleEl = document.getElementById('infoTitle');
 
-      function openPdf() {
-        frame.src = PDF_URL;
+      function openInfo(key) {
+        var tpl = document.getElementById('tpl-' + key);
+        if (!tpl) return;
+        body.innerHTML = '';
+        body.appendChild(tpl.content.cloneNode(true));
+        titleEl.textContent = titles[key] || 'EditCore';
         modal.hidden = false;
         modal.classList.add('open');
         document.body.style.overflow = 'hidden';
+        body.scrollTop = 0;
       }
-      function closePdf() {
+      function closeInfo() {
         modal.classList.remove('open');
         modal.hidden = true;
-        frame.src = 'about:blank';
+        body.innerHTML = '';
         document.body.style.overflow = '';
       }
 
-      document.querySelectorAll('[data-pdf-open]').forEach(function (el) {
-        el.addEventListener('click', openPdf);
+      document.querySelectorAll('[data-info-open]').forEach(function (el) {
+        el.addEventListener('click', function () {
+          openInfo(el.getAttribute('data-info-open'));
+        });
       });
-      document.querySelectorAll('[data-pdf-close]').forEach(function (el) {
-        el.addEventListener('click', closePdf);
+      document.querySelectorAll('[data-info-close]').forEach(function (el) {
+        el.addEventListener('click', closeInfo);
       });
       document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && modal.classList.contains('open')) closePdf();
+        if (e.key === 'Escape' && modal.classList.contains('open')) closeInfo();
       });
 
       var manifestUrl = 'https://raw.githubusercontent.com/aperezavilez-ai/editcore/main/releases/latest.json';
