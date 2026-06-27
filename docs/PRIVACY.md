@@ -10,11 +10,15 @@ EditCore es un IDE **local**. Por defecto **no envía telemetría** a EditCore n
 
 | Dato | Dónde |
 |------|--------|
-| API keys (Anthropic, OpenAI, etc.) | Almacén cifrado del sistema (SecretStorage) |
+| API keys (Anthropic, OpenAI, etc.) | SecretStorage de la extensión EditCore Claude (cifrado del SO) |
 | Tokens Vercel / Supabase | SecretStorage |
 | Configuración del editor | `%APPDATA%\EditCore` (Windows) |
 | Índices RAG / memoria proyecto | Carpeta `.editcore` en cada workspace |
 | Licencia (opcional) | SecretStorage |
+
+**Migración legacy:** si existía `%APPDATA%\EditCore\api-keys.json` (versiones antiguas),
+EditCore lo importa una sola vez a SecretStorage y lo borra del disco al arrancar.
+No se conservan copias de respaldo en texto plano.
 
 ## Qué sale de tu PC (solo si lo configurás)
 

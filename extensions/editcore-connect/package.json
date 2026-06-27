@@ -4,6 +4,9 @@
   "description": "Panel unificado para conectar repos de GitHub, desplegar en Vercel y vincular proyectos Supabase desde EditCore IDE.",
   "version": "1.0.1",
   "publisher": "editcore",
+  "extensionDependencies": [
+    "editcore.editcore-claude"
+  ],
   "engines": {
     "vscode": "^1.85.0"
   },

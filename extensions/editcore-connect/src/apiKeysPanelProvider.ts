@@ -1,16 +1,14 @@
 import * as vscode from "vscode";
 import {
-  keyHint,
-  readSharedKeys,
-  validateAnthropicKey,
-  validateOpenAiKey,
-  writeSharedKeys,
-} from "./sharedApiKeys";
+  clearAnthropicApiKey,
+  clearOpenAiApiKey,
+  getApiKeyStatus,
+  saveAnthropicApiKey,
+  saveOpenAiApiKey,
+} from "./claudeApiKeyBridge";
 
 export class ApiKeysPanelProvider implements vscode.WebviewViewProvider {
   private view?: vscode.WebviewView;
-
-  constructor(private readonly context: vscode.ExtensionContext) {}
 
   resolveWebviewView(webviewView: vscode.WebviewView): void {
     this.view = webviewView;
@@ -26,42 +24,20 @@ export class ApiKeysPanelProvider implements vscode.WebviewViewProvider {
           if (!key.startsWith("sk-")) {
             throw new Error("La key de Anthropic debe empezar con sk-");
           }
-          await writeSharedKeys({ anthropic: key });
-          await this.context.secrets.store("anthropicApiKey", key);
-          try {
-            await validateAnthropicKey(key);
-            vscode.window.showInformationMessage("EditCore: API Key de Claude guardada y validada.");
-          } catch (err) {
-            const message = err instanceof Error ? err.message : String(err);
-            vscode.window.showWarningMessage(
-              `EditCore: Claude guardada, pero la validación falló: ${message}`
-            );
-          }
+          await saveAnthropicApiKey(key);
           await this.pushState();
         } else if (msg.type === "saveOpenAi") {
           const key = String(msg.key || "").trim();
           if (!key.startsWith("sk-")) {
             throw new Error("La key de OpenAI debe empezar con sk-");
           }
-          await writeSharedKeys({ openai: key });
-          await this.context.secrets.store("openaiApiKey", key);
-          try {
-            await validateOpenAiKey(key);
-            vscode.window.showInformationMessage("EditCore: API Key de OpenAI guardada y validada.");
-          } catch (err) {
-            const message = err instanceof Error ? err.message : String(err);
-            vscode.window.showWarningMessage(
-              `EditCore: OpenAI guardada, pero la validación falló: ${message}`
-            );
-          }
+          await saveOpenAiApiKey(key);
           await this.pushState();
         } else if (msg.type === "clearAnthropic") {
-          await writeSharedKeys({ anthropic: undefined });
-          await this.context.secrets.delete("anthropicApiKey");
+          await clearAnthropicApiKey();
           await this.pushState();
         } else if (msg.type === "clearOpenAi") {
-          await writeSharedKeys({ openai: undefined });
-          await this.context.secrets.delete("openaiApiKey");
+          await clearOpenAiApiKey();
           await this.pushState();
         } else if (msg.type === "openClaudePanel") {
           await vscode.commands.executeCommand("workbench.view.extension.editcore-sidebar");
@@ -77,17 +53,29 @@ export class ApiKeysPanelProvider implements vscode.WebviewViewProvider {
   }
 
   private async pushState(): Promise<void> {
-    const shared = readSharedKeys();
-    const anthropic =
-      shared.anthropic || (await this.context.secrets.get("anthropicApiKey")) || "";
-    const openai = shared.openai || (await this.context.secrets.get("openaiApiKey")) || "";
-    this.view?.webview.postMessage({
-      type: "state",
-      anthropicHint: keyHint(anthropic),
-      openaiHint: keyHint(openai),
-      hasAnthropic: Boolean(anthropic),
-      hasOpenAi: Boolean(openai),
-    });
+    try {
+      const status = await getApiKeyStatus();
+      this.view?.webview.postMessage({
+        type: "state",
+        anthropicHint: status.anthropicHint,
+        openAiHint: status.openAiHint,
+        hasAnthropic: status.hasAnthropic,
+        hasOpenAi: status.hasOpenAi,
+      });
+    } catch (e: unknown) {
+      const text = e instanceof Error ? e.message : String(e);
+      this.view?.webview.postMessage({
+        type: "state",
+        anthropicHint: "Sin configurar",
+        openAiHint: "Sin configurar",
+        hasAnthropic: false,
+        hasOpenAi: false,
+      });
+      this.view?.webview.postMessage({
+        type: "error",
+        text: `No se pudo leer el estado de API keys: ${text}`,
+      });
+    }
   }
 
   private getHtml(): string {
@@ -114,7 +102,7 @@ export class ApiKeysPanelProvider implements vscode.WebviewViewProvider {
 </head>
 <body>
   <h2>API Keys</h2>
-  <p class="sub">Pega aquí tus keys. <strong>No instales nada del marketplace.</strong> Este panel funciona aunque Claude esté desactivado.</p>
+  <p class="sub">Pega aquí tus keys. Se guardan cifradas en SecretStorage (EditCore Claude). <strong>No instales nada del marketplace.</strong></p>
 
   <section>
     <div id="anthropicStatus" class="bad">Sin Claude</div>

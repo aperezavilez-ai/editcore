@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { ApiKeyService } from '../apiKeyService';
 import {
   activateLicenseKey,
   clearLicense,
@@ -15,7 +16,10 @@ import {
   SUPPORT_ISSUES_URL,
 } from './productVersion';
 
-export function registerProductCommands(context: vscode.ExtensionContext): void {
+export function registerProductCommands(
+  context: vscode.ExtensionContext,
+  apiKeyService: ApiKeyService
+): void {
   context.subscriptions.push(
     vscode.commands.registerCommand('editcore.checkForUpdates', async () => {
       await checkForUpdates(context, { silent: false });
@@ -106,8 +110,7 @@ export function registerProductCommands(context: vscode.ExtensionContext): void 
       } catch {
         // ignore
       }
-      const hasKey = await context.secrets.get('anthropicApiKey') ||
-        (await context.secrets.get('openaiApiKey'));
+      const hasKey = await apiKeyService.hasAnyLlmKey();
       if (!hasKey) {
         const go = await vscode.window.showWarningMessage(
           'Falta API Key de Claude u OpenAI. El chat no puede responder sin ella.',

@@ -1,7 +1,6 @@
 import * as vscode from "vscode";
 import { createClaudeClient, mapClaudeApiError } from "./anthropicClient";
 import { LLM_CONFIG } from "./llmConfig";
-import { readSharedKeys } from "./sharedApiKeys";
 
 const SECRET_KEY = "anthropicApiKey";
 const OPENAI_SECRET_KEY = "openaiApiKey";
@@ -102,19 +101,11 @@ export class ApiKeyService {
   }
 
   async getApiKey(): Promise<string | undefined> {
-    const shared = readSharedKeys().anthropic?.trim();
-    if (shared) {
-      return shared;
-    }
     const key = await this.context.secrets.get(SECRET_KEY);
     return key?.trim() || undefined;
   }
 
   async getOpenAiKey(): Promise<string | undefined> {
-    const shared = readSharedKeys().openai?.trim();
-    if (shared) {
-      return shared;
-    }
     const key = await this.context.secrets.get(OPENAI_SECRET_KEY);
     return key?.trim() || undefined;
   }
@@ -127,6 +118,28 @@ export class ApiKeyService {
     return keyHint(await this.getApiKey());
   }
 
+  /** Migración legacy: guarda sin validación remota ni popup. */
+  async importApiKeyIfEmpty(provider: "anthropic" | "openai", rawKey: string): Promise<boolean> {
+    const key = rawKey.trim();
+    if (!key) {
+      return false;
+    }
+    if (provider === "anthropic") {
+      if (await this.hasApiKey()) {
+        return false;
+      }
+      await this.context.secrets.store(SECRET_KEY, key);
+      this._onDidChange.fire();
+      return true;
+    }
+    if (await this.hasOpenAiKey()) {
+      return false;
+    }
+    await this.context.secrets.store(OPENAI_SECRET_KEY, key);
+    this._onDidChange.fire();
+    return true;
+  }
+
   async saveApiKey(rawKey: string): Promise<void> {
     const key = rawKey.trim();
     if (!key) {
@@ -136,8 +149,6 @@ export class ApiKeyService {
       throw new Error("Formato invalido. La key de Anthropic debe empezar con sk-");
     }
     await this.context.secrets.store(SECRET_KEY, key);
-    const { writeSharedKeys } = await import("./sharedApiKeys");
-    await writeSharedKeys({ anthropic: key });
     try {
       await this.validateApiKey(key);
     } catch (err) {
@@ -149,8 +160,6 @@ export class ApiKeyService {
 
   async clearApiKey(): Promise<void> {
     await this.context.secrets.delete(SECRET_KEY);
-    const { writeSharedKeys } = await import("./sharedApiKeys");
-    await writeSharedKeys({ anthropic: undefined });
     this._onDidChange.fire();
   }
 
@@ -163,8 +172,6 @@ export class ApiKeyService {
       throw new Error("Formato invalido. La key de OpenAI debe empezar con sk-");
     }
     await this.context.secrets.store(OPENAI_SECRET_KEY, key);
-    const { writeSharedKeys } = await import("./sharedApiKeys");
-    await writeSharedKeys({ openai: key });
     try {
       const { validateOpenAiKey } = await import("./openaiClient");
       await validateOpenAiKey(key);
@@ -177,8 +184,6 @@ export class ApiKeyService {
 
   async clearOpenAiKey(): Promise<void> {
     await this.context.secrets.delete(OPENAI_SECRET_KEY);
-    const { writeSharedKeys } = await import("./sharedApiKeys");
-    await writeSharedKeys({ openai: undefined });
     this._onDidChange.fire();
   }
 

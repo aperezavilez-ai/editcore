@@ -31,15 +31,17 @@ import {
   manageSupabaseAccounts,
   getSupabaseTokenForWorkspace,
 } from "./supabaseAccountStore";
+import { syncConnectSecretsToClaude } from "./connectSecretsMigration";
 
 const execAsync = promisify(exec);
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
   const panel = new ConnectPanelProvider(context);
 
   void migrateLegacySupabaseToken(context);
+  await syncConnectSecretsToClaude(context);
 
-  const apiKeysPanel = new ApiKeysPanelProvider(context);
+  const apiKeysPanel = new ApiKeysPanelProvider();
   registerApiCommands(context);
 
   context.subscriptions.push(

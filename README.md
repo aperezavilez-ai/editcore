@@ -161,6 +161,10 @@ Todos los tokens se guardan cifrados con `vscode.SecretStorage`
 (Keychain en macOS, Credential Manager en Windows, libsecret en Linux) —
 nunca en texto plano, nunca en `settings.json`.
 
+> **Nota:** versiones anteriores a 1.0.2 guardaban API keys de Claude/OpenAI
+> en `%APPDATA%\EditCore\api-keys.json`. Al actualizar, EditCore migra ese archivo
+> a SecretStorage y lo elimina automáticamente del disco.
+
 ---
 
 ## Qué funciona ya (heredado de Code-OSS, sin tocar nada)

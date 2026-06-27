@@ -42,9 +42,13 @@ import { openFreshClaudeChat } from "./chat/openFreshChat";
 import { registerChatEditorGuard } from "./chat/chatEditorGuard";
 import { registerPlatformCommands } from "./platform/platformCommands";
 import { registerGlobalCommands } from "./global/globalCommands";
+import { migrateLegacyApiKeysFile } from "./platform/legacyApiKeysMigration";
+import { registerApiKeyBridgeCommands } from "./platform/apiKeyBridgeCommands";
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
   const apiKeyService = new ApiKeyService(context);
+  await migrateLegacyApiKeysFile(context);
+  registerApiKeyBridgeCommands(context, apiKeyService);
   setDiagnosticRuntime(context, apiKeyService);
 
   // Chat primero: el workbench espera modelos y agente antes de responder.
@@ -55,7 +59,7 @@ export function activate(context: vscode.ExtensionContext) {
   void writeActivationProbe(context);
   registerQuickActionsBar(context);
   registerWelcomePanel(context);
-  registerProductCommands(context);
+  registerProductCommands(context, apiKeyService);
   registerPlatformCommands(context);
   registerGlobalCommands(context);
   void showWelcomeIfNeeded(context);
