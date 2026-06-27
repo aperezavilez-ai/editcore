@@ -14,7 +14,10 @@ $PORTABLE_DIR = Join-Path $ROOT "VSCode-win32-x64"
 
 $iconScript = Join-Path $ROOT "scripts\generate-editcore-icons.py"
 if (Test-Path $iconScript) {
+  $prevErr = $ErrorActionPreference
+  $ErrorActionPreference = "Continue"
   python $iconScript 2>&1 | Out-Host
+  $ErrorActionPreference = $prevErr
 }
 
 $iconIco = Join-Path $ROOT "branding\icons\win32\code.ico"

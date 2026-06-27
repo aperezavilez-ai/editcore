@@ -8,7 +8,10 @@ $Portable = Join-Path $Root "VSCode-win32-x64\resources\app\extensions"
 
 $genIcons = Join-Path $Root "scripts\generate-editcore-icons.py"
 if (Test-Path $genIcons) {
+  $prevErr = $ErrorActionPreference
+  $ErrorActionPreference = "Continue"
   python $genIcons 2>&1 | Out-Host
+  $ErrorActionPreference = $prevErr
 }
 
 function Invoke-Npm {

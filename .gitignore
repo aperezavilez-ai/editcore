@@ -21,6 +21,9 @@ scripts/node_modules/
 __pycache__/
 *.pyc
 
+# Telemetría local del orquestador (solo metadatos)
+.editcore/stats.json
+
 # Secretos y configuración local
 .env
 .env.local

@@ -76,18 +76,19 @@ export function enrichMessagesWithRag(
   messages: ChatMessage[],
   plan: OrchestratorResult
 ): ChatMessage[] {
-  if (plan.rag_chunks.length === 0) {
+  if (!plan.additional_context?.trim() && plan.rag_chunks.length === 0) {
     return messages;
   }
 
-  const block = plan.rag_chunks
-    .map((c) => `### ${c.path} (score ${(c.score ?? 0).toFixed(3)})\n${c.text}`)
-    .join("\n\n");
+  const block =
+    plan.additional_context?.trim() ||
+    plan.rag_chunks
+      .map((c) => `### ${c.path} (score ${(c.score ?? 0).toFixed(3)})\n${c.text}`)
+      .join("\n\n");
 
   const contextMessage: ChatMessage = {
     role: "user",
-    content:
-      `[Contexto recuperado por orquestador — ${plan.context_summary}]\n\n${block}`,
+    content: `${block}\n\n---\n_${plan.rag_trace_log || plan.context_summary}_`,
   };
 
   return [contextMessage, ...messages];
@@ -110,6 +111,10 @@ export async function tryPrepareOrchestration(
       task,
       history: chatMessagesToTurns(messages),
     });
+
+    if (plan.rag_trace_log) {
+      console.log(plan.rag_trace_log);
+    }
 
     const provider = plan.provider;
     const model = mapOrchestratorToApiModel(provider);
