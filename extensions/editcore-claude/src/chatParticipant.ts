@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { ApiKeyService } from "./apiKeyService";
 import { streamForSelectedModel } from "./aiRouter";
 import { LLM_CONFIG } from "./llmConfig";
-import { CLAUDE_MODELS, OPENAI_MODELS } from "./models";
+import { CLAUDE_MODELS, OPENAI_MODELS, resolveClaudeModelId, isOpenAiModelId } from "./models";
 import type { ChatMessage } from "./anthropicClient";
 import { runAgentTask, AgentEvent } from "./agent/agentLoop";
 import { runOrchestratedTask, OrchestratorEvent } from "./agent/orchestrator";
@@ -42,7 +42,11 @@ export function registerClaudeChatParticipant(
       }
 
       const config = vscode.workspace.getConfiguration("editcore");
-      const selectedModelId = request.model?.id ?? config.get<string>("model", LLM_CONFIG.claude.defaultModel);
+      const rawModelId =
+        request.model?.id ?? config.get<string>("model", LLM_CONFIG.claude.defaultModel);
+      const selectedModelId = isOpenAiModelId(rawModelId)
+        ? rawModelId
+        : resolveClaudeModelId(rawModelId);
       const modelLabel =
         CLAUDE_MODELS.find((m) => m.id === selectedModelId)?.label ??
         OPENAI_MODELS.find((m) => m.id === selectedModelId)?.label ??
@@ -91,7 +95,7 @@ export function registerClaudeChatParticipant(
               fullText += chunk;
               stream.markdown(chunk);
             },
-            { allowFallback: false }
+            { allowFallback: true }
           );
           apiKeyService.recordUsage(usage.inputTokens, usage.outputTokens);
         }
@@ -249,7 +253,12 @@ function streamAgentEvent(
       stream.markdown(event.text);
       break;
     case "tool_call_start":
+      stream.markdown(`\n🔧 **${event.name}**\n`);
+      break;
     case "tool_call_result":
+      if (event.isError) {
+        stream.markdown(`\n❌ ${event.output.slice(0, 500)}\n`);
+      }
       break;
     case "done":
       if (event.reason === "max_iterations") {

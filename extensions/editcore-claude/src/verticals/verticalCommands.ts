@@ -3,18 +3,48 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { copyScaffoldTree } from './scaffoldService';
 
+const BUNDLED_TEMPLATES: Record<string, string> = {
+  'template-saas-starter': 'verticals/saas-starter',
+  'template-gps-platform': 'verticals/gps-platform',
+};
+
+function getBundledTemplateDir(templateId: string): string | undefined {
+  const rel = BUNDLED_TEMPLATES[templateId];
+  if (!rel) {
+    return undefined;
+  }
+  const ext = vscode.extensions.getExtension('editcore.editcore-claude');
+  if (!ext) {
+    return undefined;
+  }
+  return path.join(ext.extensionUri.fsPath, 'marketplace', rel);
+}
+
 async function resolveTemplateDir(templateId: string): Promise<string> {
   const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
   if (!root) {
     throw new Error('Abre un workspace primero.');
   }
-  const templateDir = path.join(root, '.editcore', 'templates', templateId);
+
+  const workspaceTemplate = path.join(root, '.editcore', 'templates', templateId);
   try {
-    await fs.promises.access(path.join(templateDir, 'README.md'));
-    return templateDir;
+    await fs.promises.access(path.join(workspaceTemplate, 'README.md'));
+    return workspaceTemplate;
   } catch {
-    throw new Error(`Instala primero "${templateId}" desde EditCore Marketplace.`);
+    // continuar
   }
+
+  const bundled = getBundledTemplateDir(templateId);
+  if (bundled) {
+    try {
+      await fs.promises.access(path.join(bundled, 'README.md'));
+      return bundled;
+    } catch {
+      // continuar
+    }
+  }
+
+  throw new Error(`Plantilla "${templateId}" no encontrada en EditCore.`);
 }
 
 export async function scaffoldVertical(templateId: string): Promise<void> {
@@ -72,18 +102,15 @@ export async function saasBuilder(): Promise<void> {
     vscode.window.showWarningMessage('Abre un workspace primero.');
     return;
   }
-  const installed = path.join(root, '.editcore', 'templates', 'template-saas-starter');
   try {
-    await fs.promises.access(installed);
+    await resolveTemplateDir('template-saas-starter');
     await scaffoldVertical('template-saas-starter');
-    return;
   } catch {
-    // no instalado
+    await vscode.commands.executeCommand('workbench.action.chat.open', {
+      query:
+        '@claude @saas Diseñá e implementá un MVP SaaS multi-tenant: auth JWT, roles, API Fastify, frontend React, Postgres.',
+    });
   }
-  await vscode.commands.executeCommand('workbench.action.chat.open', {
-    query:
-      '@claude @saas Diseñá e implementá un MVP SaaS multi-tenant: auth JWT, roles, API Fastify, frontend React, Postgres. Instalá template-saas-starter del Marketplace si hace falta.',
-  });
 }
 
 export async function gpsBuilder(): Promise<void> {
@@ -92,18 +119,15 @@ export async function gpsBuilder(): Promise<void> {
     vscode.window.showWarningMessage('Abre un workspace primero.');
     return;
   }
-  const installed = path.join(root, '.editcore', 'templates', 'template-gps-platform');
   try {
-    await fs.promises.access(installed);
+    await resolveTemplateDir('template-gps-platform');
     await scaffoldVertical('template-gps-platform');
-    return;
   } catch {
-    // no instalado
+    await vscode.commands.executeCommand('workbench.action.chat.open', {
+      query:
+        '@claude @gps Implementá MVP plataforma GPS: ingesta TCP stub, API posiciones, dashboard mapa.',
+    });
   }
-  await vscode.commands.executeCommand('workbench.action.chat.open', {
-    query:
-      '@claude @gps Implementá MVP plataforma GPS: ingesta TCP stub, API posiciones, dashboard mapa. Instalá template-gps-platform del Marketplace si hace falta.',
-  });
 }
 
 export async function founderMode(): Promise<void> {

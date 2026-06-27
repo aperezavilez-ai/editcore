@@ -21,7 +21,6 @@ interface LegacyApiKeysPayload {
   openai?: string;
 }
 
-/** Sobrescribe y elimina un archivo legacy; no deja copias .migrated persistentes. */
 async function secureDeleteLegacyFile(filePath: string): Promise<void> {
   try {
     await fs.promises.access(filePath);
@@ -32,7 +31,6 @@ async function secureDeleteLegacyFile(filePath: string): Promise<void> {
   await fs.promises.unlink(filePath);
 }
 
-/** Elimina restos de builds intermedios (.migrated) sin dejar secretos en disco. */
 async function purgeLegacyBackupArtifacts(keysFile: string): Promise<void> {
   const candidates = [`${keysFile}.migrated`, `${keysFile}.bak`, `${keysFile}.old`];
   for (const candidate of candidates) {
@@ -42,7 +40,7 @@ async function purgeLegacyBackupArtifacts(keysFile: string): Promise<void> {
 
 function readLegacyPayload(keysFile: string): LegacyApiKeysPayload | undefined {
   try {
-    const raw = fs.readFileSync(keysFile, "utf8");
+    const raw = fs.readFileSync(keysFile, "utf8").replace(/^\uFEFF/, "");
     const parsed = JSON.parse(raw) as LegacyApiKeysPayload;
     if (!parsed || typeof parsed !== "object") {
       return undefined;
@@ -71,7 +69,6 @@ export async function migrateLegacyApiKeysFile(
 
   const alreadyMigrated = Boolean(context.globalState.get<string>(MIGRATION_FLAG));
   const legacy = readLegacyPayload(keysFile);
-  const fileExists = legacy !== undefined || fs.existsSync(keysFile);
 
   if (legacy?.anthropic?.trim()) {
     const existing = await context.secrets.get(ANTHROPIC_SECRET);
@@ -89,13 +86,17 @@ export async function migrateLegacyApiKeysFile(
     }
   }
 
-  if (fileExists) {
-    await secureDeleteLegacyFile(keysFile);
-    await purgeLegacyBackupArtifacts(keysFile);
-    result.deletedLegacyFile = true;
+  if (legacy !== undefined) {
+    const hadKeys = Boolean(legacy.anthropic?.trim() || legacy.openai?.trim());
+    const importedSomething = result.importedAnthropic || result.importedOpenAi;
+    if (!hadKeys || importedSomething) {
+      await secureDeleteLegacyFile(keysFile);
+      await purgeLegacyBackupArtifacts(keysFile);
+      result.deletedLegacyFile = true;
+    }
   }
 
-  if (!alreadyMigrated || fileExists) {
+  if (!alreadyMigrated || result.importedAnthropic || result.importedOpenAi) {
     await context.globalState.update(MIGRATION_FLAG, new Date().toISOString());
   }
 

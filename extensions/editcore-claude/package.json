@@ -2,7 +2,7 @@
   "name": "editcore-claude",
   "displayName": "EditCore - Claude Assistant",
   "description": "Chat con Claude (Anthropic) y OpenAI integrado nativamente en EditCore IDE.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "publisher": "editcore",
   "engines": {
     "vscode": "^1.85.0"
@@ -33,8 +33,7 @@
     "onLanguageModelChatProvider:editcore",
     "onChatParticipant:editcore.claude",
     "onView:editcore.homeView",
-    "onView:editcore.accountView",
-    "onView:editcore.marketplaceView"
+    "onView:editcore.accountView"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -56,7 +55,7 @@
         {
           "id": "editcore-sidebar",
           "title": "EditCore",
-          "icon": "media/editcore-activity.png"
+          "icon": "media/editcore-activity.svg"
         }
       ]
     },
@@ -71,16 +70,6 @@
           "type": "webview",
           "id": "editcore.accountView",
           "name": "Cuenta & API"
-        },
-        {
-          "type": "webview",
-          "id": "editcore.chatView",
-          "name": "Chat"
-        },
-        {
-          "type": "webview",
-          "id": "editcore.marketplaceView",
-          "name": "Marketplace"
         }
       ]
     },
@@ -336,16 +325,16 @@
         "editcore.model": {
           "type": "string",
           "enum": [
-            "claude-sonnet-4-20250514",
-            "claude-opus-4-20250514",
-            "claude-3-5-haiku-20241022"
+            "claude-sonnet-4-6",
+            "claude-opus-4-6",
+            "claude-haiku-4-5"
           ],
           "enumDescriptions": [
-            "Claude Sonnet 4 — equilibrado (recomendado)",
-            "Claude Opus 4 — mas potente",
-            "Claude 3.5 Haiku — rapido y economico"
+            "Claude Sonnet 4.6 — equilibrado (recomendado)",
+            "Claude Opus 4.6 — mas potente",
+            "Claude Haiku 4.5 — rapido y economico"
           ],
-          "default": "claude-sonnet-4-20250514",
+          "default": "claude-sonnet-4-6",
           "description": "Modelo Claude (Anthropic) usado por chat, agente y @claude"
         },
         "editcore.openai.model": {
@@ -434,7 +423,7 @@
             "business",
             "enterprise"
           ],
-          "default": "free",
+          "default": "enterprise",
           "description": "Plan EditCore (controla items del marketplace local)"
         },
         "editcore.product.checkUpdatesOnStartup": {
@@ -474,11 +463,11 @@
         },
         "editcore.diagnostics.model": {
           "type": "string",
-          "default": "claude-sonnet-4-20250514",
+          "default": "claude-sonnet-4-6",
           "enum": [
-            "claude-sonnet-4-20250514",
-            "claude-opus-4-20250514",
-            "claude-3-5-haiku-20241022"
+            "claude-sonnet-4-6",
+            "claude-opus-4-6",
+            "claude-haiku-4-5"
           ],
           "description": "Modelo Claude para analisis de autodiagnostico"
         },

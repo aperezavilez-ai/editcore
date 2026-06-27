@@ -4,6 +4,7 @@ import { runAgentTask, AgentEvent } from './agentLoop';
 import { AgentRoleId } from '../agents/roles';
 import { createClaudeClient, mapClaudeApiError } from '../anthropicClient';
 import { LLM_CONFIG } from '../llmConfig';
+import { resolveClaudeModelId } from '../models';
 import {
   parseStructuredPlan,
   formatPlanForDisplay,
@@ -40,7 +41,7 @@ export async function runOrchestratedTask(
   roleId: AgentRoleId = 'default'
 ): Promise<void> {
   const config = vscode.workspace.getConfiguration('editcore');
-  const model = config.get<string>('model', LLM_CONFIG.claude.defaultModel);
+  const model = resolveClaudeModelId(config.get<string>('model', LLM_CONFIG.claude.defaultModel));
   const client = createClaudeClient(apiKey);
   const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
 

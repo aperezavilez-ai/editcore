@@ -23,7 +23,6 @@ PNG_CHECKS = [
     "web/assets/favicon-16.png",
     "web/assets/favicon-32.png",
     "web/assets/apple-touch-icon.png",
-    "extensions/editcore-claude/media/editcore-activity.png",
 ]
 
 OPTIONAL_PNG = [
@@ -34,6 +33,7 @@ OPTIONAL_PNG = [
 SVG_CHECKS = [
     "branding/icons/letterpress/letterpress-dark.svg",
     "extensions/editcore-claude/media/editcore-icon.svg",
+    "extensions/editcore-claude/media/editcore-activity.svg",
 ]
 
 HTML_CHECKS = [

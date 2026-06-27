@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { ApiKeyService } from "./apiKeyService";
 import { callClaude, streamClaude, type ChatMessage } from "./anthropicClient";
 import { callOpenAI, streamOpenAI } from "./openaiClient";
-import { isOpenAiModelId } from "./models";
+import { isOpenAiModelId, resolveClaudeModelId } from "./models";
 
 export type LlmProvider = "anthropic" | "openai";
 
@@ -20,7 +20,7 @@ function isFallbackEnabled(): boolean {
 
 function shouldFallback(err: unknown): boolean {
   const status = (err as { status?: number })?.status;
-  if (status && [401, 403, 429, 500, 502, 503, 529].includes(status)) {
+  if (status && [401, 403, 404, 429, 500, 502, 503, 529].includes(status)) {
     return true;
   }
   if (err instanceof Error) {
@@ -32,6 +32,8 @@ function shouldFallback(err: unknown): boolean {
       msg.includes("network") ||
       msg.includes("fetch") ||
       msg.includes("anthropic") ||
+      msg.includes("not_found") ||
+      msg.includes("no disponible") ||
       msg.includes("timeout") ||
       msg.includes("econnrefused")
     );
@@ -82,7 +84,8 @@ export async function streamForSelectedModel(
   options?: { allowFallback?: boolean }
 ): Promise<LlmUsage> {
   const allowFallback = options?.allowFallback ?? false;
-  const isOpenAiModel = isOpenAiModelId(modelId);
+  const resolvedId = isOpenAiModelId(modelId) ? modelId : resolveClaudeModelId(modelId);
+  const isOpenAiModel = isOpenAiModelId(resolvedId);
 
   if (isOpenAiModel) {
     const openaiKey = await apiKeyService.getOpenAiKey();
@@ -91,14 +94,14 @@ export async function streamForSelectedModel(
     }
     const config = vscode.workspace.getConfiguration("editcore");
     const previous = config.get<string>("openai.model");
-    if (previous !== modelId) {
-      await config.update("openai.model", modelId, vscode.ConfigurationTarget.Global);
+    if (previous !== resolvedId) {
+      await config.update("openai.model", resolvedId, vscode.ConfigurationTarget.Global);
     }
     try {
       const usage = await streamOpenAI(openaiKey, messages, onToken);
       return { ...usage, provider: "openai", usedFallback: false };
     } finally {
-      if (previous !== modelId) {
+      if (previous !== resolvedId) {
         await config.update("openai.model", previous, vscode.ConfigurationTarget.Global);
       }
     }
@@ -117,20 +120,21 @@ export async function streamForSelectedModel(
 
   const config = vscode.workspace.getConfiguration("editcore");
   const previous = config.get<string>("model");
-  if (previous !== modelId) {
-    await config.update("model", modelId, vscode.ConfigurationTarget.Global);
+  if (previous !== resolvedId) {
+    await config.update("model", resolvedId, vscode.ConfigurationTarget.Global);
   }
   try {
     const usage = await streamClaude(anthropicKey, messages, onToken);
-    return { ...usage, provider: "anthropic", model: modelId, usedFallback: false };
+    return { ...usage, provider: "anthropic", model: resolvedId, usedFallback: false };
   } catch (err) {
     if (allowFallback && isFallbackEnabled() && openaiKey && shouldFallback(err)) {
+      onToken("\n\n_⚠️ Claude no disponible — usando OpenAI como respaldo._\n\n");
       const usage = await streamOpenAI(openaiKey, messages, onToken);
       return { ...usage, usedFallback: true };
     }
     throw err;
   } finally {
-    if (previous !== modelId) {
+    if (previous !== resolvedId) {
       await config.update("model", previous, vscode.ConfigurationTarget.Global);
     }
   }

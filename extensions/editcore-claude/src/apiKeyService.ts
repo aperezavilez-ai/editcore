@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { createClaudeClient, mapClaudeApiError } from "./anthropicClient";
 import { LLM_CONFIG } from "./llmConfig";
+import { resolveClaudeModelId } from "./models";
 
 const SECRET_KEY = "anthropicApiKey";
 const OPENAI_SECRET_KEY = "openaiApiKey";
@@ -8,9 +9,9 @@ const OPENROUTER_SECRET_KEY = "openrouterApiKey";
 const USAGE_KEY = "editcore.usageTotals";
 
 const MODEL_PRICING: Record<string, { input: number; output: number }> = {
-  "claude-sonnet-4-20250514": { input: 3, output: 15 },
-  "claude-opus-4-20250514": { input: 15, output: 75 },
-  "claude-3-5-haiku-20241022": { input: 1, output: 5 },
+  "claude-sonnet-4-6": { input: 3, output: 15 },
+  "claude-opus-4-6": { input: 15, output: 75 },
+  "claude-haiku-4-5": { input: 1, output: 5 },
   "gpt-4o": { input: 2.5, output: 10 },
   "gpt-4o-mini": { input: 0.15, output: 0.6 },
   "gpt-4.1": { input: 2, output: 8 },
@@ -101,8 +102,8 @@ export class ApiKeyService {
   }
 
   async getApiKey(): Promise<string | undefined> {
-    const key = await this.context.secrets.get(SECRET_KEY);
-    return key?.trim() || undefined;
+    const fromSecrets = await this.context.secrets.get(SECRET_KEY);
+    return fromSecrets?.trim() || undefined;
   }
 
   async getOpenAiKey(): Promise<string | undefined> {
@@ -189,11 +190,13 @@ export class ApiKeyService {
 
   async validateApiKey(apiKey: string): Promise<void> {
     const client = createClaudeClient(apiKey);
+    const rawModel = vscode.workspace
+      .getConfiguration("editcore")
+      .get<string>("model", LLM_CONFIG.claude.defaultModel);
+    const model = resolveClaudeModelId(rawModel);
     try {
       await client.messages.create({
-        model: vscode.workspace
-          .getConfiguration("editcore")
-          .get<string>("model", LLM_CONFIG.claude.defaultModel),
+        model,
         max_tokens: 16,
         messages: [{ role: "user", content: "ping" }],
       });

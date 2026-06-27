@@ -43,6 +43,11 @@ export function mapClaudeApiError(err: unknown): Error {
   if (status === 403) {
     return new Error("La API key de Anthropic no tiene permisos suficientes.");
   }
+  if (status === 404) {
+    return new Error(
+      "Modelo de Claude no disponible en tu cuenta. Cambia el modelo en EditCore → Cuenta & API."
+    );
+  }
   if (status === 429) {
     return new Error("Limite de uso alcanzado. Espera un momento e intenta de nuevo.");
   }

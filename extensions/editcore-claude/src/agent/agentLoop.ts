@@ -4,6 +4,7 @@ import { ApiKeyService } from "../apiKeyService";
 import { agentFallbackResponse } from "../aiRouter";
 import { createClaudeClient, mapClaudeApiError } from "../anthropicClient";
 import { LLM_CONFIG } from "../llmConfig";
+import { resolveClaudeModelId } from "../models";
 import { getAllAgentTools, executeAgentTool, setToolCallRecorder } from "./tools";
 import { buildAgentContext } from "./agentContext";
 import { AgentRoleId, buildSystemPrompt } from "../agents/roles";
@@ -52,7 +53,7 @@ export async function runAgentTask(
   apiKeyService?: ApiKeyService
 ): Promise<void> {
   const config = vscode.workspace.getConfiguration("editcore");
-  const model = config.get<string>("model", LLM_CONFIG.claude.defaultModel);
+  const model = resolveClaudeModelId(config.get<string>("model", LLM_CONFIG.claude.defaultModel));
   const maxTokens = config.get<number>("maxTokens", 8096);
 
   if (!apiKey?.trim()) {

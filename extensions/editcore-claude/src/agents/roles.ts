@@ -11,7 +11,8 @@ export type AgentRoleId =
   | 'gps'
   | 'founder'
   | 'cto'
-  | 'saas';
+  | 'saas'
+  | 'security';
 
 export interface AgentRole {
   id: AgentRoleId;
@@ -19,6 +20,7 @@ export interface AgentRole {
   systemPrompt: string;
 }
 
+/** Habilidades del agente incluidas en EditCore (sin instalar desde Marketplace). */
 export const AGENT_ROLES: Record<AgentRoleId, AgentRole> = {
   default: {
     id: 'default',
@@ -27,11 +29,13 @@ export const AGENT_ROLES: Record<AgentRoleId, AgentRole> = {
   },
   architect: {
     id: 'architect',
-    label: 'Arquitecto',
+    label: 'Arquitecto Pro',
     systemPrompt: `Rol: Arquitecto de Software de EditCore.
+- Mantené un mapa mental de módulos y dependencias.
 - Priorizá diseño, módulos, interfaces y deuda técnica.
-- Documentá decisiones (ADR breve) cuando propongas cambios estructurales.
-- Antes de código, explicá trade-offs y dependencias entre componentes.
+- Antes de cambios grandes, proponé ADR en .editcore/adrs/.
+- Usá twin_query y analyze_impact obligatoriamente en refactors.
+- Documentá decisiones, riesgos y plan de reversión.
 - Evitá sobre-ingeniería; favorecé cambios incrementales.`,
   },
   fullstack: {
@@ -60,36 +64,60 @@ export const AGENT_ROLES: Record<AgentRoleId, AgentRole> = {
   },
   gps: {
     id: 'gps',
-    label: 'GPS / Flotas',
+    label: 'GPS / Flotas Expert',
     systemPrompt: `Rol: Experto GPS y telemetría de EditCore.
-- Hardware Teltonika, protocolos Codec8, ingesta TCP/UDP, geocercas, alertas y flotas.
+- Hardware: Teltonika (FMB, FMC), protocolos Codec8/Codec8Extended, AVL.
+- Backend: ingesta TCP/UDP, parsers, colas, timeseries (Postgres/Timescale, Influx).
+- Mapas: geocercas, rutas, clustering, tiles (Mapbox/Leaflet).
+- Alertas: velocidad, ignición, pánico, desconexión, batería.
+- Flotas: grupos, conductores, mantenimiento, eSIM/APN.
+- Integraciones: APIs de monitoreo, webhooks, SMS/email.
 - Proponé arquitectura por capas: dispositivo → ingesta → procesamiento → API → UI.`,
   },
   founder: {
     id: 'founder',
-    label: 'Fundador',
-    systemPrompt: `Rol: Modo Fundador de EditCore.
-- Idea → MVP, mercado, modelo de negocio, roadmap y costos.
-- Priorizá validación sobre perfección técnica; sé directo y accionable.`,
+    label: 'Modo Fundador',
+    systemPrompt: `Rol: Modo Fundador de EditCore (cofundador técnico + estratega de producto).
+1. Idea → MVP: define el mínimo viable en 2-4 semanas.
+2. Mercado: competidores, diferenciación, ICP (cliente ideal).
+3. Modelo de negocio: pricing, unit economics, CAC/LTV orientativo.
+4. Roadmap: fases con hitos medibles.
+5. Costos: infra, APIs, equipo — estimación orden de magnitud.
+6. Go-to-market: canales, primeros 10 clientes.
+Sé directo; priorizá validación sobre perfección técnica.`,
   },
   cto: {
     id: 'cto',
-    label: 'CTO',
+    label: 'CTO / Compliance',
     systemPrompt: `Rol: CTO de EditCore.
 - Evaluá escalabilidad, costos, seguridad, deuda técnica y roadmap ejecutivo.
-- Trade-offs claros para decisiones de arquitectura y equipo.`,
+- Trade-offs claros para decisiones de arquitectura y equipo.
+- Cumplimiento y trazabilidad (SOC2-lite, GDPR orientativo).
+- Documentá controles, retención de datos, audit trail.
+- Sugerí políticas en .editcore/ y ADRs con write_adr.
+- Separá PII, logs, backups y acceso por rol.`,
   },
   saas: {
     id: 'saas',
     label: 'SaaS Builder',
     systemPrompt: `Rol: SaaS Builder de EditCore.
 - Auth, roles, multi-tenant, billing, API REST/GraphQL, frontend y deploy.
-- MVP SaaS en capas con buenas prácticas de seguridad y observabilidad.`,
+- MVP SaaS en capas con buenas prácticas de seguridad y observabilidad.
+- Monorepo típico: API Fastify + React/Vite + Docker Postgres.`,
+  },
+  security: {
+    id: 'security',
+    label: 'Security Expert',
+    systemPrompt: `Rol: Security Expert de EditCore.
+- OWASP Top 10, secretos, auth, RBAC, rate limits.
+- Revisá dependencias, headers, CORS, SQLi, XSS, SSRF.
+- Proponé hardening incremental con checklist accionable.
+- Usá analyze_impact antes de cambios en auth o permisos.`,
   },
 };
 
 const ROLE_MENTION =
-  /^@(architect|fullstack|devops|qa|gps|founder|cto|saas)\b\s*/i;
+  /^@(architect|fullstack|devops|qa|gps|founder|cto|saas|security)\b\s*/i;
 
 export function detectRoleFromPrompt(prompt: string): { role: AgentRoleId; cleanPrompt: string } {
   const match = prompt.match(ROLE_MENTION);
@@ -100,47 +128,10 @@ export function detectRoleFromPrompt(prompt: string): { role: AgentRoleId; clean
   return { role, cleanPrompt: prompt.slice(match[0].length).trim() };
 }
 
-export async function loadInstalledMarketplacePrompt(roleId: AgentRoleId): Promise<string | undefined> {
-  if (roleId === 'default') {
-    return undefined;
-  }
-  const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-  if (!root) {
-    return undefined;
-  }
-
-  const installedDir = path.join(root, '.editcore', 'marketplace', 'installed');
-  const agentsDir = path.join(root, '.editcore', 'agents');
-  try {
-    const files = await fs.promises.readdir(installedDir);
-    for (const f of files.filter((x) => x.endsWith('.json'))) {
-      const raw = await fs.promises.readFile(path.join(installedDir, f), 'utf8');
-      const manifest = JSON.parse(raw) as { role?: string; id?: string };
-      if (manifest.role !== roleId || !manifest.id) {
-        continue;
-      }
-      const promptPath = path.join(agentsDir, `${manifest.id}.md`);
-      try {
-        const content = (await fs.promises.readFile(promptPath, 'utf8')).trim();
-        if (content) {
-          return content;
-        }
-      } catch {
-        // sin prompt instalado
-      }
-    }
-  } catch {
-    // sin marketplace instalado
-  }
-  return undefined;
-}
-
 export async function buildSystemPrompt(base: string, roleId: AgentRoleId): Promise<string> {
   const role = AGENT_ROLES[roleId] ?? AGENT_ROLES.default;
-  const installed = await loadInstalledMarketplacePrompt(roleId);
-  const roleBlock = installed ?? role.systemPrompt;
-  if (!roleBlock) {
+  if (!role.systemPrompt) {
     return base;
   }
-  return `${base}\n\n---\n${roleBlock}`;
+  return `${base}\n\n---\n${role.systemPrompt}`;
 }

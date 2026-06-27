@@ -1,5 +1,4 @@
 ﻿import * as vscode from "vscode";
-import { ClaudeChatViewProvider } from "./chatViewProvider";
 import { ClaudeConfigViewProvider } from "./configViewProvider";
 import { EditCoreHomeViewProvider } from "./homeViewProvider";
 import { callWithFallback } from "./aiRouter";
@@ -8,8 +7,8 @@ import { registerClaudeChatParticipant } from "./chatParticipant";
 import { registerClaudeLanguageModelProvider } from "./languageModelProvider";
 import { registerWorkspaceContextProvider } from "./workspace/workspaceContextProvider";
 import { ApiKeyService } from "./apiKeyService";
-import { LLM_VENDOR } from "./llmConfig";
-import { DEPRECATED_CLAUDE_MODELS } from "./models";
+import { LLM_CONFIG, LLM_VENDOR } from "./llmConfig";
+import { resolveClaudeModelId } from "./models";
 import { getWorkspaceIndex } from "./index/workspaceIndex";
 import { getRagIndex } from "./rag/chunkIndex";
 import { buildDependencyGraph } from "./twin/dependencyGraph";
@@ -47,9 +46,13 @@ import { registerApiKeyBridgeCommands } from "./platform/apiKeyBridgeCommands";
 
 export async function activate(context: vscode.ExtensionContext) {
   const apiKeyService = new ApiKeyService(context);
+
   await migrateLegacyApiKeysFile(context);
+
   registerApiKeyBridgeCommands(context, apiKeyService);
   setDiagnosticRuntime(context, apiKeyService);
+
+  await migrateDeprecatedModelSettings();
 
   // Chat primero: el workbench espera modelos y agente antes de responder.
   registerClaudeLanguageModelProvider(context, apiKeyService);
@@ -68,7 +71,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
   initVoyageService(context);
   registerWorkspaceContextProvider(context);
-  void migrateDeprecatedModelSettings();
 
   // Precalentar índice del workspace para búsqueda semántica ligera.
   if (vscode.workspace.workspaceFolders?.length) {
@@ -176,8 +178,9 @@ export async function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(
     vscode.commands.registerCommand("editcore.openMarketplace", async () => {
-      await vscode.commands.executeCommand("workbench.view.extension.editcore-sidebar");
-      await vscode.commands.executeCommand("editcore.marketplaceView.focus");
+      vscode.window.showInformationMessage(
+        "Las habilidades de EditCore (Arquitecto, GPS, SaaS, Security…) están integradas en el agente. Usá @architect, @gps, @saas, etc. en el chat."
+      );
     }),
     vscode.commands.registerCommand("editcore.founderMode", () => founderMode()),
     vscode.commands.registerCommand("editcore.ctoMode", () => ctoMode()),
@@ -203,15 +206,12 @@ export async function activate(context: vscode.ExtensionContext) {
   createStatusBarItem(context);
   registerDiagnosticCommands(context, apiKeyService);
 
-  const chatProvider = new ClaudeChatViewProvider(context, apiKeyService);
   const configProvider = new ClaudeConfigViewProvider(context, apiKeyService);
   const homeProvider = new EditCoreHomeViewProvider(apiKeyService);
 
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider("editcore.homeView", homeProvider),
-    vscode.window.registerWebviewViewProvider("editcore.chatView", chatProvider),
-    vscode.window.registerWebviewViewProvider("editcore.accountView", configProvider),
-    vscode.window.registerWebviewViewProvider("editcore.marketplaceView", marketplaceProvider)
+    vscode.window.registerWebviewViewProvider("editcore.accountView", configProvider)
   );
 
   context.subscriptions.push(
@@ -259,16 +259,8 @@ export async function activate(context: vscode.ExtensionContext) {
         vscode.window.showWarningMessage("Selecciona código primero.");
         return;
       }
-      await runWithProgress(apiKeyService, "Explicando selección...", async () => {
-        const { text, usage } = await callWithFallback(apiKeyService, [
-          {
-            role: "user",
-            content: `Explica este código de forma clara y concisa:\n\n\`\`\`\n${selection}\n\`\`\``,
-          },
-        ]);
-        apiKeyService.recordUsage(usage.inputTokens, usage.outputTokens);
-        chatProvider.postAssistantMessage(text);
-        chatProvider.reveal();
+      await vscode.commands.executeCommand("workbench.action.chat.open", {
+        query: `@claude Explica este código de forma clara y concisa:\n\n\`\`\`\n${selection}\n\`\`\``,
       });
     })
   );
@@ -381,19 +373,36 @@ async function maybePromptWorkspaceInit(context: vscode.ExtensionContext): Promi
 
 async function migrateDeprecatedModelSettings(): Promise<void> {
   const config = vscode.workspace.getConfiguration("editcore");
-  const current = config.get<string>("model");
-  if (!current || !(current in DEPRECATED_CLAUDE_MODELS)) {
-    return;
-  }
-  const next = DEPRECATED_CLAUDE_MODELS[current];
-  await config.update("model", next, vscode.ConfigurationTarget.Global);
-  const diag = config.get<string>("diagnostics.model");
-  if (diag && diag in DEPRECATED_CLAUDE_MODELS) {
-    await config.update(
-      "diagnostics.model",
-      DEPRECATED_CLAUDE_MODELS[diag],
-      vscode.ConfigurationTarget.Global
-    );
+  const targets = ["model", "diagnostics.model"] as const;
+
+  for (const key of targets) {
+    const inspect = config.inspect<string>(key);
+    const entries: Array<{ value: string; target: vscode.ConfigurationTarget }> = [];
+    if (inspect?.globalValue) {
+      entries.push({ value: inspect.globalValue, target: vscode.ConfigurationTarget.Global });
+    }
+    if (inspect?.workspaceValue) {
+      entries.push({ value: inspect.workspaceValue, target: vscode.ConfigurationTarget.Workspace });
+    }
+    if (inspect?.workspaceFolderValue) {
+      entries.push({
+        value: inspect.workspaceFolderValue,
+        target: vscode.ConfigurationTarget.WorkspaceFolder,
+      });
+    }
+    if (entries.length === 0) {
+      const current = config.get<string>(key);
+      if (current) {
+        entries.push({ value: current, target: vscode.ConfigurationTarget.Global });
+      }
+    }
+
+    for (const { value, target } of entries) {
+      const next = resolveClaudeModelId(value);
+      if (next !== value) {
+        await config.update(key, next, target);
+      }
+    }
   }
 }
 

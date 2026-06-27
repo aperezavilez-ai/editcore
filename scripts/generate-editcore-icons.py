@@ -298,10 +298,13 @@ def main() -> None:
     for rel in (
         "branding/icons/editcore-icon.svg",
         "extensions/editcore-claude/media/editcore-icon.svg",
+        "extensions/editcore-claude/media/editcore-activity.svg",
         "extensions/editcore-connect/media/activity-connect.svg",
         "editcore-src/extensions/editcore-claude/media/editcore-icon.svg",
+        "editcore-src/extensions/editcore-claude/media/editcore-activity.svg",
         "editcore-src/extensions/editcore-connect/media/activity-connect.svg",
         "VSCode-win32-x64/resources/app/extensions/editcore-claude/media/editcore-icon.svg",
+        "VSCode-win32-x64/resources/app/extensions/editcore-claude/media/editcore-activity.svg",
         "VSCode-win32-x64/resources/app/extensions/editcore-connect/media/connect-icon.svg",
     ):
         write_text(ROOT / rel, svg24)

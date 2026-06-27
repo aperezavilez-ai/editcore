@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { LLM_CONFIG } from "../llmConfig";
+import { getModelLabel, resolveClaudeModelId } from '../models';
 import { getRagIndex } from '../rag/chunkIndex';
 import { getWorkspaceIndex } from '../index/workspaceIndex';
 import { getExtensionVersion, PRODUCT_NAME } from '../product/productVersion';
@@ -13,8 +14,10 @@ export function createStatusBarItem(
 
   const refresh = () => {
     const config = vscode.workspace.getConfiguration('editcore');
-    const model = config.get<string>('model', LLM_CONFIG.claude.defaultModel);
-    const short = model.replace('claude-', '').replace(/-/g, ' ');
+    const model = resolveClaudeModelId(
+      config.get<string>('model', LLM_CONFIG.claude.defaultModel)
+    );
+    const short = getModelLabel(model);
     const rag = getRagIndex().getStats();
     item.text = `$(sparkle) EditCore · ${short}`;
     item.tooltip = `EditCore Command Hub (Ctrl+Alt+E)\nModelo: ${model}\nRAG: ${rag.chunks} chunks · ${rag.files} archivos`;
@@ -50,7 +53,7 @@ export async function showAbout(): Promise<void> {
     '- Chat nativo `@claude` (Ask + Agent)',
     '- Autodiagnóstico (Ctrl+Alt+D) — checks + análisis Claude',
     '- 13+ tools: git, MCP, RAG, ADR, gemelo digital, autodiagnóstico',
-    '- Marketplace local + builders SaaS/GPS',
+    '- Habilidades integradas: @architect @gps @saas @security @founder @cto',
     '- Sesiones, audit log, org.json',
     `- Índice: keyword v2${indexed ? ' ✓' : ''} · RAG: ${rag.chunks} chunks`,
     '',

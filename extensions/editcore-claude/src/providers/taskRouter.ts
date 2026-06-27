@@ -28,7 +28,7 @@ const DEFAULT_RULES: TaskRoutingRule[] = [
   {
     category: "coding",
     provider: "anthropic",
-    model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-4-6",
     keywords: ["implement", "código", "code", "fix", "bug", "refactor"],
   },
   {

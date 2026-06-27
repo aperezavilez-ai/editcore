@@ -93,9 +93,5 @@ export async function showInitWorkspaceResult(): Promise<void> {
     result.created.length > 0
       ? `EditCore: creado ${result.created.join(', ')} en .editcore/`
       : 'EditCore: .editcore/ ya estaba inicializado.';
-  vscode.window.showInformationMessage(msg, 'Abrir Marketplace').then((choice) => {
-    if (choice === 'Abrir Marketplace') {
-      void vscode.commands.executeCommand('editcore.openMarketplace');
-    }
-  });
+  vscode.window.showInformationMessage(msg);
 }

@@ -3,6 +3,7 @@ import { ApiKeyService } from "./apiKeyService";
 import { streamForSelectedModel } from "./aiRouter";
 import type { ChatMessage } from "./anthropicClient";
 import { getModelLabel, getOpenAiModelLabel } from "./models";
+import { LLM_CONFIG } from "./llmConfig";
 
 export class ClaudeChatViewProvider implements vscode.WebviewViewProvider {
   private view?: vscode.WebviewView;
@@ -82,7 +83,7 @@ export class ClaudeChatViewProvider implements vscode.WebviewViewProvider {
     let fullText = "";
     try {
       const config = vscode.workspace.getConfiguration("editcore");
-      const modelId = config.get<string>("model", "claude-sonnet-4-20250514");
+      const modelId = config.get<string>("model", LLM_CONFIG.claude.defaultModel);
       const usage = await streamForSelectedModel(
         this.apiKeyService,
         this.history,

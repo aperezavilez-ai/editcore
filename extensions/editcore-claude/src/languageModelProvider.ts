@@ -93,7 +93,7 @@ export function registerClaudeLanguageModelProvider(
               progress.report(new vscode.LanguageModelTextPart(chunk));
             }
           },
-          { allowFallback: false }
+          { allowFallback: true }
         );
         apiKeyService.recordUsage(usage.inputTokens, usage.outputTokens);
       },

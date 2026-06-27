@@ -4,6 +4,7 @@ import { runAgentTask, AgentEvent } from './agentLoop';
 import { AgentRoleId } from '../agents/roles';
 import { createClaudeClient, mapClaudeApiError } from '../anthropicClient';
 import { LLM_CONFIG } from '../llmConfig';
+import { resolveClaudeModelId } from '../models';
 import {
   runPostChangeValidation,
   saveValidationReport,
@@ -57,7 +58,7 @@ export async function runMultiAgentPipeline(
 ): Promise<void> {
   let context = `Tarea del usuario:\n${userTask}\n`;
   const config = vscode.workspace.getConfiguration('editcore');
-  const model = config.get<string>('model', LLM_CONFIG.claude.defaultModel);
+  const model = resolveClaudeModelId(config.get<string>('model', LLM_CONFIG.claude.defaultModel));
   const client = createClaudeClient(apiKey);
 
   for (const step of PIPELINE) {

@@ -5,31 +5,34 @@ export interface ClaudeModelOption {
   tier: "balanced" | "powerful" | "fast";
 }
 
-/** Modelos Claude verificados en la API de Anthropic (Messages API). */
+/** Modelos Claude actuales (Messages API, 2026). */
 export const CLAUDE_MODELS: ClaudeModelOption[] = [
   {
-    id: "claude-sonnet-4-20250514",
-    label: "Claude Sonnet 4",
+    id: "claude-sonnet-4-6",
+    label: "Claude Sonnet 4.6",
     description: "Por defecto: equilibrado para código y agente",
     tier: "balanced",
   },
   {
-    id: "claude-opus-4-20250514",
-    label: "Claude Opus 4",
+    id: "claude-opus-4-6",
+    label: "Claude Opus 4.6",
     description: "Máxima capacidad para tareas complejas",
     tier: "powerful",
   },
   {
-    id: "claude-3-5-haiku-20241022",
-    label: "Claude 3.5 Haiku",
+    id: "claude-haiku-4-5",
+    label: "Claude Haiku 4.5",
     description: "Rápido y económico",
     tier: "fast",
   },
 ];
 
-/** Modelos retirados: migrar al sustituto en settings. */
+/** Modelos retirados: migrar al sustituto en settings al arrancar. */
 export const DEPRECATED_CLAUDE_MODELS: Record<string, string> = {
-  "claude-3-5-sonnet-20241022": "claude-sonnet-4-20250514",
+  "claude-3-5-sonnet-20241022": "claude-sonnet-4-6",
+  "claude-sonnet-4-20250514": "claude-sonnet-4-6",
+  "claude-opus-4-20250514": "claude-opus-4-6",
+  "claude-3-5-haiku-20241022": "claude-haiku-4-5",
 };
 
 export function getModelLabel(modelId: string): string {
@@ -41,7 +44,13 @@ export function isValidModelId(modelId: string): boolean {
 }
 
 export function resolveClaudeModelId(modelId: string): string {
-  return DEPRECATED_CLAUDE_MODELS[modelId] ?? modelId;
+  const mapped = DEPRECATED_CLAUDE_MODELS[modelId] ?? modelId;
+  return isValidModelId(mapped) ? mapped : CLAUDE_MODELS[0].id;
+}
+
+/** Lee editcore.model y devuelve un ID válido para la API. */
+export function resolveClaudeModelFromSettings(raw?: string): string {
+  return resolveClaudeModelId(raw ?? CLAUDE_MODELS[0].id);
 }
 
 export interface OpenAiModelOption {
