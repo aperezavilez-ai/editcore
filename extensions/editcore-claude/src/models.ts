@@ -30,10 +30,21 @@ export const CLAUDE_MODELS: ClaudeModelOption[] = [
 /** Modelos retirados: migrar al sustituto en settings al arrancar. */
 export const DEPRECATED_CLAUDE_MODELS: Record<string, string> = {
   "claude-3-5-sonnet-20241022": "claude-sonnet-4-6",
+  "claude-3-7-sonnet-20250219": "claude-sonnet-4-6",
+  "claude-sonnet-4": "claude-sonnet-4-6",
   "claude-sonnet-4-20250514": "claude-sonnet-4-6",
+  "claude-opus-4": "claude-opus-4-6",
   "claude-opus-4-20250514": "claude-opus-4-6",
   "claude-3-5-haiku-20241022": "claude-haiku-4-5",
 };
+
+/** Snapshots retirados por Anthropic (jun 2026); cualquier ID que los contenga se remapea. */
+const RETIRED_MODEL_SNIPPETS: Array<{ match: RegExp; replacement: string }> = [
+  { match: /sonnet-4-20250514/i, replacement: "claude-sonnet-4-6" },
+  { match: /opus-4-20250514/i, replacement: "claude-opus-4-6" },
+  { match: /3-7-sonnet-20250219/i, replacement: "claude-sonnet-4-6" },
+  { match: /3-5-sonnet-20241022/i, replacement: "claude-sonnet-4-6" },
+];
 
 export function getModelLabel(modelId: string): string {
   return CLAUDE_MODELS.find((m) => m.id === modelId)?.label ?? modelId;
@@ -44,8 +55,23 @@ export function isValidModelId(modelId: string): boolean {
 }
 
 export function resolveClaudeModelId(modelId: string): string {
-  const mapped = DEPRECATED_CLAUDE_MODELS[modelId] ?? modelId;
-  return isValidModelId(mapped) ? mapped : CLAUDE_MODELS[0].id;
+  const trimmed = modelId.trim();
+  if (!trimmed) {
+    return CLAUDE_MODELS[0].id;
+  }
+
+  const direct = DEPRECATED_CLAUDE_MODELS[trimmed] ?? trimmed;
+  if (isValidModelId(direct)) {
+    return direct;
+  }
+
+  for (const { match, replacement } of RETIRED_MODEL_SNIPPETS) {
+    if (match.test(trimmed)) {
+      return replacement;
+    }
+  }
+
+  return CLAUDE_MODELS[0].id;
 }
 
 /** Lee editcore.model y devuelve un ID válido para la API. */

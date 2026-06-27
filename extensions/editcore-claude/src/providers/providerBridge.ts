@@ -7,18 +7,28 @@ import { callOllama } from "./ollamaClient";
 import { callOpenRouter } from "./openRouterClient";
 import { resolveTaskRoute, describeRoute } from "./taskRouter";
 import { LlmUsage } from "../aiRouter";
+import { callViaOrchestrator } from "../orchestration/orchestratorApi";
 
 export type ExtendedProvider = "anthropic" | "openai" | "ollama" | "openrouter";
 
 /**
  * Puente opcional de proveedores extendidos. No reemplaza el flujo principal de Claude/OpenAI.
+ * Las llamadas pasan primero por orchestrator.prepare (fallback al flujo legacy si falla).
  */
 export async function callExtendedProvider(
   apiKeyService: ApiKeyService,
   messages: ChatMessage[],
   hintText?: string
 ): Promise<{ text: string; usage: LlmUsage } | undefined> {
-  const route = hintText ? resolveTaskRoute(hintText) : undefined;
+  const task = hintText?.trim();
+  if (task) {
+    const orchestrated = await callViaOrchestrator(apiKeyService, messages, task);
+    if (orchestrated) {
+      return orchestrated;
+    }
+  }
+
+  const route = task ? resolveTaskRoute(task, messages) : undefined;
   if (!route) return undefined;
 
   const config = vscode.workspace.getConfiguration("editcore");
@@ -28,7 +38,7 @@ export async function callExtendedProvider(
       case "anthropic": {
         const key = await apiKeyService.getApiKey();
         if (!key) return undefined;
-        const result = await callClaude(key, messages);
+        const result = await callClaude(key, messages, route.model);
         return {
           text: result.text,
           usage: { ...result.usage, provider: "anthropic", model: route.model },
@@ -37,11 +47,21 @@ export async function callExtendedProvider(
       case "openai": {
         const key = await apiKeyService.getOpenAiKey();
         if (!key) return undefined;
-        const result = await callOpenAI(key, messages);
-        return {
-          text: result.text,
-          usage: { ...result.usage, provider: "openai", model: route.model },
-        };
+        const previous = config.get<string>("openai.model");
+        if (previous !== route.model) {
+          await config.update("openai.model", route.model, vscode.ConfigurationTarget.Global);
+        }
+        try {
+          const result = await callOpenAI(key, messages);
+          return {
+            text: result.text,
+            usage: { ...result.usage, provider: "openai", model: route.model },
+          };
+        } finally {
+          if (previous !== route.model) {
+            await config.update("openai.model", previous, vscode.ConfigurationTarget.Global);
+          }
+        }
       }
       case "ollama": {
         if (!config.get<boolean>("ollama.enabled", false)) return undefined;

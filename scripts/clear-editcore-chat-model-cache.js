@@ -37,15 +37,18 @@ for (const key of CACHE_KEYS) {
   }
 }
 
-// Cualquier clave con gptpro4all en el valor
-const stale = db
-  .prepare("SELECT key FROM ItemTable WHERE value LIKE ? OR key LIKE ?")
-  .all("%gptpro4all%", "%gptpro4all%");
-for (const row of stale) {
-  if (!CACHE_KEYS.includes(row.key)) {
-    del.run(row.key);
-    console.log("OK: eliminado (stale)", row.key);
-    removed++;
+// Cualquier clave con modelos retirados u obsoletos en el valor
+const stalePatterns = ["%gptpro4all%", "%claude-sonnet-4-20250514%", "%claude-opus-4-20250514%", "%20250514%"];
+for (const pattern of stalePatterns) {
+  const stale = db
+    .prepare("SELECT key FROM ItemTable WHERE value LIKE ? OR key LIKE ?")
+    .all(pattern, pattern.replace(/%/g, ""));
+  for (const row of stale) {
+    if (!CACHE_KEYS.includes(row.key)) {
+      del.run(row.key);
+      console.log("OK: eliminado (stale)", row.key);
+      removed++;
+    }
   }
 }
 

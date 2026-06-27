@@ -3,6 +3,8 @@ import { ApiKeyService } from "./apiKeyService";
 import { callClaude, streamClaude, type ChatMessage } from "./anthropicClient";
 import { callOpenAI, streamOpenAI } from "./openaiClient";
 import { isOpenAiModelId, resolveClaudeModelId } from "./models";
+import { persistClaudeModelSetting } from "./platform/modelMigration";
+import { callViaOrchestrator, streamViaOrchestrator } from "./orchestration/orchestratorApi";
 
 export type LlmProvider = "anthropic" | "openai";
 
@@ -45,6 +47,11 @@ export async function callWithFallback(
   apiKeyService: ApiKeyService,
   messages: ChatMessage[]
 ): Promise<{ text: string; usage: LlmUsage }> {
+  const orchestrated = await callViaOrchestrator(apiKeyService, messages);
+  if (orchestrated) {
+    return orchestrated;
+  }
+
   const anthropicKey = await apiKeyService.getApiKey();
   const openaiKey = await apiKeyService.getOpenAiKey();
   const fallback = isFallbackEnabled();
@@ -81,8 +88,18 @@ export async function streamForSelectedModel(
   messages: ChatMessage[],
   modelId: string,
   onToken: (token: string) => void,
-  options?: { allowFallback?: boolean }
+  options?: { allowFallback?: boolean; taskHint?: string }
 ): Promise<LlmUsage> {
+  const orchestrated = await streamViaOrchestrator(
+    apiKeyService,
+    messages,
+    onToken,
+    options?.taskHint
+  );
+  if (orchestrated) {
+    return orchestrated;
+  }
+
   const allowFallback = options?.allowFallback ?? false;
   const resolvedId = isOpenAiModelId(modelId) ? modelId : resolveClaudeModelId(modelId);
   const isOpenAiModel = isOpenAiModelId(resolvedId);
@@ -118,13 +135,10 @@ export async function streamForSelectedModel(
     throw new Error("Configura una API Key de Claude (Anthropic) en el panel de APIs.");
   }
 
-  const config = vscode.workspace.getConfiguration("editcore");
-  const previous = config.get<string>("model");
-  if (previous !== resolvedId) {
-    await config.update("model", resolvedId, vscode.ConfigurationTarget.Global);
-  }
+  await persistClaudeModelSetting(resolvedId);
+
   try {
-    const usage = await streamClaude(anthropicKey, messages, onToken);
+    const usage = await streamClaude(anthropicKey, messages, onToken, resolvedId);
     return { ...usage, provider: "anthropic", model: resolvedId, usedFallback: false };
   } catch (err) {
     if (allowFallback && isFallbackEnabled() && openaiKey && shouldFallback(err)) {
@@ -133,10 +147,6 @@ export async function streamForSelectedModel(
       return { ...usage, usedFallback: true };
     }
     throw err;
-  } finally {
-    if (previous !== resolvedId) {
-      await config.update("model", previous, vscode.ConfigurationTarget.Global);
-    }
   }
 }
 

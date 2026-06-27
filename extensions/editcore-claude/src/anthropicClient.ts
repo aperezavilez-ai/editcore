@@ -17,9 +17,9 @@ export interface ClaudeUsage {
   model: string;
 }
 
-function getModelConfig(): { model: string; maxTokens: number } {
+function getModelConfig(modelOverride?: string): { model: string; maxTokens: number } {
   const config = vscode.workspace.getConfiguration("editcore");
-  const raw = config.get<string>("model", LLM_CONFIG.claude.defaultModel);
+  const raw = modelOverride ?? config.get<string>("model", LLM_CONFIG.claude.defaultModel);
   const model = resolveClaudeModelId(raw);
   const maxTokens = config.get<number>("maxTokens", 8096);
   if (!isValidModelId(model)) {
@@ -44,8 +44,15 @@ export function mapClaudeApiError(err: unknown): Error {
     return new Error("La API key de Anthropic no tiene permisos suficientes.");
   }
   if (status === 404) {
+    const body = String((err as { message?: string })?.message ?? "");
+    if (body.includes("20250514") || body.includes("not_found_error")) {
+      return new Error(
+        "El modelo Claude seleccionado fue retirado por Anthropic. EditCore migrará a Claude Sonnet 4.6. " +
+          "Recarga la ventana (Ctrl+Alt+R) y vuelve a intentar."
+      );
+    }
     return new Error(
-      "Modelo de Claude no disponible en tu cuenta. Cambia el modelo en EditCore → Cuenta & API."
+      "Modelo de Claude no disponible. Abre Cuenta & API y elige Claude Sonnet 4.6."
     );
   }
   if (status === 429) {
@@ -72,9 +79,10 @@ export function mapClaudeApiError(err: unknown): Error {
 
 export async function callClaude(
   apiKey: string,
-  messages: ChatMessage[]
+  messages: ChatMessage[],
+  modelOverride?: string
 ): Promise<{ text: string; usage: ClaudeUsage }> {
-  const { model, maxTokens } = getModelConfig();
+  const { model, maxTokens } = getModelConfig(modelOverride);
   const client = createClaudeClient(apiKey);
 
   try {
@@ -107,9 +115,10 @@ export async function callClaude(
 export async function streamClaude(
   apiKey: string,
   messages: ChatMessage[],
-  onToken: (token: string) => void
+  onToken: (token: string) => void,
+  modelOverride?: string
 ): Promise<ClaudeUsage> {
-  const { model, maxTokens } = getModelConfig();
+  const { model, maxTokens } = getModelConfig(modelOverride);
   const client = createClaudeClient(apiKey);
 
   try {

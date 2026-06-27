@@ -7,6 +7,8 @@ import {
   useCommunityEdition,
   generateDevLicenseKey,
 } from './licenseService';
+import { migrateDeprecatedModelSettings, persistClaudeModelSetting } from '../platform/modelMigration';
+import { CLAUDE_MODELS } from '../models';
 import { checkForUpdates } from './updateChecker';
 import {
   DOWNLOAD_PAGE_URL,
@@ -110,6 +112,10 @@ export function registerProductCommands(
       } catch {
         // ignore
       }
+
+      await migrateDeprecatedModelSettings();
+      await persistClaudeModelSetting(CLAUDE_MODELS[0].id);
+
       const hasKey = await apiKeyService.hasAnyLlmKey();
       if (!hasKey) {
         const go = await vscode.window.showWarningMessage(
@@ -124,8 +130,15 @@ export function registerProductCommands(
           }
         }
       }
+
       await vscode.commands.executeCommand('workbench.action.chat.clear');
-      await vscode.commands.executeCommand('editcoreConnect.reloadWindow');
+      const reload = await vscode.window.showInformationMessage(
+        'EditCore: modelo migrado a Claude Sonnet 4.6. Recarga la ventana para limpiar la cache del chat.',
+        'Recargar ahora'
+      );
+      if (reload === 'Recargar ahora') {
+        await vscode.commands.executeCommand('editcoreConnect.reloadWindow');
+      }
     })
   );
 }

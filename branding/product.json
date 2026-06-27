@@ -41,8 +41,8 @@
   "requestFeatureUrl": "https://github.com/aperezavilez-ai/editcore/issues/new",
   "downloadUrl": "https://editcore.mx/",
   "updateUrl": "https://raw.githubusercontent.com/aperezavilez-ai/editcore/main/releases/update",
-  "editCoreProductVersion": "1.0.3",
-  "version": "1.0.3",
+  "editCoreProductVersion": "1.0.4",
+  "version": "1.0.4",
   "extensionsGallery": {
     "serviceUrl": "https://open-vsx.org/vscode/gallery",
     "itemUrl": "https://open-vsx.org/vscode/item",

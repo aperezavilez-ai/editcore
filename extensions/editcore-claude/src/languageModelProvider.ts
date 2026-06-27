@@ -3,7 +3,7 @@ import { ApiKeyService } from "./apiKeyService";
 import { streamForSelectedModel } from "./aiRouter";
 import type { ChatMessage } from "./anthropicClient";
 import { LLM_VENDOR } from "./llmConfig";
-import { CLAUDE_MODELS, OPENAI_MODELS } from "./models";
+import { CLAUDE_MODELS, OPENAI_MODELS, isOpenAiModelId, resolveClaudeModelId } from "./models";
 import { prependWorkspaceContext } from "./workspace/workspaceMessages";
 import {
   buildUserContent,
@@ -84,16 +84,26 @@ export function registerClaudeLanguageModelProvider(
           return;
         }
 
+        const modelId = isOpenAiModelId(model.id)
+          ? model.id
+          : resolveClaudeModelId(model.id);
+
+        const taskHint = [...chatMessages]
+          .reverse()
+          .find((m) => m.role === "user" && typeof m.content === "string")?.content as
+          | string
+          | undefined;
+
         const usage = await streamForSelectedModel(
           apiKeyService,
           chatMessages,
-          model.id,
+          modelId,
           (chunk) => {
             if (!token.isCancellationRequested) {
               progress.report(new vscode.LanguageModelTextPart(chunk));
             }
           },
-          { allowFallback: true }
+          { allowFallback: true, taskHint }
         );
         apiKeyService.recordUsage(usage.inputTokens, usage.outputTokens);
       },

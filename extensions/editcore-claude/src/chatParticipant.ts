@@ -101,7 +101,7 @@ export function registerClaudeChatParticipant(
               fullText += chunk;
               stream.markdown(chunk);
             },
-            { allowFallback: true }
+            { allowFallback: true, taskHint: request.prompt }
           );
           apiKeyService.recordUsage(usage.inputTokens, usage.outputTokens);
         }

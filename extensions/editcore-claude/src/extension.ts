@@ -8,7 +8,6 @@ import { registerClaudeLanguageModelProvider } from "./languageModelProvider";
 import { registerWorkspaceContextProvider } from "./workspace/workspaceContextProvider";
 import { ApiKeyService } from "./apiKeyService";
 import { LLM_CONFIG, LLM_VENDOR } from "./llmConfig";
-import { resolveClaudeModelId } from "./models";
 import { getWorkspaceIndex } from "./index/workspaceIndex";
 import { getRagIndex } from "./rag/chunkIndex";
 import { buildDependencyGraph } from "./twin/dependencyGraph";
@@ -43,6 +42,7 @@ import { registerPlatformCommands } from "./platform/platformCommands";
 import { registerGlobalCommands } from "./global/globalCommands";
 import { migrateLegacyApiKeysFile } from "./platform/legacyApiKeysMigration";
 import { registerApiKeyBridgeCommands } from "./platform/apiKeyBridgeCommands";
+import { migrateDeprecatedModelSettings } from "./platform/modelMigration";
 
 export async function activate(context: vscode.ExtensionContext) {
   const apiKeyService = new ApiKeyService(context);
@@ -376,41 +376,6 @@ async function maybePromptWorkspaceInit(context: vscode.ExtensionContext): Promi
   await context.globalState.update(flagKey, true);
   if (choice === "Inicializar") {
     await vscode.commands.executeCommand("editcore.initWorkspace");
-  }
-}
-
-async function migrateDeprecatedModelSettings(): Promise<void> {
-  const config = vscode.workspace.getConfiguration("editcore");
-  const targets = ["model", "diagnostics.model"] as const;
-
-  for (const key of targets) {
-    const inspect = config.inspect<string>(key);
-    const entries: Array<{ value: string; target: vscode.ConfigurationTarget }> = [];
-    if (inspect?.globalValue) {
-      entries.push({ value: inspect.globalValue, target: vscode.ConfigurationTarget.Global });
-    }
-    if (inspect?.workspaceValue) {
-      entries.push({ value: inspect.workspaceValue, target: vscode.ConfigurationTarget.Workspace });
-    }
-    if (inspect?.workspaceFolderValue) {
-      entries.push({
-        value: inspect.workspaceFolderValue,
-        target: vscode.ConfigurationTarget.WorkspaceFolder,
-      });
-    }
-    if (entries.length === 0) {
-      const current = config.get<string>(key);
-      if (current) {
-        entries.push({ value: current, target: vscode.ConfigurationTarget.Global });
-      }
-    }
-
-    for (const { value, target } of entries) {
-      const next = resolveClaudeModelId(value);
-      if (next !== value) {
-        await config.update(key, next, target);
-      }
-    }
   }
 }
 
