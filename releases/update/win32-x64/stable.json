@@ -1,8 +1,8 @@
 {
-  "version": "1.0.1",
-  "productVersion": "1.0.1",
-  "timestamp": 1782441005645,
-  "url": "https://github.com/aperezavilez-ai/editcore/releases/download/v1.0.1/EditCore-1.0.1-win32-x64-setup.exe",
-  "name": "1.0.1",
-  "sha256hash": "5836a7180fa36c2f2826bf71233afccacdde0f78232f09f842510fb94ce4d796"
+  "version": "1.0.3",
+  "productVersion": "1.0.3",
+  "timestamp": 1782532385432,
+  "url": "https://github.com/aperezavilez-ai/editcore/releases/download/v1.0.3/EditCore-1.0.3-win32-x64-setup.exe",
+  "name": "1.0.3",
+  "sha256hash": "ecc0e88642e8d0571b382411850cdcf282a374f7ce77351911ed3a5c3c1bfb21"
 }

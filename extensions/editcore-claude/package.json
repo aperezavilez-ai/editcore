@@ -2,7 +2,7 @@
   "name": "editcore-claude",
   "displayName": "EditCore - Claude Assistant",
   "description": "Chat con Claude (Anthropic) y OpenAI integrado nativamente en EditCore IDE.",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "publisher": "editcore",
   "engines": {
     "vscode": "^1.85.0"
@@ -23,6 +23,7 @@
   "enabledApiProposals": [
     "defaultChatParticipant",
     "chatParticipantAdditions",
+    "chatParticipantPrivate",
     "chatProvider",
     "chatContextProvider",
     "chatReferenceBinaryData"
@@ -366,10 +367,28 @@
           "maximum": 64000,
           "description": "Maximo de tokens por respuesta"
         },
-        "editcore.orchestrator.enabled": {
+        "editcore.agent.alwaysWhenWorkspaceOpen": {
           "type": "boolean",
           "default": true,
-          "description": "En modo Agent: plan -> aprobación -> ejecución -> validación -> revisión"
+          "description": "Con carpeta abierta, usar agente con herramientas reales aunque el modo no llegue del chat"
+        },
+        "editcore.agent.style": {
+          "type": "string",
+          "enum": [
+            "cursor",
+            "verbose"
+          ],
+          "enumDescriptions": [
+            "Conciso: actua sin narrar; herramientas ocultas en el chat (recomendado)",
+            "Detallado: muestra cada herramienta y fases del orquestador"
+          ],
+          "default": "cursor",
+          "description": "Estilo de comunicacion del agente en modo Agent"
+        },
+        "editcore.orchestrator.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "En modo Agent: plan y aprobacion antes de ejecutar (desactivado = directo como Cursor)"
         },
         "editcore.plan.requireApproval": {
           "type": "boolean",

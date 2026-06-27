@@ -11,6 +11,7 @@ import { requestCommandApproval } from './terminalApproval';
 import { analyzeFileImpact, formatImpactReport } from './impactAnalyzer';
 import { loadDependencyGraph, formatGraphAnswer } from '../twin/dependencyGraph';
 import { McpManager } from '../mcp/mcpClient';
+import { isReadableFile } from '../fs/workspaceFs';
 
 export type ToolCallRecorder = (name: string) => void;
 
@@ -371,6 +372,12 @@ async function execListDirectory(input: { path: string }): Promise<string> {
 
 async function execReadFile(input: { path: string; offset?: number; limit?: number }): Promise<string> {
   const abs = resolveSafePath(input.path);
+  if (!(await isReadableFile(abs))) {
+    const hint = (await fs.promises.stat(abs).catch(() => undefined))?.isDirectory()
+      ? " Es una carpeta — usa list_directory o glob_files."
+      : "";
+    throw new Error(`No es un archivo legible: ${input.path}.${hint}`);
+  }
   const content = await fs.promises.readFile(abs, 'utf-8');
   const lines = content.split('\n');
   const start = Math.max(0, (input.offset ?? 1) - 1);
@@ -404,7 +411,7 @@ async function execSearchFiles(input: {
     let stat: fs.Stats;
     try {
       stat = await fs.promises.stat(abs);
-      if (stat.size > 300_000) {
+      if (!stat.isFile() || stat.size > 300_000) {
         return;
       }
     } catch {
@@ -637,7 +644,11 @@ async function execListAdrs(): Promise<string> {
     }
     const lines: string[] = [];
     for (const f of md) {
-      const content = await fs.promises.readFile(path.join(dir, f), 'utf8');
+      const filePath = path.join(dir, f);
+      if (!(await isReadableFile(filePath))) {
+        continue;
+      }
+      const content = await fs.promises.readFile(filePath, 'utf8');
       const title = content.match(/^# ADR:\s*(.+)$/m)?.[1] ?? f;
       lines.push(`- ${f}: ${title}`);
     }

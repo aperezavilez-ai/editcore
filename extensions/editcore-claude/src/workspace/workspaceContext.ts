@@ -2,11 +2,98 @@ import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 import { guessDevPort } from "../preview/projectDevServer";
+import { isReadableFileSync } from "../fs/workspaceFs";
+
+const SKIP_DIRS = new Set([
+  "node_modules",
+  ".git",
+  ".next",
+  "out",
+  "dist",
+  "build",
+  "coverage",
+  ".vercel",
+]);
 
 export interface WorkspaceSnapshot {
   name: string;
   root: string;
   summary: string;
+}
+
+function listProjectTree(root: string, maxLines = 60): string[] {
+  const lines: string[] = [];
+
+  function walk(dir: string, prefix: string, depth: number): void {
+    if (lines.length >= maxLines || depth > 3) {
+      return;
+    }
+    let entries: fs.Dirent[];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+
+    const sorted = entries
+      .filter((e) => !SKIP_DIRS.has(e.name))
+      .filter((e) => !e.name.startsWith(".") || e.name === ".editcore")
+      .sort((a, b) => {
+        if (a.isDirectory() !== b.isDirectory()) {
+          return a.isDirectory() ? -1 : 1;
+        }
+        return a.name.localeCompare(b.name);
+      });
+
+    for (const entry of sorted) {
+      if (lines.length >= maxLines) {
+        lines.push(`${prefix}...`);
+        return;
+      }
+      const rel = path.relative(root, path.join(dir, entry.name)).replace(/\\/g, "/");
+      if (entry.isDirectory()) {
+        lines.push(`${prefix}${entry.name}/`);
+        walk(path.join(dir, entry.name), `${prefix}  `, depth + 1);
+      } else {
+        lines.push(`${prefix}${entry.name}`);
+      }
+      if (lines.length >= maxLines) {
+        break;
+      }
+    }
+  }
+
+  for (const entry of ["src", "app", "pages", "components", "lib", "supabase"]) {
+    const abs = path.join(root, entry);
+    if (fs.existsSync(abs) && fs.statSync(abs).isDirectory()) {
+      lines.push(`${entry}/`);
+      walk(abs, "  ", 1);
+      if (lines.length >= maxLines) {
+        break;
+      }
+    }
+  }
+
+  if (lines.length < 10) {
+    walk(root, "", 0);
+  }
+
+  return lines;
+}
+
+function readSnippet(filePath: string, maxChars = 400): string | undefined {
+  if (!isReadableFileSync(filePath)) {
+    return undefined;
+  }
+  try {
+    const raw = fs.readFileSync(filePath, "utf8").trim();
+    if (!raw) {
+      return undefined;
+    }
+    return raw.length > maxChars ? `${raw.slice(0, maxChars)}…` : raw;
+  } catch {
+    return undefined;
+  }
 }
 
 export async function getWorkspaceSnapshot(): Promise<WorkspaceSnapshot | undefined> {
@@ -17,10 +104,7 @@ export async function getWorkspaceSnapshot(): Promise<WorkspaceSnapshot | undefi
 
   const root = folder.uri.fsPath;
   const name = folder.name;
-  const lines: string[] = [
-    `Carpeta abierta: ${name}`,
-    `Ruta: ${root}`,
-  ];
+  const lines: string[] = [`Carpeta abierta: ${name}`, `Ruta absoluta: ${root}`];
 
   const pkgPath = path.join(root, "package.json");
   if (fs.existsSync(pkgPath)) {
@@ -51,29 +135,32 @@ export async function getWorkspaceSnapshot(): Promise<WorkspaceSnapshot | undefi
     }
   }
 
-  try {
-    const entries = fs.readdirSync(root, { withFileTypes: true });
-    const dirs = entries.filter((e) => e.isDirectory() && !e.name.startsWith(".")).map((e) => e.name);
-    const files = entries.filter((e) => e.isFile()).map((e) => e.name);
-    if (dirs.length) {
-      lines.push(`Carpetas: ${dirs.slice(0, 20).join(", ")}`);
+  const tree = listProjectTree(root);
+  if (tree.length) {
+    lines.push("Estructura del código (parcial):");
+    lines.push(...tree.map((l) => `  ${l}`));
+  }
+
+  for (const rel of ["README.md", "src/app/page.tsx", "src/app/layout.tsx", "app/page.tsx"]) {
+    const abs = path.join(root, rel);
+    if (isReadableFileSync(abs)) {
+      const snippet = readSnippet(abs);
+      if (snippet) {
+        lines.push(`Extracto ${rel}:\n${snippet}`);
+      }
+      break;
     }
-    if (files.length) {
-      lines.push(`Archivos raíz: ${files.slice(0, 20).join(", ")}`);
-    }
-  } catch {
-    // ignore
   }
 
   if (fs.existsSync(path.join(root, "supabase"))) {
     lines.push("Incluye carpeta supabase/ (Supabase).");
   }
   if (fs.existsSync(path.join(root, "next.config.ts")) || fs.existsSync(path.join(root, "next.config.js"))) {
-    lines.push("Proyecto Next.js detectado.");
+    lines.push("Stack: Next.js.");
   }
 
   const devPort = guessDevPort(root);
-  lines.push(`Preview local habitual: http://localhost:${devPort} (Browser: Ctrl+Alt+/ o "EditCore: Preview local").`);
+  lines.push(`Dev server habitual: http://localhost:${devPort}`);
 
   return { name, root, summary: lines.join("\n") };
 }
@@ -84,10 +171,10 @@ export async function getWorkspaceContextBlock(): Promise<string | undefined> {
     return undefined;
   }
   return [
-    "=== WORKSPACE ABIERTO EN EDITCORE ===",
+    "=== PROYECTO ABIERTO EN EDITCORE (ya cargado) ===",
     snap.summary,
-    "Tienes acceso a este proyecto. En modo Agent usa list_directory, read_file, search_codebase y run_command.",
-    "No pidas al usuario que comparta archivos si el workspace ya está abierto.",
-    "===================================",
+    "IMPORTANTE: El proyecto ya está abierto. Usa herramientas (list_directory, read_file, search_codebase, run_command).",
+    "PROHIBIDO: pedir al usuario que comparta archivos, que ejecute dir/ls/grep en terminal, o escribir <tool_call> en texto.",
+    "================================================",
   ].join("\n");
 }

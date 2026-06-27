@@ -52,6 +52,17 @@ def svg_embedded(viewbox: str, b64: str) -> str:
     )
 
 
+def svg_activity_ec() -> str:
+    """Monocromo para activity bar (VS Code solo pinta currentColor, no PNG embebido)."""
+    return (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">\n'
+        '  <text x="12" y="16.5" text-anchor="middle" '
+        'font-family="Segoe UI, system-ui, sans-serif" font-size="9.5" '
+        'font-weight="700" fill="currentColor">EC</text>\n'
+        "</svg>\n"
+    )
+
+
 def _flood_outer_background(arr: np.ndarray) -> np.ndarray:
     """Quita solo el padding blanco exterior; conserva letras blancas del cubo EC."""
     h, w = arr.shape[:2]
@@ -292,22 +303,27 @@ def main() -> None:
     print(f"wrote {ICON_DIR / 'editcore-logo-512.png'}")
 
     svg24 = svg_embedded("0 0 24 24", png_b64(circular.resize((24, 24), Image.Resampling.LANCZOS)))
+    svg_activity = svg_activity_ec()
     svg512 = svg_embedded("0 0 512 512", png_b64(center_on_canvas(circular, 512)))
     svg1024 = svg_embedded("0 0 1024 1024", png_b64(center_on_canvas(circular, 1024)))
 
     for rel in (
         "branding/icons/editcore-icon.svg",
         "extensions/editcore-claude/media/editcore-icon.svg",
-        "extensions/editcore-claude/media/editcore-activity.svg",
         "extensions/editcore-connect/media/activity-connect.svg",
         "editcore-src/extensions/editcore-claude/media/editcore-icon.svg",
-        "editcore-src/extensions/editcore-claude/media/editcore-activity.svg",
         "editcore-src/extensions/editcore-connect/media/activity-connect.svg",
         "VSCode-win32-x64/resources/app/extensions/editcore-claude/media/editcore-icon.svg",
-        "VSCode-win32-x64/resources/app/extensions/editcore-claude/media/editcore-activity.svg",
         "VSCode-win32-x64/resources/app/extensions/editcore-connect/media/connect-icon.svg",
     ):
         write_text(ROOT / rel, svg24)
+
+    for rel in (
+        "extensions/editcore-claude/media/editcore-activity.svg",
+        "editcore-src/extensions/editcore-claude/media/editcore-activity.svg",
+        "VSCode-win32-x64/resources/app/extensions/editcore-claude/media/editcore-activity.svg",
+    ):
+        write_text(ROOT / rel, svg_activity)
 
     activity_png = apply_circular_mask(circular).resize((28, 28), Image.Resampling.LANCZOS)
     for rel in (

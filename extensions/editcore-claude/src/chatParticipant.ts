@@ -5,10 +5,11 @@ import { LLM_CONFIG } from "./llmConfig";
 import { CLAUDE_MODELS, OPENAI_MODELS, resolveClaudeModelId, isOpenAiModelId } from "./models";
 import type { ChatMessage } from "./anthropicClient";
 import { runAgentTask, AgentEvent } from "./agent/agentLoop";
+import { shouldSkipOrchestratorPlan } from "./agent/orchestratorPolicy";
 import { runOrchestratedTask, OrchestratorEvent } from "./agent/orchestrator";
 import { runMultiAgentPipeline, MultiAgentEvent, isMultiAgentEnabled } from "./agent/multiAgentOrchestrator";
 import { detectRoleFromPrompt } from "./agents/roles";
-import { isAgentMode } from "./chatRequestTypes";
+import { shouldUseAgentLoop } from "./chatRequestTypes";
 import { appendAudit } from "./enterprise/orgConfig";
 import { getSessionStore } from "./sessions/agentSessionStore";
 import { enrichSessionSummary } from "./sessions/sessionSummarizer";
@@ -20,6 +21,11 @@ import {
   resolveImagesFromReferences,
 } from "./chat/multimodalContent";
 import { callExtendedProvider, getActiveRouteDescription } from "./providers/providerBridge";
+import {
+  shouldShowAgentPhasesInChat,
+  shouldShowToolProgressInChat,
+} from "./agent/communicationStyle";
+import { sanitizeAssistantText, isSubstantiveAssistantText } from "./agent/responseSanitizer";
 
 export function registerClaudeChatParticipant(
   context: vscode.ExtensionContext,
@@ -52,7 +58,7 @@ export function registerClaudeChatParticipant(
         OPENAI_MODELS.find((m) => m.id === selectedModelId)?.label ??
         selectedModelId;
 
-      if (isAgentMode(request)) {
+      if (shouldUseAgentLoop(request)) {
         const apiKey = await apiKeyService.getApiKey();
         return handleAgentRequest(
           apiKey ?? "",
@@ -152,14 +158,17 @@ async function handleAgentRequest(
   const useOrchestrator =
     hasAnthropic &&
     !useMultiAgent &&
-    vscode.workspace.getConfiguration("editcore").get<boolean>("orchestrator.enabled", true);
+    !shouldSkipOrchestratorPlan(cleanPrompt || request.prompt) &&
+    vscode.workspace.getConfiguration("editcore").get<boolean>("orchestrator.enabled", false);
 
   try {
     const run = useMultiAgent
       ? runMultiAgentPipeline(apiKey, task, (event: MultiAgentEvent) => {
           if (token.isCancellationRequested) return;
           if (event.type === "phase") {
-            stream.markdown(`\n**${event.agent}** — ${event.message}\n`);
+            if (shouldShowAgentPhasesInChat()) {
+              stream.markdown(`\n**${event.agent}** — ${event.message}\n`);
+            }
             return;
           }
           streamAgentEvent(event, stream, (text) => {
@@ -170,7 +179,9 @@ async function handleAgentRequest(
       ? runOrchestratedTask(apiKey, task, (event: OrchestratorEvent) => {
           if (token.isCancellationRequested) return;
           if (event.type === "phase") {
-            stream.markdown(`\n_${event.message}_\n`);
+            if (shouldShowAgentPhasesInChat()) {
+              stream.markdown(`\n_${event.message}_\n`);
+            }
             return;
           }
           streamAgentEvent(event, stream, (text) => {
@@ -248,12 +259,19 @@ function streamAgentEvent(
   onAssistantText?: (text: string) => void
 ): void {
   switch (event.type) {
-    case "assistant_text":
-      onAssistantText?.(event.text);
-      stream.markdown(event.text);
+    case "assistant_text": {
+      const clean = sanitizeAssistantText(event.text);
+      if (!isSubstantiveAssistantText(clean)) {
+        break;
+      }
+      onAssistantText?.(clean);
+      stream.markdown(clean);
       break;
+    }
     case "tool_call_start":
-      stream.markdown(`\n🔧 **${event.name}**\n`);
+      if (shouldShowToolProgressInChat()) {
+        stream.markdown(`\n🔧 **${event.name}**\n`);
+      }
       break;
     case "tool_call_result":
       if (event.isError) {

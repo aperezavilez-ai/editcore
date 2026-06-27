@@ -43,6 +43,10 @@ export async function loadProjectMemory(): Promise<MemorySection[]> {
   for (const rel of MEMORY_FILES) {
     const abs = path.join(root, rel);
     try {
+      const stat = await fs.promises.stat(abs);
+      if (!stat.isFile()) {
+        continue;
+      }
       const content = await fs.promises.readFile(abs, 'utf8');
       const trimmed = content.trim();
       if (trimmed) {

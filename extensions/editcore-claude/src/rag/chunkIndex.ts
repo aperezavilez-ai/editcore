@@ -201,7 +201,7 @@ export class RagIndex {
       if (!TEXT_EXTENSIONS.has(ext)) continue;
       try {
         const stat = await fs.promises.stat(abs);
-        if (stat.size > 512_000) continue;
+        if (!stat.isFile() || stat.size > 512_000) continue;
         const content = await fs.promises.readFile(abs, 'utf8');
         const rel = path.relative(root, abs).replace(/\\/g, '/');
         this.chunks.push(...chunkFile(rel, content));

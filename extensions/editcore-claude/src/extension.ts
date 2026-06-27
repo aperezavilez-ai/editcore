@@ -72,14 +72,22 @@ export async function activate(context: vscode.ExtensionContext) {
   initVoyageService(context);
   registerWorkspaceContextProvider(context);
 
-  // Precalentar índice del workspace para búsqueda semántica ligera.
+  const warmWorkspaceIndex = () => {
+    if (vscode.workspace.workspaceFolders?.length) {
+      void getWorkspaceIndex().ensureIndexed();
+      void getRagIndex().ensureBuilt();
+    }
+  };
+  warmWorkspaceIndex();
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeWorkspaceFolders(() => warmWorkspaceIndex())
+  );
+
   if (vscode.workspace.workspaceFolders?.length) {
-    void getWorkspaceIndex().ensureIndexed();
-    void getRagIndex().ensureBuilt();
     context.subscriptions.push(
       vscode.workspace.onDidSaveTextDocument((doc) => {
         void getWorkspaceIndex().ensureIndexed();
-        if (doc.uri.scheme === 'file') {
+        if (doc.uri.scheme === "file") {
           void getWorkspaceIndex().updateFile(doc.uri.fsPath);
           void getRagIndex().updateFile(doc.uri.fsPath);
         }

@@ -1,18 +1,5 @@
 import * as vscode from 'vscode';
-import { findActiveDevPort } from '../preview/localPreview';
-import { openIntegratedBrowser, startLocalPreview } from '../preview/localPreview';
-
-async function openBrowserWithDevUrl(): Promise<void> {
-  const folder = vscode.workspace.workspaceFolders?.[0];
-  if (folder) {
-    const port = await findActiveDevPort(folder.uri.fsPath);
-    if (port !== undefined) {
-      await openIntegratedBrowser(`http://localhost:${port}`);
-      return;
-    }
-  }
-  await vscode.commands.executeCommand('workbench.action.browser.open', {});
-}
+import { openBrowserSmart, startLocalPreview } from '../preview/localPreview';
 
 /** Botones siempre visibles en la barra inferior (derecha). */
 export function registerQuickActionsBar(context: vscode.ExtensionContext): void {
@@ -20,13 +7,14 @@ export function registerQuickActionsBar(context: vscode.ExtensionContext): void 
     vscode.commands.registerCommand('editcore.reloadWindow', async () => {
       await vscode.commands.executeCommand('workbench.action.reloadWindow');
     }),
-    vscode.commands.registerCommand('editcore.openBrowser', () => openBrowserWithDevUrl()),    vscode.commands.registerCommand('editcore.previewLocal', () => startLocalPreview())
+    vscode.commands.registerCommand('editcore.openBrowser', () => openBrowserSmart()),
+    vscode.commands.registerCommand('editcore.previewLocal', () => startLocalPreview())
   );
 
   const browser = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 10001);
   browser.command = 'editcore.openBrowser';
   browser.text = '$(globe) Browser';
-  browser.tooltip = 'Abrir browser integrado — Ctrl+Alt+/';
+  browser.tooltip = 'Abrir browser con preview local — Ctrl+Alt+/';
   browser.show();
 
   const api = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 10000);

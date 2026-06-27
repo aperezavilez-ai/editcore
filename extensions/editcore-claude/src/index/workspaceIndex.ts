@@ -237,7 +237,7 @@ export class WorkspaceIndex {
     let stat: fs.Stats;
     try {
       stat = await fs.promises.stat(absPath);
-      if (stat.size > 512_000) return;
+      if (!stat.isFile() || stat.size > 512_000) return;
     } catch {
       return;
     }

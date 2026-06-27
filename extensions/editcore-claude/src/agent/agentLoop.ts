@@ -8,6 +8,7 @@ import { resolveClaudeModelId } from "../models";
 import { getAllAgentTools, executeAgentTool, setToolCallRecorder } from "./tools";
 import { buildAgentContext } from "./agentContext";
 import { AgentRoleId, buildSystemPrompt } from "../agents/roles";
+import { buildAgentSystemPromptBase, getAgentCommunicationStyle } from "./communicationStyle";
 
 const MAX_ITERATIONS = 30;
 
@@ -17,30 +18,6 @@ export type AgentEvent =
   | { type: "tool_call_result"; name: string; output: string; isError: boolean }
   | { type: "done"; reason: "finished" | "max_iterations" | "cancelled" }
   | { type: "error"; message: string };
-
-const SYSTEM_PROMPT_BASE = `Eres el Agent Mode de EditCore IDE, un asistente de programacion autonomo.
-El usuario tiene un workspace abierto en el explorador; su ruta y estructura vienen en el contexto de la tarea.
-No pidas que comparta archivos manualmente: usa list_directory, read_file y search_codebase desde el inicio.
-Tienes herramientas para explorar, buscar, leer, parchear y escribir archivos, ejecutar comandos, git (status, diff, commit, push), analisis de impacto, gemelo digital y MCP.
-
-Integraciones EditCore Connect (guiar al usuario cuando haga falta):
-- GitHub: editcoreConnect.signInGithub, publishGithub, cloneRepo, listIssues, createIssue
-- Vercel: editcoreConnect.setVercelToken, deployVercel
-- Supabase: editcoreConnect.setSupabaseToken, linkSupabase, initSupabase
-- APIs Claude/OpenAI: editcoreConnect.openApis o editcore.openAccountPanel
-- Browser local: sugiere abrir http://localhost:PORT (EditCore abre links locales en el navegador integrado)
-
-Reglas:
-- Explora con list_directory, glob_files, search_files o search_codebase antes de editar.
-- Usa analyze_impact o twin_query antes de cambios riesgosos en modulos compartidos.
-- Prefiere apply_patch para cambios pequenos; write_file solo para archivos nuevos o reescrituras totales.
-- Comandos de terminal y cambios de archivo requieren aprobacion del usuario.
-- Si el usuario rechaza algo, no lo reintentes sin preguntar.
-- Cuando termines, resume en texto plano SIN llamar mas tools.
-- Tareas destructivas o ambiguas: pregunta antes en texto.
-- Usa write_adr para decisiones de arquitectura importantes.
-- Usa append_memory para guardar decisiones importantes en .editcore/memory.md.
-- Roles: @architect @fullstack @devops @qa @gps @founder @cto @saas en el mensaje.`;
 
 export async function runAgentTask(
   apiKey: string,
@@ -77,7 +54,7 @@ export async function runAgentTask(
   }
 
   const client = createClaudeClient(apiKey);
-  const systemPrompt = await buildSystemPrompt(SYSTEM_PROMPT_BASE, roleId);
+  const systemPrompt = await buildSystemPrompt(buildAgentSystemPromptBase(), roleId);
   const tools = await getAllAgentTools();
 
   setToolCallRecorder(onToolCall);
@@ -135,8 +112,11 @@ export async function runAgentTask(
         (b): b is Anthropic.Messages.TextBlock => b.type === "text"
       );
 
+      const showIntermediateText =
+        toolUseBlocks.length === 0 || getAgentCommunicationStyle() === "verbose";
+
       for (const block of textBlocks) {
-        if (block.text.trim().length > 0) {
+        if (block.text.trim().length > 0 && showIntermediateText) {
           onEvent({ type: "assistant_text", text: block.text });
         }
       }
