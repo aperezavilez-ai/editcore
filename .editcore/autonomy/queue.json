@@ -1,0 +1,121 @@
+{
+  "version": 1,
+  "generatedAt": "2026-06-28T23:18:55.297Z",
+  "productVersion": "1.0.7",
+  "extensionVersion": "1.4.0",
+  "healthStatus": "degraded",
+  "workspacePath": "d:\\EDITCORE",
+  "tasks": [
+    {
+      "id": "health-full-diagnostic",
+      "priority": 1,
+      "kind": "investigate",
+      "status": "pending",
+      "title": "Autodiagnóstico completo (local)",
+      "description": "Consolidar hallazgos antes de aplicar fixes.",
+      "evidence": "health.status=degraded",
+      "autoExecutable": true,
+      "cursorPrompt": "# EditCore — tarea de automejora real\n\n## Ejecutar autodiagnóstico completo y registrar en tech-memory\n\nEstado de salud: degraded. Críticos: 0, warnings: 2.\n\n\nArchivos relacionados:\n- extensions/editcore-claude/src/diagnostics/diagnosticService.ts\n\n## Instrucciones\nEjecuta run_self_diagnostic sin análisis Claude (local). Guarda resumen en .editcore/tech-memory/ si hay permiso.\n\nReglas: usa solo datos reales del repo; no simules herramientas ni inventes archivos.",
+      "agentPrompt": "TAREA DE AUTOMEJORA REAL DE EDITCORE (no simular, usar herramientas):\n\n**Ejecutar autodiagnóstico completo y registrar en tech-memory**\n\nEstado de salud: degraded. Críticos: 0, warnings: 2.\n\n\nArchivos relacionados:\n- extensions/editcore-claude/src/diagnostics/diagnosticService.ts\n\nEjecuta run_self_diagnostic sin análisis Claude (local). Guarda resumen en .editcore/tech-memory/ si hay permiso.\n\nObligatorio: list_directory, read_file, search_files antes de escribir. apply_patch/write_file solo con diff aprobado."
+    },
+    {
+      "id": "git-dirty-02",
+      "priority": 1,
+      "kind": "investigate",
+      "status": "pending",
+      "title": "Cambios sin commit",
+      "description": "106 archivo(s) con cambios.",
+      "evidence": "git.dirty: 106 archivo(s) con cambios.",
+      "findingId": "git.dirty",
+      "autoExecutable": true,
+      "cursorPrompt": "# EditCore — tarea de automejora real\n\n## Cambios sin commit\n\nHallazgo real (warning): 106 archivo(s) con cambios.\n\n\n## Instrucciones\n M branding/default-settings.json\n M branding/icons/app-icon-source.svg\n M branding/icons/editcore-icon.svg\n M branding/icons/editcore-logo-512.png\n M branding/icons/editcore-logo-web.png\n M branding/icons/editcore-logo.png\n\nInvestiga con herramientas reales y propón un fix mínimo verificable.\n\nReglas: usa solo datos reales del repo; no simules herramientas ni inventes archivos.",
+      "agentPrompt": "TAREA DE AUTOMEJORA REAL DE EDITCORE (no simular, usar herramientas):\n\n**Cambios sin commit**\n\nHallazgo real (warning): 106 archivo(s) con cambios.\n\n\n M branding/default-settings.json\n M branding/icons/app-icon-source.svg\n M branding/icons/editcore-icon.svg\n M branding/icons/editcore-logo-512.png\n M branding/icons/editcore-logo-web.png\n M branding/icons/editcore-logo.png\n\nInvestiga con herramientas reales y propón un fix mínimo verificable.\n\nObligatorio: list_directory, read_file, search_files antes de escribir. apply_patch/write_file solo con diff aprobado."
+    },
+    {
+      "id": "build-installer-01",
+      "priority": 1,
+      "kind": "investigate",
+      "status": "pending",
+      "title": "Instalador EditCoreUserSetup",
+      "description": "Instalador más viejo (2026-06-28) que el portable.",
+      "evidence": "build.installer: Instalador más viejo (2026-06-28) que el portable.",
+      "findingId": "build.installer",
+      "autoExecutable": true,
+      "cursorPrompt": "# EditCore — tarea de automejora real\n\n## Instalador EditCoreUserSetup\n\nHallazgo real (warning): Instalador más viejo (2026-06-28) que el portable.\n\n\n## Instrucciones\nRegenerá con scripts\\build-win-installer.ps1 -SetupOnly\n\nInvestiga con herramientas reales y propón un fix mínimo verificable.\n\nReglas: usa solo datos reales del repo; no simules herramientas ni inventes archivos.",
+      "agentPrompt": "TAREA DE AUTOMEJORA REAL DE EDITCORE (no simular, usar herramientas):\n\n**Instalador EditCoreUserSetup**\n\nHallazgo real (warning): Instalador más viejo (2026-06-28) que el portable.\n\n\nRegenerá con scripts\\build-win-installer.ps1 -SetupOnly\n\nInvestiga con herramientas reales y propón un fix mínimo verificable.\n\nObligatorio: list_directory, read_file, search_files antes de escribir. apply_patch/write_file solo con diff aprobado."
+    },
+    {
+      "id": "editcore-graph-06",
+      "priority": 2,
+      "kind": "investigate",
+      "status": "pending",
+      "title": ".editcore/graph.json",
+      "description": "No encontrado.",
+      "evidence": "editcore.graph: No encontrado.",
+      "findingId": "editcore.graph",
+      "autoExecutable": true,
+      "cursorPrompt": "# EditCore — tarea de automejora real\n\n## .editcore/graph.json\n\nHallazgo real (info): No encontrado.\n\n\n## Instrucciones\nInvestiga la causa con read_file/search_files y aplica un fix mínimo verificable.\n\nReglas: usa solo datos reales del repo; no simules herramientas ni inventes archivos.",
+      "agentPrompt": "TAREA DE AUTOMEJORA REAL DE EDITCORE (no simular, usar herramientas):\n\n**.editcore/graph.json**\n\nHallazgo real (info): No encontrado.\n\n\nInvestiga la causa con read_file/search_files y aplica un fix mínimo verificable.\n\nObligatorio: list_directory, read_file, search_files antes de escribir. apply_patch/write_file solo con diff aprobado."
+    },
+    {
+      "id": "mcp-config-04",
+      "priority": 2,
+      "kind": "fix_config",
+      "status": "pending",
+      "title": "Corregir configuración MCP",
+      "description": "Sin servidores en .editcore/mcp.json ni en settings.",
+      "evidence": "mcp.config: Sin servidores en .editcore/mcp.json ni en settings.",
+      "findingId": "mcp.config",
+      "relatedFiles": [
+        ".editcore/mcp.json",
+        "extensions/editcore-claude/src/mcp/mcpClient.ts"
+      ],
+      "autoExecutable": true,
+      "cursorPrompt": "# EditCore — tarea de automejora real\n\n## Corregir configuración MCP\n\nHallazgo real (info): Sin servidores en .editcore/mcp.json ni en settings.\n\n\nArchivos relacionados:\n- .editcore/mcp.json\n- extensions/editcore-claude/src/mcp/mcpClient.ts\n\n## Instrucciones\nLee .editcore/mcp.json y valida servidores. Corrige JSON inválido o rutas incorrectas. Documenta cambios en tech-memory.\n\nReglas: usa solo datos reales del repo; no simules herramientas ni inventes archivos.",
+      "agentPrompt": "TAREA DE AUTOMEJORA REAL DE EDITCORE (no simular, usar herramientas):\n\n**Corregir configuración MCP**\n\nHallazgo real (info): Sin servidores en .editcore/mcp.json ni en settings.\n\n\nArchivos relacionados:\n- .editcore/mcp.json\n- extensions/editcore-claude/src/mcp/mcpClient.ts\n\nLee .editcore/mcp.json y valida servidores. Corrige JSON inválido o rutas incorrectas. Documenta cambios en tech-memory.\n\nObligatorio: list_directory, read_file, search_files antes de escribir. apply_patch/write_file solo con diff aprobado."
+    },
+    {
+      "id": "api-model-03",
+      "priority": 2,
+      "kind": "fix_config",
+      "status": "pending",
+      "title": "Corregir modelo Claude obsoleto",
+      "description": "Modelo actual: claude-sonnet-4-6",
+      "evidence": "api.model: Modelo actual: claude-sonnet-4-6",
+      "findingId": "api.model",
+      "relatedFiles": [
+        "extensions/editcore-claude/src/models.ts",
+        "branding/default-settings.json"
+      ],
+      "autoExecutable": true,
+      "cursorPrompt": "# EditCore — tarea de automejora real\n\n## Corregir modelo Claude obsoleto\n\nHallazgo real (info): Modelo actual: claude-sonnet-4-6\n\n\nArchivos relacionados:\n- extensions/editcore-claude/src/models.ts\n- branding/default-settings.json\n\n## Instrucciones\nBusca referencias al modelo retirado, actualiza a claude-sonnet-4-6 (o el default en models.ts) y migra settings del usuario si hace falta.\n\nReglas: usa solo datos reales del repo; no simules herramientas ni inventes archivos.",
+      "agentPrompt": "TAREA DE AUTOMEJORA REAL DE EDITCORE (no simular, usar herramientas):\n\n**Corregir modelo Claude obsoleto**\n\nHallazgo real (info): Modelo actual: claude-sonnet-4-6\n\n\nArchivos relacionados:\n- extensions/editcore-claude/src/models.ts\n- branding/default-settings.json\n\nBusca referencias al modelo retirado, actualiza a claude-sonnet-4-6 (o el default en models.ts) y migra settings del usuario si hace falta.\n\nObligatorio: list_directory, read_file, search_files antes de escribir. apply_patch/write_file solo con diff aprobado."
+    },
+    {
+      "id": "rag-voyage-05",
+      "priority": 2,
+      "kind": "investigate",
+      "status": "pending",
+      "title": "Embeddings Voyage (opcional)",
+      "description": "Sin Voyage API Key — RAG usa solo keywords locales.",
+      "evidence": "rag.voyage: Sin Voyage API Key — RAG usa solo keywords locales.",
+      "findingId": "rag.voyage",
+      "autoExecutable": true,
+      "cursorPrompt": "# EditCore — tarea de automejora real\n\n## Embeddings Voyage (opcional)\n\nHallazgo real (info): Sin Voyage API Key — RAG usa solo keywords locales.\n\n\n## Instrucciones\nInvestiga la causa con read_file/search_files y aplica un fix mínimo verificable.\n\nReglas: usa solo datos reales del repo; no simules herramientas ni inventes archivos.",
+      "agentPrompt": "TAREA DE AUTOMEJORA REAL DE EDITCORE (no simular, usar herramientas):\n\n**Embeddings Voyage (opcional)**\n\nHallazgo real (info): Sin Voyage API Key — RAG usa solo keywords locales.\n\n\nInvestiga la causa con read_file/search_files y aplica un fix mínimo verificable.\n\nObligatorio: list_directory, read_file, search_files antes de escribir. apply_patch/write_file solo con diff aprobado."
+    },
+    {
+      "id": "editcore-sessions-07",
+      "priority": 2,
+      "kind": "investigate",
+      "status": "pending",
+      "title": "Sesiones de agente",
+      "description": "2 sesión(es) guardada(s).",
+      "evidence": "editcore.sessions: 2 sesión(es) guardada(s).",
+      "findingId": "editcore.sessions",
+      "autoExecutable": true,
+      "cursorPrompt": "# EditCore — tarea de automejora real\n\n## Sesiones de agente\n\nHallazgo real (info): 2 sesión(es) guardada(s).\n\n\n## Instrucciones\nInvestiga la causa con read_file/search_files y aplica un fix mínimo verificable.\n\nReglas: usa solo datos reales del repo; no simules herramientas ni inventes archivos.",
+      "agentPrompt": "TAREA DE AUTOMEJORA REAL DE EDITCORE (no simular, usar herramientas):\n\n**Sesiones de agente**\n\nHallazgo real (info): 2 sesión(es) guardada(s).\n\n\nInvestiga la causa con read_file/search_files y aplica un fix mínimo verificable.\n\nObligatorio: list_directory, read_file, search_files antes de escribir. apply_patch/write_file solo con diff aprobado."
+    }
+  ]
+}

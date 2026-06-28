@@ -1,0 +1,10 @@
+{
+  "id": "sess_1782688855429",
+  "startedAt": "2026-06-28T23:20:55.429Z",
+  "task": "adelante",
+  "role": "default",
+  "status": "running",
+  "toolCalls": 0,
+  "tokensIn": 0,
+  "tokensOut": 0
+}

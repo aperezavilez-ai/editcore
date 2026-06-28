@@ -1,0 +1,5 @@
+# Documentación generada por EditCore
+
+- `EDITCORE_SYSTEM_MAP.md`
+- `REPORTE_CAMBIOS_EDITCORE.md`
+- `SIGUIENTE_PROMPT_EVOLUCION_EDITCORE.md`

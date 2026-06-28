@@ -1,0 +1,3 @@
+{"ts":"2026-06-28T23:11:37.827Z","event":"workspace_init"}
+{"ts":"2026-06-28T23:18:05.183Z","event":"agent_session","sessionId":"sess_1782688546127","role":"default","status":"completed","toolCalls":8,"tokensIn":46772,"tokensOut":989}
+{"ts":"2026-06-28T23:20:19.979Z","event":"agent_session","sessionId":"sess_1782688779482","role":"default","status":"completed","toolCalls":6,"tokensIn":64289,"tokensOut":1330}

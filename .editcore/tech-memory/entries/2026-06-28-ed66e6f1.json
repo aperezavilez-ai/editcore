@@ -1,0 +1,12 @@
+{
+  "id": "ed66e6f1-f49e-473f-a26e-9189639df582",
+  "timestamp": "2026-06-28T23:18:55.321Z",
+  "type": "autonomy_cycle",
+  "title": "Autonomía — degraded",
+  "summary": "8 tareas pendientes. Producto v1.0.7.",
+  "metadata": {
+    "healthStatus": "degraded",
+    "taskCount": 8,
+    "queuePath": "d:\\EDITCORE\\.editcore\\autonomy\\queue.json"
+  }
+}
