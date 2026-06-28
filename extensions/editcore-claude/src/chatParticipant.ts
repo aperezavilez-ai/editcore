@@ -20,12 +20,52 @@ import {
   messageHasText,
   resolveImagesFromReferences,
 } from "./chat/multimodalContent";
-import { callExtendedProvider, getActiveRouteDescription } from "./providers/providerBridge";
 import {
   shouldShowAgentPhasesInChat,
   shouldShowToolProgressInChat,
 } from "./agent/communicationStyle";
 import { sanitizeAssistantText, isSubstantiveAssistantText } from "./agent/responseSanitizer";
+
+async function handleStreamingChatRequest(
+  request: vscode.ChatRequest,
+  chatContext: vscode.ChatContext,
+  stream: vscode.ChatResponseStream,
+  token: vscode.CancellationToken,
+  apiKeyService: ApiKeyService,
+  selectedModelId: string
+): Promise<{ errorDetails: { message: string } } | void> {
+  const messages = await buildMessages(
+    chatContext.history,
+    request.prompt,
+    request.references
+  );
+  let fullText = "";
+
+  try {
+    const usage = await streamForSelectedModel(
+      apiKeyService,
+      messages,
+      selectedModelId,
+      (chunk) => {
+        if (token.isCancellationRequested) {
+          return;
+        }
+        fullText += chunk;
+        stream.markdown(chunk);
+      },
+      { allowFallback: true, taskHint: request.prompt }
+    );
+    apiKeyService.recordUsage(usage.inputTokens, usage.outputTokens);
+
+    if (!fullText.trim()) {
+      stream.markdown("_(Sin respuesta de texto)_");
+    }
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error ? err.message : "Error al contactar al proveedor de IA.";
+    return { errorDetails: { message } };
+  }
+}
 
 export function registerClaudeChatParticipant(
   context: vscode.ExtensionContext,
@@ -58,7 +98,7 @@ export function registerClaudeChatParticipant(
         OPENAI_MODELS.find((m) => m.id === selectedModelId)?.label ??
         selectedModelId;
 
-      if (shouldUseAgentLoop(request)) {
+      if (shouldUseAgentLoop(request) && !isOpenAiModelId(selectedModelId)) {
         const apiKey = await apiKeyService.getApiKey();
         return handleAgentRequest(
           apiKey ?? "",
@@ -72,48 +112,14 @@ export function registerClaudeChatParticipant(
         );
       }
 
-      const messages = await buildMessages(
-        chatContext.history,
-        request.prompt,
-        request.references
+      return handleStreamingChatRequest(
+        request,
+        chatContext,
+        stream,
+        token,
+        apiKeyService,
+        selectedModelId
       );
-      let fullText = "";
-      const routeHint = getActiveRouteDescription(request.prompt);
-      if (routeHint) {
-        stream.markdown(`_Router: ${routeHint}_\n\n`);
-      }
-
-      try {
-        const extended = await callExtendedProvider(apiKeyService, messages, request.prompt);
-        if (extended) {
-          fullText = extended.text;
-          stream.markdown(fullText);
-          apiKeyService.recordUsage(extended.usage.inputTokens, extended.usage.outputTokens);
-        } else {
-          const usage = await streamForSelectedModel(
-            apiKeyService,
-            messages,
-            selectedModelId,
-            (chunk) => {
-              if (token.isCancellationRequested) {
-                return;
-              }
-              fullText += chunk;
-              stream.markdown(chunk);
-            },
-            { allowFallback: true, taskHint: request.prompt }
-          );
-          apiKeyService.recordUsage(usage.inputTokens, usage.outputTokens);
-        }
-
-        if (!fullText.trim()) {
-          stream.markdown("_(Sin respuesta de texto)_");
-        }
-      } catch (err: unknown) {
-        const message =
-          err instanceof Error ? err.message : "Error al contactar al proveedor de IA.";
-        return { errorDetails: { message } };
-      }
     }
   );
 

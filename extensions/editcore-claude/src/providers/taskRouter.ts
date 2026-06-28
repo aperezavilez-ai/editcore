@@ -23,8 +23,8 @@ export interface TaskRoutingRule {
 const DEFAULT_RULES: TaskRoutingRule[] = [
   {
     category: "architecture",
-    provider: "openai",
-    model: "gpt-4o",
+    provider: "anthropic",
+    model: "claude-sonnet-4-6",
     keywords: ["arquitectura", "architecture", "diseño", "design system", "adr"],
   },
   {

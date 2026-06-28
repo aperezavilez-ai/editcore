@@ -1,16 +1,16 @@
 {
-  "version": "1.0.5",
-  "productVersion": "1.0.5",
-  "publishedAt": "2026-06-27T03:53:00.991Z",
-  "notes": "EditCore IDE 1.0.3",
+  "version": "1.0.6",
+  "productVersion": "1.0.6",
+  "publishedAt": "2026-06-27T22:47:14.925Z",
+  "notes": "EditCore IDE 1.0.5",
   "portable": {
-    "name": "EditCore-1.0.3-win32-x64-portable.zip",
-    "url": "https://github.com/aperezavilez-ai/editcore/releases/download/v1.0.3/EditCore-1.0.3-win32-x64-portable.zip",
-    "sha256": "fffa5d419cb1b5f58de5ab17db01cd85ef59b5a92f4f348580b2fa52d60fb583"
+    "name": "EditCore-1.0.5-win32-x64-portable.zip",
+    "url": "https://github.com/aperezavilez-ai/editcore/releases/download/v1.0.5/EditCore-1.0.5-win32-x64-portable.zip",
+    "sha256": "c5046e0e74bea8c325c363e5eb9218ea5d65354dbe068b4e4a09d1a50f5bd75b"
   },
   "setup": {
-    "name": "EditCore-1.0.3-win32-x64-setup.exe",
-    "url": "https://github.com/aperezavilez-ai/editcore/releases/download/v1.0.3/EditCore-1.0.3-win32-x64-setup.exe",
-    "sha256": "ecc0e88642e8d0571b382411850cdcf282a374f7ce77351911ed3a5c3c1bfb21"
+    "name": "EditCore-1.0.5-win32-x64-setup.exe",
+    "url": "https://github.com/aperezavilez-ai/editcore/releases/download/v1.0.5/EditCore-1.0.5-win32-x64-setup.exe",
+    "sha256": "255d14ff410fb319d866e138806845ceef999cc5b2ed9efd6f682d5a291e7b3d"
   }
 }

@@ -23,6 +23,14 @@ function estimateCostUsd(model: string, inputTokens: number, outputTokens: numbe
   return (inputTokens / 1_000_000) * p.input + (outputTokens / 1_000_000) * p.output;
 }
 
+function normalizeApiKey(key?: string): string | undefined {
+  if (!key) {
+    return undefined;
+  }
+  const cleaned = key.replace(/[\uFEFF\u200B-\u200D]/g, "").trim();
+  return cleaned || undefined;
+}
+
 function keyHint(key?: string): string {
   if (!key) {
     return "Sin configurar";
@@ -103,12 +111,12 @@ export class ApiKeyService {
 
   async getApiKey(): Promise<string | undefined> {
     const fromSecrets = await this.context.secrets.get(SECRET_KEY);
-    return fromSecrets?.trim() || undefined;
+    return normalizeApiKey(fromSecrets);
   }
 
   async getOpenAiKey(): Promise<string | undefined> {
     const key = await this.context.secrets.get(OPENAI_SECRET_KEY);
-    return key?.trim() || undefined;
+    return normalizeApiKey(key);
   }
 
   async getOpenAiKeyHint(): Promise<string> {

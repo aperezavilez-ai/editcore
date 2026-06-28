@@ -55,8 +55,14 @@ export interface ModelRoute {
 /** Palabras clave de tarea que fuerzan Claude (sección 2, .cursorrules). */
 const SONNET_TASK_PATTERNS = [
   "architect",
+  "arquitectura",
+  "auditoría",
+  "auditoria",
   "refactor structure",
+  "refactor",
   "new feature",
+  "nueva feature",
+  "diseño",
 ] as const;
 
 const DEFAULT_CONTEXT_LIMIT = 8_000;
@@ -99,9 +105,9 @@ export function select_model(task: string, token_count: number): ModelRoute {
   }
 
   return {
-    model: ORCHESTRATOR_MODELS.GPT4O,
-    provider: "openai",
-    reason: "default: task within context budget",
+    model: ORCHESTRATOR_MODELS.CLAUDE_SONNET,
+    provider: "anthropic",
+    reason: "default: claude-first within context budget",
   };
 }
 

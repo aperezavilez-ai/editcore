@@ -4,7 +4,7 @@ import { callClaude, streamClaude, type ChatMessage } from "./anthropicClient";
 import { callOpenAI, streamOpenAI } from "./openaiClient";
 import { isOpenAiModelId, resolveClaudeModelId } from "./models";
 import { persistClaudeModelSetting } from "./platform/modelMigration";
-import { callViaOrchestrator, streamViaOrchestrator } from "./orchestration/orchestratorApi";
+import { tryPrepareOrchestration } from "./orchestration/orchestratorInvoke";
 
 export type LlmProvider = "anthropic" | "openai";
 
@@ -34,6 +34,9 @@ function shouldFallback(err: unknown): boolean {
       msg.includes("network") ||
       msg.includes("fetch") ||
       msg.includes("anthropic") ||
+      msg.includes("openai") ||
+      msg.includes("invalida") ||
+      msg.includes("inválida") ||
       msg.includes("not_found") ||
       msg.includes("no disponible") ||
       msg.includes("timeout") ||
@@ -43,14 +46,39 @@ function shouldFallback(err: unknown): boolean {
   return true;
 }
 
+/** Enriquece mensajes con RAG del orquestador sin cambiar el modelo elegido por el usuario. */
+async function enrichWithOrchestratorRag(
+  messages: ChatMessage[],
+  taskHint?: string
+): Promise<ChatMessage[]> {
+  if (!taskHint?.trim()) {
+    return messages;
+  }
+  const prepared = await tryPrepareOrchestration(taskHint, messages);
+  return prepared?.messages ?? messages;
+}
+
+async function withOpenAiModelSetting<T>(model: string, fn: () => Promise<T>): Promise<T> {
+  const config = vscode.workspace.getConfiguration("editcore");
+  const previous = config.get<string>("openai.model");
+  if (previous !== model) {
+    await config.update("openai.model", model, vscode.ConfigurationTarget.Global);
+  }
+  try {
+    return await fn();
+  } finally {
+    if (previous !== model) {
+      await config.update("openai.model", previous, vscode.ConfigurationTarget.Global);
+    }
+  }
+}
+
 export async function callWithFallback(
   apiKeyService: ApiKeyService,
-  messages: ChatMessage[]
+  messages: ChatMessage[],
+  taskHint?: string
 ): Promise<{ text: string; usage: LlmUsage }> {
-  const orchestrated = await callViaOrchestrator(apiKeyService, messages);
-  if (orchestrated) {
-    return orchestrated;
-  }
+  const enriched = await enrichWithOrchestratorRag(messages, taskHint);
 
   const anthropicKey = await apiKeyService.getApiKey();
   const openaiKey = await apiKeyService.getOpenAiKey();
@@ -58,14 +86,14 @@ export async function callWithFallback(
 
   if (anthropicKey) {
     try {
-      const result = await callClaude(anthropicKey, messages);
+      const result = await callClaude(anthropicKey, enriched);
       return {
         text: result.text,
         usage: { ...result.usage, provider: "anthropic", usedFallback: false },
       };
     } catch (err) {
       if (fallback && openaiKey && shouldFallback(err)) {
-        const result = await callOpenAI(openaiKey, messages);
+        const result = await callOpenAI(openaiKey, enriched);
         return {
           text: result.text,
           usage: { ...result.usage, usedFallback: true },
@@ -76,8 +104,12 @@ export async function callWithFallback(
   }
 
   if (openaiKey) {
-    const result = await callOpenAI(openaiKey, messages);
-    return { text: result.text, usage: { ...result.usage, usedFallback: false } };
+    try {
+      const result = await callOpenAI(openaiKey, enriched);
+      return { text: result.text, usage: { ...result.usage, usedFallback: false } };
+    } catch (err) {
+      throw err;
+    }
   }
 
   throw new Error("Configura al menos una API Key: Anthropic (Claude) u OpenAI.");
@@ -90,46 +122,50 @@ export async function streamForSelectedModel(
   onToken: (token: string) => void,
   options?: { allowFallback?: boolean; taskHint?: string }
 ): Promise<LlmUsage> {
-  const orchestrated = await streamViaOrchestrator(
-    apiKeyService,
-    messages,
-    onToken,
-    options?.taskHint
-  );
-  if (orchestrated) {
-    return orchestrated;
-  }
-
   const allowFallback = options?.allowFallback ?? false;
   const resolvedId = isOpenAiModelId(modelId) ? modelId : resolveClaudeModelId(modelId);
   const isOpenAiModel = isOpenAiModelId(resolvedId);
-
-  if (isOpenAiModel) {
-    const openaiKey = await apiKeyService.getOpenAiKey();
-    if (!openaiKey) {
-      throw new Error("Configura una API Key de OpenAI en el panel de APIs.");
-    }
-    const config = vscode.workspace.getConfiguration("editcore");
-    const previous = config.get<string>("openai.model");
-    if (previous !== resolvedId) {
-      await config.update("openai.model", resolvedId, vscode.ConfigurationTarget.Global);
-    }
-    try {
-      const usage = await streamOpenAI(openaiKey, messages, onToken);
-      return { ...usage, provider: "openai", usedFallback: false };
-    } finally {
-      if (previous !== resolvedId) {
-        await config.update("openai.model", previous, vscode.ConfigurationTarget.Global);
-      }
-    }
-  }
+  const enriched = await enrichWithOrchestratorRag(messages, options?.taskHint);
 
   const anthropicKey = await apiKeyService.getApiKey();
   const openaiKey = await apiKeyService.getOpenAiKey();
 
+  if (isOpenAiModel) {
+    if (!openaiKey) {
+      if (allowFallback && isFallbackEnabled() && anthropicKey) {
+        onToken("\n\n_⚠️ Sin key de OpenAI — usando Claude como respaldo._\n\n");
+        const claudeModel = resolveClaudeModelId(
+          vscode.workspace.getConfiguration("editcore").get<string>("model") ?? resolvedId
+        );
+        await persistClaudeModelSetting(claudeModel);
+        const usage = await streamClaude(anthropicKey, enriched, onToken, claudeModel);
+        return { ...usage, provider: "anthropic", model: claudeModel, usedFallback: true };
+      }
+      throw new Error("Configura una API Key de OpenAI en el panel de APIs.");
+    }
+
+    try {
+      const usage = await withOpenAiModelSetting(resolvedId, () =>
+        streamOpenAI(openaiKey, enriched, onToken)
+      );
+      return { ...usage, provider: "openai", model: resolvedId, usedFallback: false };
+    } catch (err) {
+      if (allowFallback && isFallbackEnabled() && anthropicKey && shouldFallback(err)) {
+        onToken("\n\n_⚠️ OpenAI no disponible — usando Claude como respaldo._\n\n");
+        const claudeModel = resolveClaudeModelId(
+          vscode.workspace.getConfiguration("editcore").get<string>("model") ?? resolvedId
+        );
+        await persistClaudeModelSetting(claudeModel);
+        const usage = await streamClaude(anthropicKey, enriched, onToken, claudeModel);
+        return { ...usage, provider: "anthropic", model: claudeModel, usedFallback: true };
+      }
+      throw err;
+    }
+  }
+
   if (!anthropicKey) {
     if (openaiKey && isFallbackEnabled()) {
-      const usage = await streamOpenAI(openaiKey, messages, onToken);
+      const usage = await streamOpenAI(openaiKey, enriched, onToken);
       return { ...usage, provider: "openai", usedFallback: true };
     }
     throw new Error("Configura una API Key de Claude (Anthropic) en el panel de APIs.");
@@ -138,13 +174,13 @@ export async function streamForSelectedModel(
   await persistClaudeModelSetting(resolvedId);
 
   try {
-    const usage = await streamClaude(anthropicKey, messages, onToken, resolvedId);
+    const usage = await streamClaude(anthropicKey, enriched, onToken, resolvedId);
     return { ...usage, provider: "anthropic", model: resolvedId, usedFallback: false };
   } catch (err) {
     if (allowFallback && isFallbackEnabled() && openaiKey && shouldFallback(err)) {
       onToken("\n\n_⚠️ Claude no disponible — usando OpenAI como respaldo._\n\n");
-      const usage = await streamOpenAI(openaiKey, messages, onToken);
-      return { ...usage, usedFallback: true };
+      const usage = await streamOpenAI(openaiKey, enriched, onToken);
+      return { ...usage, provider: "openai", usedFallback: true };
     }
     throw err;
   }
@@ -153,20 +189,22 @@ export async function streamForSelectedModel(
 export async function streamWithFallback(
   apiKeyService: ApiKeyService,
   messages: ChatMessage[],
-  onToken: (token: string) => void
+  onToken: (token: string) => void,
+  taskHint?: string
 ): Promise<LlmUsage> {
+  const enriched = await enrichWithOrchestratorRag(messages, taskHint);
   const anthropicKey = await apiKeyService.getApiKey();
   const openaiKey = await apiKeyService.getOpenAiKey();
   const fallback = isFallbackEnabled();
 
   if (anthropicKey) {
     try {
-      const usage = await streamClaude(anthropicKey, messages, onToken);
+      const usage = await streamClaude(anthropicKey, enriched, onToken);
       return { ...usage, provider: "anthropic", usedFallback: false };
     } catch (err) {
       if (fallback && openaiKey && shouldFallback(err)) {
         onToken("\n\n_⚠️ Claude no disponible — usando OpenAI como respaldo._\n\n");
-        const usage = await streamOpenAI(openaiKey, messages, onToken);
+        const usage = await streamOpenAI(openaiKey, enriched, onToken);
         return { ...usage, usedFallback: true };
       }
       throw err;
@@ -174,8 +212,12 @@ export async function streamWithFallback(
   }
 
   if (openaiKey) {
-    const usage = await streamOpenAI(openaiKey, messages, onToken);
-    return { ...usage, usedFallback: false };
+    try {
+      const usage = await streamOpenAI(openaiKey, enriched, onToken);
+      return { ...usage, usedFallback: false };
+    } catch (err) {
+      throw err;
+    }
   }
 
   throw new Error("Configura al menos una API Key: Anthropic (Claude) u OpenAI.");
@@ -193,15 +235,19 @@ export async function agentFallbackResponse(
   if (!openaiKey) {
     return undefined;
   }
-  const result = await callOpenAI(openaiKey, [
-    {
-      role: "user",
-      content:
-        `El agente Claude no está disponible. Responde como asistente de código (sin herramientas):\n\n${userTask}`,
-    },
-  ]);
-  return {
-    text: result.text,
-    usage: { ...result.usage, usedFallback: true },
-  };
+  try {
+    const result = await callOpenAI(openaiKey, [
+      {
+        role: "user",
+        content:
+          `El agente Claude no está disponible. Responde como asistente de código (sin herramientas):\n\n${userTask}`,
+      },
+    ]);
+    return {
+      text: result.text,
+      usage: { ...result.usage, usedFallback: true },
+    };
+  } catch {
+    return undefined;
+  }
 }
