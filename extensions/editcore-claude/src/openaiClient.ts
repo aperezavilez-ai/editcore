@@ -14,7 +14,7 @@ export interface OpenAiUsage {
 function getOpenAiConfig(): { model: string; maxTokens: number } {
   const config = vscode.workspace.getConfiguration("editcore");
   const model = config.get<string>("openai.model", LLM_CONFIG.openai.defaultModel);
-  const maxTokens = config.get<number>("maxTokens", 8096);
+  const maxTokens = config.get<number>("maxTokens", 16384);
   if (!isValidOpenAiModelId(model)) {
     throw new Error(`Modelo OpenAI desconocido: ${model}. Configuralo en Cuenta & API.`);
   }
@@ -29,7 +29,7 @@ async function readBodyPreview(res: Response): Promise<string> {
   }
 }
 
-function mapOpenAiError(status: number, body: string): Error {
+export function mapOpenAiError(status: number, body: string): Error {
   if (status === 401) {
     return new Error("API key de OpenAI invalida. Revisa la key en el panel de APIs.");
   }

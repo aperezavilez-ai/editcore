@@ -21,7 +21,7 @@ function getModelConfig(modelOverride?: string): { model: string; maxTokens: num
   const config = vscode.workspace.getConfiguration("editcore");
   const raw = modelOverride ?? config.get<string>("model", LLM_CONFIG.claude.defaultModel);
   const model = resolveClaudeModelId(raw);
-  const maxTokens = config.get<number>("maxTokens", 8096);
+  const maxTokens = config.get<number>("maxTokens", 16384);
   if (!isValidModelId(model)) {
     throw new Error(`Modelo desconocido: ${model}. Elige uno en EditCore -> Cuenta & API.`);
   }

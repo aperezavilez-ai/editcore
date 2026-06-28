@@ -2,7 +2,7 @@
   "name": "editcore-claude",
   "displayName": "EditCore - Claude Assistant",
   "description": "Chat con Claude (Anthropic) y OpenAI integrado nativamente en EditCore IDE.",
-  "version": "1.0.7",
+  "version": "1.4.0",
   "publisher": "editcore",
   "engines": {
     "vscode": "^1.85.0"
@@ -34,6 +34,9 @@
     "onLanguageModelChatProvider:editcore",
     "onChatParticipant:editcore.claude",
     "onView:editcore.homeView",
+    "onView:editcore.knowledgeView",
+    "onView:editcore.marketplaceView",
+    "onView:editcore.aiHubView",
     "onView:editcore.accountView"
   ],
   "main": "./out/extension.js",
@@ -71,6 +74,21 @@
           "type": "webview",
           "id": "editcore.accountView",
           "name": "Cuenta & API"
+        },
+        {
+          "type": "webview",
+          "id": "editcore.knowledgeView",
+          "name": "Knowledge Center"
+        },
+        {
+          "type": "webview",
+          "id": "editcore.aiHubView",
+          "name": "AI Hub"
+        },
+        {
+          "type": "webview",
+          "id": "editcore.marketplaceView",
+          "name": "Marketplace"
         }
       ]
     },
@@ -297,6 +315,242 @@
         "command": "editcore.intelligence.health",
         "title": "EditCore: Health Monitor (SIL)",
         "shortTitle": "Health Monitor"
+      },
+      {
+        "command": "editcore.intelligence.generateSystemMap",
+        "title": "EditCore: Pipeline SIL completo (mapa + memoria)",
+        "shortTitle": "SIL Pipeline"
+      },
+      {
+        "command": "editcore.autonomy.diagnose",
+        "title": "EditCore: Autonomía real (diagnóstico + tareas)",
+        "shortTitle": "Autonomía real"
+      },
+      {
+        "command": "editcore.autonomy.execute",
+        "title": "EditCore: Ejecutar siguiente tarea de autonomía",
+        "shortTitle": "Ejecutar tarea"
+      },
+      {
+        "command": "editcore.autonomy.openQueue",
+        "title": "EditCore: Abrir cola de autonomía",
+        "shortTitle": "Cola autonomía"
+      },
+      {
+        "command": "editcore.evolution.cycle",
+        "title": "EditCore: Ciclo de evolución completo",
+        "shortTitle": "Evolución"
+      },
+      {
+        "command": "editcore.evolution.openNextPrompt",
+        "title": "EditCore: Abrir SIGUIENTE_PROMPT_EVOLUCION",
+        "shortTitle": "Siguiente prompt"
+      },
+      {
+        "command": "editcore.evolution.generatePlan",
+        "title": "EditCore: Generar PLAN_IMPLEMENTACION_EDITCORE.md",
+        "shortTitle": "Plan implementación"
+      },
+      {
+        "command": "editcore.evolution.runPhase",
+        "title": "EditCore: Ejecutar fase del roadmap (1–10)",
+        "shortTitle": "Ejecutar fase"
+      },
+      {
+        "command": "editcore.evolution.openPlan",
+        "title": "EditCore: Abrir plan de implementación",
+        "shortTitle": "Abrir plan"
+      },
+      {
+        "command": "editcore.autonomy.setLevel",
+        "title": "EditCore: Configurar nivel de autonomía (1–5)",
+        "shortTitle": "Nivel autonomía"
+      },
+      {
+        "command": "editcore.aos.run",
+        "title": "EditCore: AI Orchestrator (pipeline completo)",
+        "shortTitle": "AI Orchestrator"
+      },
+      {
+        "command": "editcore.aos.generateWorkPlan",
+        "title": "EditCore: Generar PLAN_DE_TRABAJO.md",
+        "shortTitle": "Plan de trabajo"
+      },
+      {
+        "command": "editcore.aos.evolutionManager",
+        "title": "EditCore: Evolution Manager",
+        "shortTitle": "Evolution Manager"
+      },
+      {
+        "command": "editcore.aos.generateDocs",
+        "title": "EditCore: Generar documentación AOS",
+        "shortTitle": "Docs AOS"
+      },
+      {
+        "command": "editcore.autonomous.run",
+        "title": "EditCore: Desarrollador autónomo (ciclo completo)",
+        "shortTitle": "Autonomous Dev"
+      },
+      {
+        "command": "editcore.autonomous.analyzeProject",
+        "title": "EditCore: Analizar proyecto (PROJECT_UNDERSTANDING)",
+        "shortTitle": "Analizar proyecto"
+      },
+      {
+        "command": "editcore.autonomous.generatePlan",
+        "title": "EditCore: Generar plan autónomo",
+        "shortTitle": "Plan autónomo"
+      },
+      {
+        "command": "editcore.autonomous.openWorkbench",
+        "title": "EditCore: Historial de tareas autónomas",
+        "shortTitle": "Workbench ADE"
+      },
+      {
+        "command": "editcore.autonomous.setMode",
+        "title": "EditCore: Modo copiloto / autónomo",
+        "shortTitle": "Modo ADE"
+      },
+      {
+        "command": "editcore.autonomous.generateDocs",
+        "title": "EditCore: Generar documentación Autonomous Engine",
+        "shortTitle": "Docs ADE"
+      },
+      {
+        "command": "editcore.autonomous.showDiff",
+        "title": "EditCore: Ver diff git (tarea autónoma)",
+        "shortTitle": "Diff ADE"
+      },
+      {
+        "command": "editcore.autonomous.openNextPrompt",
+        "title": "EditCore: Abrir SIGUIENTE_PROMPT 5",
+        "shortTitle": "Prompt 5"
+      },
+      {
+        "command": "editcore.knowledge.reindex",
+        "title": "EditCore: Reindexar conocimiento (RAG + memoria)",
+        "shortTitle": "Reindex Knowledge"
+      },
+      {
+        "command": "editcore.knowledge.buildMap",
+        "title": "EditCore: Generar PROJECT_KNOWLEDGE_MAP",
+        "shortTitle": "Knowledge Map"
+      },
+      {
+        "command": "editcore.knowledge.search",
+        "title": "EditCore: Buscar conocimiento",
+        "shortTitle": "Buscar"
+      },
+      {
+        "command": "editcore.knowledge.semanticAnalysis",
+        "title": "EditCore: Análisis semántico del código",
+        "shortTitle": "Semántica"
+      },
+      {
+        "command": "editcore.knowledge.openCenter",
+        "title": "EditCore: Abrir Knowledge Center",
+        "shortTitle": "Knowledge Center"
+      },
+      {
+        "command": "editcore.knowledge.purge",
+        "title": "EditCore: Purgar conocimiento local",
+        "shortTitle": "Purgar"
+      },
+      {
+        "command": "editcore.knowledge.auditLog",
+        "title": "EditCore: Auditoría de memoria",
+        "shortTitle": "Audit memoria"
+      },
+      {
+        "command": "editcore.knowledge.generateDocs",
+        "title": "EditCore: Generar documentación Knowledge",
+        "shortTitle": "Docs Knowledge"
+      },
+      {
+        "command": "editcore.knowledge.openNextPrompt",
+        "title": "EditCore: Abrir SIGUIENTE_PROMPT 6",
+        "shortTitle": "Prompt 6"
+      },
+      {
+        "command": "editcore.knowledge.status",
+        "title": "EditCore: Estado del sistema de conocimiento",
+        "shortTitle": "Knowledge status"
+      },
+      {
+        "command": "editcore.ecosystem.openAiHub",
+        "title": "EditCore: Abrir AI Hub",
+        "shortTitle": "AI Hub"
+      },
+      {
+        "command": "editcore.ecosystem.openMarketplace",
+        "title": "EditCore: Abrir Marketplace (ecosistema)",
+        "shortTitle": "Marketplace"
+      },
+      {
+        "command": "editcore.ecosystem.agentBuilder",
+        "title": "EditCore: Agent Builder",
+        "shortTitle": "Agent Builder"
+      },
+      {
+        "command": "editcore.ecosystem.listAgents",
+        "title": "EditCore: Catálogo de agentes"
+      },
+      {
+        "command": "editcore.ecosystem.templates",
+        "title": "EditCore: Template Library"
+      },
+      {
+        "command": "editcore.ecosystem.integrations",
+        "title": "EditCore: Integraciones externas"
+      },
+      {
+        "command": "editcore.ecosystem.manageTeam",
+        "title": "EditCore: Equipo y roles"
+      },
+      {
+        "command": "editcore.ecosystem.addComment",
+        "title": "EditCore: Añadir comentario colaborativo"
+      },
+      {
+        "command": "editcore.ecosystem.activity",
+        "title": "EditCore: Actividad del equipo"
+      },
+      {
+        "command": "editcore.ecosystem.snapshot",
+        "title": "EditCore: Crear snapshot de versión"
+      },
+      {
+        "command": "editcore.ecosystem.versions",
+        "title": "EditCore: Historial de versiones"
+      },
+      {
+        "command": "editcore.ecosystem.saveToHub",
+        "title": "EditCore: Guardar en AI Hub"
+      },
+      {
+        "command": "editcore.ecosystem.searchHub",
+        "title": "EditCore: Buscar en AI Hub"
+      },
+      {
+        "command": "editcore.ecosystem.pluginSdk",
+        "title": "EditCore: Plugin SDK"
+      },
+      {
+        "command": "editcore.ecosystem.analytics",
+        "title": "EditCore: Analítica de uso"
+      },
+      {
+        "command": "editcore.ecosystem.generateDocs",
+        "title": "EditCore: Generar docs ecosistema (Prompt 6)"
+      },
+      {
+        "command": "editcore.ecosystem.openNextPrompt",
+        "title": "EditCore: Abrir SIGUIENTE_PROMPT 7",
+        "shortTitle": "Prompt 7"
+      },
+      {
+        "command": "editcore.ecosystem.refreshAiHub",
+        "title": "EditCore: Actualizar AI Hub"
       }
     ],
     "menus": {
@@ -372,10 +626,10 @@
         },
         "editcore.maxTokens": {
           "type": "number",
-          "default": 8096,
+          "default": 16384,
           "minimum": 256,
-          "maximum": 64000,
-          "description": "Maximo de tokens por respuesta"
+          "maximum": 128000,
+          "description": "Maximo de tokens por respuesta (chat y agente). Claude soporta hasta 64k salida."
         },
         "editcore.agent.alwaysWhenWorkspaceOpen": {
           "type": "boolean",
@@ -465,6 +719,11 @@
           "default": "",
           "description": "URL opcional de catalogo JSON remoto (se fusiona con el bundled)"
         },
+        "editcore.ecosystem.security.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Habilitar control de permisos por rol de equipo (org.json)"
+        },
         "editcore.rag.useEmbeddings": {
           "type": "boolean",
           "default": true,
@@ -509,8 +768,8 @@
         },
         "editcore.intelligence.enabled": {
           "type": "boolean",
-          "default": false,
-          "description": "Activa EditCore System Intelligence Layer (lectura del sistema)"
+          "default": true,
+          "description": "Activa EditCore System Intelligence Layer (lectura y diagnóstico real del IDE)"
         },
         "editcore.intelligence.permissionLevel": {
           "type": "string",
@@ -520,13 +779,50 @@
             "write_config",
             "write_code"
           ],
-          "default": "read",
+          "default": "write_docs",
           "description": "Nivel maximo de permiso SIL sin aprobacion explicita"
         },
         "editcore.intelligence.autoGenerateMap": {
           "type": "boolean",
+          "default": true,
+          "description": "Al diagnosticar, guardar EDITCORE_SYSTEM_MAP.md en .editcore/docs/ (pide aprobacion)"
+        },
+        "editcore.intelligence.autoAnalyze": {
+          "type": "boolean",
           "default": false,
-          "description": "Regenerar mapa del sistema al abrir workspace (Sprint 2)"
+          "description": "Usar API para analisis interpretado. Si false, solo datos locales (sin gastar cuota)."
+        },
+        "editcore.intelligence.analysisModel": {
+          "type": "string",
+          "default": "claude-haiku-4-5",
+          "enum": [
+            "claude-haiku-4-5",
+            "claude-sonnet-4-6",
+            "claude-opus-4-6"
+          ],
+          "description": "Modelo para analisis SIL (Haiku = mas rapido y barato)"
+        },
+        "editcore.intelligence.preferClaudeForAnalysis": {
+          "type": "boolean",
+          "default": true,
+          "description": "Preferir Claude para analisis SIL; si 429 en OpenAI, fallback automatico"
+        },
+        "editcore.intelligence.skipMcpProbe": {
+          "type": "boolean",
+          "default": true,
+          "description": "No conectar MCP durante health check (mas rapido, menos carga)"
+        },
+        "editcore.intelligence.maxAnalysisTokens": {
+          "type": "number",
+          "default": 1024,
+          "minimum": 256,
+          "maximum": 4096,
+          "description": "Tokens maximos del analisis SIL con API"
+        },
+        "editcore.intelligence.techMemory.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Registrar diagnósticos en .editcore/tech-memory/ (pide aprobacion)"
         },
         "editcore.intelligence.healthIntervalMinutes": {
           "type": "number",
@@ -534,6 +830,141 @@
           "minimum": 0,
           "maximum": 1440,
           "description": "Intervalo de health check automatico (0 = solo manual)"
+        },
+        "editcore.autonomy.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Activa el motor de autonomía real (diagnóstico + cola de tareas + ejecución con agente)"
+        },
+        "editcore.autonomy.maxTasksPerRun": {
+          "type": "number",
+          "default": 3,
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Máximo de tareas a ejecutar por ciclo del agente"
+        },
+        "editcore.autonomy.level": {
+          "type": "number",
+          "default": 2,
+          "minimum": 1,
+          "maximum": 5,
+          "description": "Nivel de autonomía: 1=analizar, 2=planear, 3=escribir aprobado, 4=ejecutar tareas, 5=continuo"
+        },
+        "editcore.agent.openAiForCoder": {
+          "type": "boolean",
+          "default": true,
+          "description": "Usar OpenAI con herramientas para rol Coder (fullstack)"
+        },
+        "editcore.evolution.gitBranchBeforeChanges": {
+          "type": "boolean",
+          "default": true,
+          "description": "Crear rama editcore/evolution-* antes de escrituras en nivel ≥3"
+        },
+        "editcore.evolution.continuousIntervalMinutes": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 1440,
+          "description": "Ciclo evolución automático cada N minutos (solo nivel 5; 0=off)"
+        },
+        "editcore.evolution.runValidation": {
+          "type": "boolean",
+          "default": true,
+          "description": "Ejecutar validación build/test en ciclo de evolución"
+        },
+        "editcore.evolution.generateReportsAfterPipeline": {
+          "type": "boolean",
+          "default": true,
+          "description": "Generar REPORTE_CAMBIOS y QA_CHECKLIST tras pipeline multiagente"
+        },
+        "editcore.orchestrator.selfCritique": {
+          "type": "boolean",
+          "default": true,
+          "description": "Activar autocrítica (validateGeneration) en orchestrator middleware"
+        },
+        "editcore.aos.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Activa EDITCORE Agent Operating System (AI Orchestrator)"
+        },
+        "editcore.aos.modelOverride": {
+          "type": "string",
+          "enum": ["auto", "anthropic", "openai"],
+          "default": "auto",
+          "description": "Forzar proveedor IA en AOS (auto = por agente)"
+        },
+        "editcore.aos.security.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Security Guard: bloquea comandos destructivos"
+        },
+        "editcore.autonomous.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Activa EDITCORE Autonomous Developer Engine"
+        },
+        "editcore.autonomous.mode": {
+          "type": "string",
+          "enum": ["copilot", "autonomous"],
+          "default": "copilot",
+          "description": "Modo copiloto (aprobación) o autónomo (implementa y prueba)"
+        },
+        "editcore.autonomous.maxDebugCycles": {
+          "type": "number",
+          "default": 3,
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Máximo de ciclos Self Debug Loop por tarea"
+        },
+        "editcore.autonomous.useAosPipeline": {
+          "type": "boolean",
+          "default": true,
+          "description": "Usar AI Orchestrator (AOS) para implementación"
+        },
+        "editcore.autonomous.autoCommit": {
+          "type": "boolean",
+          "default": false,
+          "description": "Crear commit git automático tras tarea exitosa (nivel 4+)"
+        },
+        "editcore.autonomous.autoApproveWrites": {
+          "type": "boolean",
+          "default": false,
+          "description": "En modo autónomo nivel 3+, omitir diálogo de aprobación"
+        },
+        "editcore.autonomous.confirmCritical": {
+          "type": "boolean",
+          "default": true,
+          "description": "Confirmar commits, stash y PRs"
+        },
+        "editcore.autonomous.useForAutonomyQueue": {
+          "type": "boolean",
+          "default": true,
+          "description": "editcore.autonomy.execute usa Autonomous Developer Engine"
+        },
+        "editcore.autonomous.continuousEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Nivel 5: ejecutar ADE en ciclos continuos antes del evolution cycle"
+        },
+        "editcore.knowledge.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Activa EDITCORE Knowledge & Memory System"
+        },
+        "editcore.knowledge.rag.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "RAG unificado en agente y chat"
+        },
+        "editcore.knowledge.useQdrantFallback": {
+          "type": "boolean",
+          "default": true,
+          "description": "Usar Qdrant si está disponible tras búsqueda local"
+        },
+        "editcore.knowledge.contextAssembler.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Context assembler unificado pre-tarea"
         },
         "editcore.mcp.servers": {
           "type": "array",

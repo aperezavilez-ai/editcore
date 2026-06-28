@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import type { IntelligencePermission } from "./types";
+import { getAutonomyLevel, mapLevelToPermissionLevel } from "../autonomy/autonomyLevel";
 
 const PERMISSION_RANK: Record<IntelligencePermission, number> = {
   read: 0,
@@ -15,13 +16,15 @@ export function isIntelligenceEnabled(): boolean {
 }
 
 export function getMaxPermissionLevel(): IntelligencePermission {
+  const fromAutonomy = mapLevelToPermissionLevel(getAutonomyLevel());
   const raw = vscode.workspace
     .getConfiguration("editcore")
-    .get<string>("intelligence.permissionLevel", "read");
+    .get<string>("intelligence.permissionLevel", fromAutonomy);
   if (raw === "write_docs" || raw === "write_config" || raw === "write_code") {
-    return raw;
+    const configured = raw as IntelligencePermission;
+    return PERMISSION_RANK[configured] >= PERMISSION_RANK[fromAutonomy] ? configured : fromAutonomy;
   }
-  return "read";
+  return fromAutonomy;
 }
 
 export function hasPermission(required: IntelligencePermission): boolean {
@@ -32,19 +35,13 @@ export function hasPermission(required: IntelligencePermission): boolean {
 }
 
 export async function assertIntelligenceEnabled(): Promise<void> {
-  if (!isIntelligenceEnabled()) {
-    const enable = await vscode.window.showInformationMessage(
-      "EditCore System Intelligence está desactivada. ¿Activarla ahora?",
-      "Activar",
-      "Cancelar"
-    );
-    if (enable !== "Activar") {
-      throw new Error("System Intelligence Layer desactivada.");
-    }
-    await vscode.workspace
-      .getConfiguration("editcore")
-      .update("intelligence.enabled", true, vscode.ConfigurationTarget.Global);
+  if (isIntelligenceEnabled()) {
+    return;
   }
+  // Auto-activar en lectura: SIL read-only es seguro para diagnósticos reales.
+  await vscode.workspace
+    .getConfiguration("editcore")
+    .update("intelligence.enabled", true, vscode.ConfigurationTarget.Global);
 }
 
 export async function requestPermission(

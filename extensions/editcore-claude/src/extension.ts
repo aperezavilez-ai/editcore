@@ -31,6 +31,12 @@ import { createStatusBarItem, showAbout } from "./hub/statusBar";
 import { initVoyageService } from "./rag/voyageService";
 import { registerDiagnosticCommands } from "./diagnostics/diagnosticCommands";
 import { registerIntelligenceCommands } from "./intelligence/intelligenceCommands";
+import { registerAutonomyCommands } from "./autonomy/autonomyCommands";
+import { registerEvolutionCommands, scheduleContinuousEvolution } from "./evolution/evolutionCommands";
+import { registerAosCommands } from "./aos/aosCommands";
+import { registerAutonomousCommands } from "./autonomous/autonomousCommands";
+import { registerKnowledgeCommands } from "./knowledge/knowledgeCommands";
+import { registerEcosystemCommands } from "./ecosystem/ecosystemCommands";
 import { registerQuickActionsBar } from "./hub/quickActionsBar";
 import { registerWelcomePanel, showWelcomeIfNeeded } from "./welcome/welcomePanel";
 import { runFirstRunWizardIfNeeded } from "./welcome/firstRunWizard";
@@ -95,6 +101,7 @@ export async function activate(context: vscode.ExtensionContext) {
       })
     );
     void maybePromptWorkspaceInit(context);
+    void import("./memory/multiProjectMemory").then((m) => m.registerActiveProject());
   }
 
   context.subscriptions.push(
@@ -184,13 +191,9 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const marketplaceService = new MarketplaceService(context.extensionUri);
   const marketplaceProvider = new MarketplaceViewProvider(context, marketplaceService);
+  const aiHubProvider = registerEcosystemCommands(context, marketplaceService, marketplaceProvider);
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("editcore.openMarketplace", async () => {
-      vscode.window.showInformationMessage(
-        "Las habilidades de EditCore (Arquitecto, GPS, SaaS, Security…) están integradas en el agente. Usá @architect, @gps, @saas, etc. en el chat."
-      );
-    }),
     vscode.commands.registerCommand("editcore.founderMode", () => founderMode()),
     vscode.commands.registerCommand("editcore.ctoMode", () => ctoMode()),
     vscode.commands.registerCommand("editcore.saasBuilder", () => saasBuilder()),
@@ -207,6 +210,7 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("editcore.initWorkspace", () => showInitWorkspaceResult()),
     vscode.commands.registerCommand("editcore.exportSessions", () => exportSessionsReport()),
     vscode.commands.registerCommand("editcore.refreshMarketplace", () => marketplaceProvider.refresh()),
+    vscode.commands.registerCommand("editcore.ecosystem.refreshAiHub", () => aiHubProvider.refresh()),
     vscode.commands.registerCommand("editcore.commandHub", () => showCommandHub()),
     vscode.commands.registerCommand("editcore.resumeSession", () => resumeSession()),
     vscode.commands.registerCommand("editcore.about", () => showAbout())
@@ -215,6 +219,12 @@ export async function activate(context: vscode.ExtensionContext) {
   createStatusBarItem(context);
   registerDiagnosticCommands(context, apiKeyService);
   registerIntelligenceCommands(context, apiKeyService);
+  registerAutonomyCommands(context, apiKeyService);
+  registerEvolutionCommands(context, apiKeyService);
+  registerAosCommands(context, apiKeyService);
+  registerAutonomousCommands(context, apiKeyService);
+  registerKnowledgeCommands(context, apiKeyService);
+  scheduleContinuousEvolution(context, apiKeyService);
 
   const configProvider = new ClaudeConfigViewProvider(context, apiKeyService);
   const homeProvider = new EditCoreHomeViewProvider(apiKeyService);

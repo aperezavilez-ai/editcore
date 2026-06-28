@@ -9,6 +9,8 @@ import {
   createOrchestrator,
   createQdrantFromEnv,
 } from "./orchestrator";
+import { getDiagnosticRuntime } from "../diagnostics/diagnosticRuntime";
+import { createValidationCaller } from "./validateGenerationBridge";
 
 export interface PreparedOrchestration {
   plan: OrchestratorResult;
@@ -35,6 +37,7 @@ function getQdrantConfig(): { url: string; apiKey?: string; collection: string }
 function getOrchestrator(): Orchestrator {
   if (!cachedOrchestrator) {
     const qdrantCfg = getQdrantConfig();
+    const rt = getDiagnosticRuntime();
     cachedOrchestrator = createOrchestrator({
       qdrant: createQdrantFromEnv({
         qdrantUrl: qdrantCfg.url,
@@ -47,6 +50,10 @@ function getOrchestrator(): Orchestrator {
         }
         return embedQuery(text);
       },
+      validateGeneration: rt ? createValidationCaller(rt.apiKeyService) : undefined,
+      selfCritiqueEnabled: vscode.workspace
+        .getConfiguration("editcore")
+        .get<boolean>("orchestrator.selfCritique", true),
     });
   }
   return cachedOrchestrator;

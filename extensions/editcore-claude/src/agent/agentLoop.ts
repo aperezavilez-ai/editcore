@@ -9,6 +9,7 @@ import { getAllAgentTools, executeAgentTool, setToolCallRecorder } from "./tools
 import { buildAgentContext } from "./agentContext";
 import { AgentRoleId, buildSystemPrompt } from "../agents/roles";
 import { buildAgentSystemPromptBase, getAgentCommunicationStyle } from "./communicationStyle";
+import { runOpenAiAgentTask, shouldUseOpenAiForRole } from "./openaiAgentLoop";
 
 const MAX_ITERATIONS = 30;
 
@@ -27,11 +28,29 @@ export async function runAgentTask(
   onUsage?: (inputTokens: number, outputTokens: number) => void,
   onToolCall?: (name: string) => void,
   roleId: AgentRoleId = "default",
-  apiKeyService?: ApiKeyService
+  apiKeyService?: ApiKeyService,
+  customAgentId?: string
 ): Promise<void> {
+  if (shouldUseOpenAiForRole(roleId) && apiKeyService) {
+    const openAiKey = await apiKeyService.getOpenAiKey();
+    if (openAiKey?.trim()) {
+      return runOpenAiAgentTask(
+        openAiKey,
+        userTask,
+        onEvent,
+        abortSignal,
+        onUsage,
+        onToolCall,
+        roleId,
+        apiKeyService,
+        customAgentId
+      );
+    }
+  }
+
   const config = vscode.workspace.getConfiguration("editcore");
   const model = resolveClaudeModelId(config.get<string>("model", LLM_CONFIG.claude.defaultModel));
-  const maxTokens = config.get<number>("maxTokens", 8096);
+  const maxTokens = config.get<number>("maxTokens", 16384);
 
   if (!apiKey?.trim()) {
     if (apiKeyService) {
@@ -54,7 +73,7 @@ export async function runAgentTask(
   }
 
   const client = createClaudeClient(apiKey);
-  const systemPrompt = await buildSystemPrompt(buildAgentSystemPromptBase(), roleId);
+  const systemPrompt = await buildSystemPrompt(buildAgentSystemPromptBase(), roleId, customAgentId);
   const tools = await getAllAgentTools();
 
   setToolCallRecorder(onToolCall);

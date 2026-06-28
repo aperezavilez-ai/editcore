@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "items": [
     {
       "id": "agent-architect-pro",
@@ -10,6 +10,76 @@
       "tier": "free",
       "role": "architect",
       "promptFile": "prompts/architect-pro.md"
+    },
+    {
+      "id": "agent-frontend",
+      "type": "agent",
+      "name": "Frontend Agent",
+      "description": "React, Vue, UI/UX, componentes y accesibilidad.",
+      "author": "EditCore",
+      "tier": "free",
+      "role": "fullstack",
+      "promptFile": "prompts/frontend-agent.md"
+    },
+    {
+      "id": "agent-backend",
+      "type": "agent",
+      "name": "Backend Agent",
+      "description": "APIs REST/GraphQL, servicios, lógica de negocio.",
+      "author": "EditCore",
+      "tier": "free",
+      "role": "fullstack",
+      "promptFile": "prompts/backend-agent.md"
+    },
+    {
+      "id": "agent-database",
+      "type": "agent",
+      "name": "Database Agent",
+      "description": "SQL, ORM, migraciones, modelos y optimización.",
+      "author": "EditCore",
+      "tier": "pro",
+      "role": "architect",
+      "promptFile": "prompts/database-agent.md"
+    },
+    {
+      "id": "agent-testing",
+      "type": "agent",
+      "name": "Testing Agent",
+      "description": "Unit, integration, E2E y cobertura.",
+      "author": "EditCore",
+      "tier": "free",
+      "role": "qa",
+      "promptFile": "prompts/testing-agent.md"
+    },
+    {
+      "id": "agent-devops",
+      "type": "agent",
+      "name": "DevOps Agent",
+      "description": "CI/CD, Docker, Kubernetes, deploy.",
+      "author": "EditCore",
+      "tier": "pro",
+      "role": "devops",
+      "promptFile": "prompts/devops-agent.md"
+    },
+    {
+      "id": "agent-marketing",
+      "type": "agent",
+      "name": "Marketing Agent",
+      "description": "Copy, landing pages, growth y SEO.",
+      "author": "EditCore",
+      "tier": "pro",
+      "role": "founder",
+      "promptFile": "prompts/marketing-agent.md"
+    },
+    {
+      "id": "agent-documentation",
+      "type": "agent",
+      "name": "Documentation Agent",
+      "description": "README, ADRs, API docs y guías.",
+      "author": "EditCore",
+      "tier": "free",
+      "role": "documenter",
+      "promptFile": "prompts/documentation-agent.md"
     },
     {
       "id": "agent-gps-expert",
@@ -38,7 +108,7 @@
       "description": "OWASP, hardening, secretos, auth y revisión de dependencias.",
       "author": "EditCore",
       "tier": "pro",
-      "role": "architect",
+      "role": "security",
       "promptFile": "prompts/security-expert.md"
     },
     {
@@ -70,6 +140,26 @@
       "tier": "business",
       "vertical": "gps",
       "scaffoldDir": "verticals/gps-platform"
+    },
+    {
+      "id": "template-crm",
+      "type": "template",
+      "name": "CRM Starter",
+      "description": "Contactos, pipeline, tareas y dashboard.",
+      "author": "EditCore",
+      "tier": "pro",
+      "vertical": "crm",
+      "scaffoldDir": "verticals/saas-starter"
+    },
+    {
+      "id": "template-landing",
+      "type": "template",
+      "name": "Landing Page",
+      "description": "Landing moderna con hero, features y CTA.",
+      "author": "EditCore",
+      "tier": "free",
+      "vertical": "landing",
+      "scaffoldDir": "verticals/saas-starter"
     },
     {
       "id": "mcp-filesystem",

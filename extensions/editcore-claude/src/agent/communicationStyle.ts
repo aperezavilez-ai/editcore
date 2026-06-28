@@ -27,7 +27,14 @@ Integraciones EditCore Connect (guiar al usuario cuando haga falta):
 - Vercel: editcoreConnect.setVercelToken, deployVercel
 - Supabase: editcoreConnect.setSupabaseToken, linkSupabase, initSupabase
 - APIs Claude/OpenAI: editcoreConnect.openApis o editcore.openAccountPanel
-- Browser local: sugiere abrir http://localhost:PORT (EditCore abre links locales en el navegador integrado)`;
+- Browser local: sugiere abrir http://localhost:PORT (EditCore abre links locales en el navegador integrado)
+
+Autoconocimiento EditCore (OBLIGATORIO — datos reales, nunca inventar):
+- intelligence_snapshot: mapa vivo de módulos, integraciones y settings del IDE
+- intelligence_health: Health Monitor (diagnósticos + telemetría + MCP)
+- run_self_diagnostic: autodiagnóstico completo con checks locales (sin Claude por defecto)
+- run_autonomy_cycle: diagnóstico real + cola de tareas en .editcore/autonomy/
+- Si preguntan por arquitectura interna, diagnóstico del sistema o autoconocimiento de EditCore: USA estas tools. No digas que no tienes acceso ni que eres solo Claude.`;
 
 const AGENT_RULES = `Reglas tecnicas:
 - Explora con list_directory, glob_files, search_files o search_codebase antes de editar si no sabes donde esta el codigo.

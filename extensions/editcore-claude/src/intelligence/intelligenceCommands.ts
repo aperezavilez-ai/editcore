@@ -6,20 +6,20 @@ import {
   buildHealthReport,
   formatHealthReportMarkdown,
 } from "./healthMonitor";
+import { runIntelligencePipeline } from "./intelligencePipeline";
 import {
   buildSystemSnapshot,
   formatSystemSnapshotJson,
   formatSystemSnapshotMarkdown,
 } from "./systemReader";
 
-async function openMarkdownReport(title: string, markdown: string): Promise<void> {
+async function openMarkdownReport(markdown: string): Promise<void> {
   const doc = await vscode.workspace.openTextDocument({
     content: markdown,
     language: "markdown",
   });
   await vscode.window.showTextDocument(doc, { preview: false, viewColumn: vscode.ViewColumn.Beside });
   await vscode.commands.executeCommand("markdown.showPreviewToSide");
-  void title;
 }
 
 export function registerIntelligenceCommands(
@@ -64,7 +64,7 @@ export function registerIntelligenceCommands(
           return;
         }
 
-        await openMarkdownReport("System Snapshot", formatSystemSnapshotMarkdown(snapshot));
+        await openMarkdownReport(formatSystemSnapshotMarkdown(snapshot));
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
         vscode.window.showErrorMessage(`EditCore SIL: ${message}`);
@@ -89,18 +89,41 @@ export function registerIntelligenceCommands(
           warning: report.diagnosticSummary.warning,
         });
 
-        await openMarkdownReport("Health Monitor", formatHealthReportMarkdown(report));
+        await openMarkdownReport(formatHealthReportMarkdown(report));
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        vscode.window.showErrorMessage(`EditCore SIL: ${message}`);
+      }
+    }),
 
-        if (report.status === "critical") {
-          vscode.window.showWarningMessage(
-            `Health Monitor: ${report.diagnosticSummary.critical} problema(s) crítico(s). Ver reporte.`
+    vscode.commands.registerCommand("editcore.intelligence.generateSystemMap", async () => {
+      try {
+        await assertIntelligenceEnabled();
+        const result = await vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.Notification,
+            title: "EditCore: pipeline System Intelligence...",
+            cancellable: false,
+          },
+          () =>
+            runIntelligencePipeline(context, apiKeyService, {
+              saveSystemMap: true,
+              runAnalysis: true,
+              recordMemory: true,
+            })
+        );
+
+        await openMarkdownReport(result.markdown);
+
+        if (result.savedMapPath) {
+          const open = await vscode.window.showInformationMessage(
+            `Mapa guardado en .editcore/docs/EDITCORE_SYSTEM_MAP.md`,
+            "Abrir archivo"
           );
-        } else if (report.status === "degraded") {
-          vscode.window.showInformationMessage(
-            `Health Monitor: ${report.diagnosticSummary.warning} advertencia(s). Ver reporte.`
-          );
-        } else {
-          vscode.window.showInformationMessage("Health Monitor: sistema saludable.");
+          if (open === "Abrir archivo") {
+            const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(result.savedMapPath));
+            await vscode.window.showTextDocument(doc);
+          }
         }
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);

@@ -35,11 +35,18 @@ export async function initWorkspace(): Promise<WorkspaceBootstrapResult> {
   const dirs = [
     base,
     path.join(base, 'agents'),
+    path.join(base, 'autonomy'),
+    path.join(base, 'docs'),
+    path.join(base, 'reports'),
+    path.join(base, 'tech-memory'),
+    path.join(base, 'memory'),
     path.join(base, 'marketplace', 'installed'),
     path.join(base, 'sessions'),
     path.join(base, 'templates'),
     path.join(base, 'adrs'),
     path.join(base, 'rag'),
+    path.join(base, 'plans'),
+    path.join(base, 'diagnostics'),
   ];
   for (const d of dirs) {
     await fs.promises.mkdir(d, { recursive: true });
@@ -49,6 +56,16 @@ export async function initWorkspace(): Promise<WorkspaceBootstrapResult> {
     { rel: 'rules.md', content: RULES_TEMPLATE },
     { rel: 'mcp.json', content: { servers: [] } },
     { rel: 'memory.md', content: '# Memoria del proyecto\n\nNotas persistentes para el agente.\n' },
+    {
+      rel: 'autonomy/README.md',
+      content:
+        '# Cola de autonomía EditCore\n\nGenerada por `editcore.autonomy.diagnose`.\n\n- `queue.json` — tareas pendientes\n- `cursor-prompts.md` — prompts para Cursor\n- `latest-report.md` — último diagnóstico\n',
+    },
+    {
+      rel: 'docs/README.md',
+      content:
+        '# Documentación generada por EditCore\n\n- `EDITCORE_SYSTEM_MAP.md`\n- `REPORTE_CAMBIOS_EDITCORE.md`\n- `SIGUIENTE_PROMPT_EVOLUCION_EDITCORE.md`\n',
+    },
   ];
 
   for (const f of files) {

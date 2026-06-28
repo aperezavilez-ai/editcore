@@ -46,7 +46,7 @@ function shouldFallback(err: unknown): boolean {
   return true;
 }
 
-/** Enriquece mensajes con RAG del orquestador sin cambiar el modelo elegido por el usuario. */
+/** Enriquece mensajes con RAG del orquestador; fallback a Knowledge RAG local. */
 async function enrichWithOrchestratorRag(
   messages: ChatMessage[],
   taskHint?: string
@@ -55,7 +55,30 @@ async function enrichWithOrchestratorRag(
     return messages;
   }
   const prepared = await tryPrepareOrchestration(taskHint, messages);
-  return prepared?.messages ?? messages;
+  if (prepared?.messages && prepared.messages !== messages) {
+    return prepared.messages;
+  }
+
+  const config = vscode.workspace.getConfiguration("editcore");
+  if (!config.get<boolean>("knowledge.rag.enabled", true)) {
+    return messages;
+  }
+
+  try {
+    const { getDiagnosticRuntime } = await import("./diagnostics/diagnosticRuntime");
+    const { retrieveKnowledgeContext } = await import("./knowledge/ragPipeline");
+    const rt = getDiagnosticRuntime();
+    if (!rt) return messages;
+    const rag = await retrieveKnowledgeContext(rt.context, taskHint);
+    if (!rag.contextBlock.trim()) return messages;
+    const contextMessage: ChatMessage = {
+      role: "user",
+      content: rag.contextBlock + "\n\n---\n_RAG local EditCore (" + rag.sources.join(", ") + ")_",
+    };
+    return [contextMessage, ...messages];
+  } catch {
+    return messages;
+  }
 }
 
 async function withOpenAiModelSetting<T>(model: string, fn: () => Promise<T>): Promise<T> {

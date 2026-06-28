@@ -117,6 +117,30 @@ export const AGENT_TOOLS = [
     },
   },
   {
+    name: 'read_logs',
+    description: 'Lee últimas líneas de un archivo de log o salida de terminal guardada en el workspace.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        path: { type: 'string', description: 'Ruta al log, ej: .editcore/logs/last-run.txt' },
+        lines: { type: 'number', description: 'Últimas N líneas (default 80).' },
+      },
+      required: ['path'],
+    },
+  },
+  {
+    name: 'git_branch',
+    description:
+      'Crea o cambia a una rama git. Por defecto editcore/evolution-YYYYMMDD. Requiere aprobación en main/master.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Nombre de rama. Opcional.' },
+        checkout_only: { type: 'boolean', description: 'Solo checkout sin crear.' },
+      },
+    },
+  },
+  {
     name: 'git_status',
     description: 'Muestra git status --short en el workspace.',
     input_schema: { type: 'object', properties: {} },
@@ -231,6 +255,98 @@ export const AGENT_TOOLS = [
   {
     name: 'list_adrs',
     description: 'Lista Architecture Decision Records en .editcore/adrs/.',
+    input_schema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'run_aos_orchestrator',
+    description: 'EDITCORE AI Orchestrator: plan + pipeline multiagente + validación + reportes.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        task: { type: 'string', description: 'Tarea a orquestar.' },
+        skip_review: { type: 'boolean', description: 'Omitir fases de revisión.' },
+      },
+      required: ['task'],
+    },
+  },
+  {
+    name: 'run_autonomous_engine',
+    description:
+      'EDITCORE Autonomous Developer Engine: análisis proyecto + plan + implementación + self-debug + QA + reportes.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        objective: { type: 'string', description: 'Objetivo a implementar (ej: agregar auth con Google).' },
+        plan_only: { type: 'boolean', description: 'Solo generar plan sin implementar.' },
+      },
+      required: ['objective'],
+    },
+  },
+  {
+    name: 'generate_implementation_plan',
+    description: 'Genera PLAN_IMPLEMENTACION_EDITCORE.md con diagnóstico real y roadmap 10 fases.',
+    input_schema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'run_evolution_phase',
+    description: 'Ejecuta una fase del roadmap (1–10): plan, agente, QA, REPORTE y SIGUIENTE_PROMPT.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        phase_id: { type: 'number', description: 'Número de fase 1–10.' },
+      },
+      required: ['phase_id'],
+    },
+  },
+  {
+    name: 'run_evolution_cycle',
+    description:
+      'Ciclo de evolución completo: autonomía + REPORTE_CAMBIOS + QA_CHECKLIST + SIGUIENTE_PROMPT. Escribe archivos reales en .editcore/docs/.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        run_validation: { type: 'boolean', description: 'Ejecutar npm test/build si están configurados.' },
+      },
+    },
+  },
+  {
+    name: 'run_autonomy_cycle',
+    description:
+      'Motor de autonomía REAL: diagnóstico local + cola de tareas en .editcore/autonomy/. Sin role-play.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        execute: {
+          type: 'boolean',
+          description: 'Si true, devuelve también el prompt para ejecutar tareas con el agente.',
+        },
+      },
+    },
+  },
+  {
+    name: 'intelligence_generate_map',
+    description:
+      'Pipeline SIL completo: snapshot + health + guarda EDITCORE_SYSTEM_MAP.md + memoria técnica. Datos reales del IDE.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        include_analysis: {
+          type: 'boolean',
+          description: 'Si true, añade análisis interpretado basado solo en datos reales.',
+        },
+      },
+    },
+  },
+  {
+    name: 'intelligence_snapshot',
+    description:
+      'Mapa REAL del sistema EditCore: módulos, integraciones, flujos, settings (sin secretos). Usar para autoconocimiento/arquitectura interna.',
+    input_schema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'intelligence_health',
+    description:
+      'Health Monitor REAL de EditCore: servicios, diagnósticos, stats.json, MCP, errores. Usar para estado del IDE.',
     input_schema: { type: 'object', properties: {} },
   },
   {
@@ -451,6 +567,13 @@ async function execGlobFiles(input: { pattern: string; max_results?: number }): 
 }
 
 async function execWriteFile(input: { path: string; content: string }): Promise<string> {
+  const { checkSensitiveWrite } = await import('../autonomous/autonomousSecurity');
+  const sensitive = checkSensitiveWrite(input.path);
+  if (!sensitive.allowed) {
+    return 'BLOQUEADO_SECURITY: ' + (sensitive.reason ?? 'archivo sensible');
+  }
+  const { ensureSafeGitBranchBeforeWrites } = await import('../evolution/gitSafeFlow');
+  await ensureSafeGitBranchBeforeWrites();
   const abs = resolveSafePath(input.path);
   const fileExists = fs.existsSync(abs);
   const impact = fileExists ? await analyzeFileImpact(input.path) : undefined;
@@ -468,6 +591,13 @@ async function execApplyPatch(input: {
   old_string: string;
   new_string: string;
 }): Promise<string> {
+  const { checkSensitiveWrite } = await import('../autonomous/autonomousSecurity');
+  const sensitive = checkSensitiveWrite(input.path);
+  if (!sensitive.allowed) {
+    return 'BLOQUEADO_SECURITY: ' + (sensitive.reason ?? 'archivo sensible');
+  }
+  const { ensureSafeGitBranchBeforeWrites } = await import('../evolution/gitSafeFlow');
+  await ensureSafeGitBranchBeforeWrites();
   const abs = resolveSafePath(input.path);
   if (!fs.existsSync(abs)) {
     throw new Error(`Archivo no existe: ${input.path}`);
@@ -491,6 +621,18 @@ async function execApplyPatch(input: {
 }
 
 async function execRunCommand(input: { command: string; reason?: string }): Promise<string> {
+  const { checkCommandSecurity, isAosSecurityEnabled } = await import('../aos/securityGuard');
+  const { checkAutonomousCommand } = await import('../autonomous/autonomousSecurity');
+  if (isAosSecurityEnabled()) {
+    const sec = checkCommandSecurity(input.command);
+    if (!sec.allowed) {
+      return 'BLOQUEADO_SECURITY_GUARD: ' + (sec.reason ?? 'comando no permitido');
+    }
+    const autoSec = await checkAutonomousCommand(input.command);
+    if (!autoSec.allowed) {
+      return 'BLOQUEADO_AUTONOMOUS_SECURITY: ' + (autoSec.reason ?? 'comando no permitido');
+    }
+  }
   const decision = await requestCommandApproval(input.command, input.reason);
   if (decision.action === 'cancel') {
     return 'RECHAZADO_POR_EL_USUARIO: comando cancelado.';
@@ -690,6 +832,11 @@ export async function executeAgentTool(
       case 'run_command':
         output = await execRunCommand(input);
         break;
+      case 'git_branch': {
+        const { execGitBranch } = await import('../evolution/gitSafeFlow');
+        output = await execGitBranch(input ?? {});
+        break;
+      }
       case 'git_status':
         output = await execGitStatus();
         break;
@@ -737,6 +884,146 @@ export async function executeAgentTool(
       case 'list_adrs':
         output = await execListAdrs();
         break;
+      case 'read_logs': {
+        const logPath = resolveSafePath(input.path);
+        if (!fs.existsSync(logPath)) {
+          output = 'Log no encontrado: ' + input.path;
+          break;
+        }
+        const content = await fs.promises.readFile(logPath, 'utf8');
+        const n = input.lines ?? 80;
+        const lines = content.split('\n').slice(-n);
+        output = lines.join('\n');
+        break;
+      }
+      case 'run_aos_orchestrator': {
+        const { getDiagnosticRuntime } = await import('../diagnostics/diagnosticRuntime');
+        const { runAiOrchestrator } = await import('../aos/aiOrchestrator');
+        const rt = getDiagnosticRuntime();
+        if (!rt) {
+          output = 'AI Orchestrator no disponible.';
+          break;
+        }
+        const result = await runAiOrchestrator(rt.context, rt.apiKeyService, {
+          task: input.task,
+          skipReview: input?.skip_review === true,
+        });
+        output = result.markdown;
+        break;
+      }
+      case 'run_autonomous_engine': {
+        const { getDiagnosticRuntime } = await import('../diagnostics/diagnosticRuntime');
+        const { runAutonomousTaskEngine } = await import('../autonomous/taskEngine');
+        const rt = getDiagnosticRuntime();
+        if (!rt) {
+          output = 'Autonomous Developer Engine no disponible.';
+          break;
+        }
+        const result = await runAutonomousTaskEngine(rt.context, rt.apiKeyService, {
+          objective: input.objective,
+          skipImplementation: input?.plan_only === true,
+        });
+        output = result.markdown;
+        break;
+      }
+      case 'generate_implementation_plan': {
+        const { getDiagnosticRuntime } = await import('../diagnostics/diagnosticRuntime');
+        const { generateImplementationPlan } = await import('../evolution/phaseExecutor');
+        const rt = getDiagnosticRuntime();
+        if (!rt) {
+          output = 'Plan no disponible.';
+          break;
+        }
+        const result = await generateImplementationPlan(rt.context, rt.apiKeyService);
+        output = result.markdown;
+        break;
+      }
+      case 'run_evolution_phase': {
+        const { getDiagnosticRuntime } = await import('../diagnostics/diagnosticRuntime');
+        const { runEvolutionPhase } = await import('../evolution/phaseExecutor');
+        const rt = getDiagnosticRuntime();
+        if (!rt) {
+          output = 'Fase no disponible.';
+          break;
+        }
+        const phaseId = Number(input?.phase_id);
+        if (!phaseId || phaseId < 1 || phaseId > 10) {
+          output = 'ERROR: phase_id debe ser 1–10.';
+          break;
+        }
+        const result = await runEvolutionPhase(rt.context, rt.apiKeyService, phaseId);
+        output = result.markdown;
+        break;
+      }
+      case 'run_evolution_cycle': {
+        const { getDiagnosticRuntime } = await import('../diagnostics/diagnosticRuntime');
+        const { runEvolutionCycle } = await import('../evolution/evolutionCycle');
+        const rt = getDiagnosticRuntime();
+        if (!rt) {
+          output = 'Evolution cycle no disponible.';
+          break;
+        }
+        const result = await runEvolutionCycle(rt.context, rt.apiKeyService, {
+          runValidation: input?.run_validation !== false,
+        });
+        output = result.markdown;
+        break;
+      }
+      case 'run_autonomy_cycle': {
+        const { getDiagnosticRuntime } = await import('../diagnostics/diagnosticRuntime');
+        const { runAutonomyCycle, getAutonomyExecutionPrompt } = await import('../autonomy/autonomyEngine');
+        const rt = getDiagnosticRuntime();
+        if (!rt) {
+          output = 'Autonomía no disponible.';
+          break;
+        }
+        const result = await runAutonomyCycle(rt.context, rt.apiKeyService);
+        if (input?.execute === true) {
+          const execPrompt = await getAutonomyExecutionPrompt();
+          output = `${result.markdown}\n\n---\n\n## Prompt de ejecución\n\n${execPrompt}`;
+        } else {
+          output = result.markdown;
+        }
+        break;
+      }
+      case 'intelligence_generate_map': {
+        const { getDiagnosticRuntime } = await import('../diagnostics/diagnosticRuntime');
+        const { runIntelligencePipeline } = await import('../intelligence/intelligencePipeline');
+        const rt = getDiagnosticRuntime();
+        if (!rt) {
+          output = 'System Intelligence no disponible.';
+          break;
+        }
+        const result = await runIntelligencePipeline(rt.context, rt.apiKeyService, {
+          saveSystemMap: true,
+          runAnalysis: input?.include_analysis === true,
+          recordMemory: true,
+        });
+        output = result.markdown;
+        break;
+      }
+      case 'intelligence_snapshot': {
+        const { getDiagnosticRuntime } = await import('../diagnostics/diagnosticRuntime');
+        const { runIntelligenceSnapshotOnly } = await import('../intelligence/intelligenceQuery');
+        const rt = getDiagnosticRuntime();
+        if (!rt) {
+          output = 'System Intelligence no disponible.';
+          break;
+        }
+        output = await runIntelligenceSnapshotOnly(rt.context, rt.apiKeyService);
+        break;
+      }
+      case 'intelligence_health': {
+        const { getDiagnosticRuntime } = await import('../diagnostics/diagnosticRuntime');
+        const { runIntelligenceHealthOnly } = await import('../intelligence/intelligenceQuery');
+        const rt = getDiagnosticRuntime();
+        if (!rt) {
+          output = 'System Intelligence no disponible.';
+          break;
+        }
+        output = await runIntelligenceHealthOnly(rt.context, rt.apiKeyService);
+        break;
+      }
       case 'run_self_diagnostic': {
         const { runSelfDiagnostic } = await import('../diagnostics/diagnosticService');
         const { reportToMarkdown } = await import('../diagnostics/diagnosticTypes');
@@ -747,7 +1034,7 @@ export async function executeAgentTool(
           break;
         }
         const report = await runSelfDiagnostic(rt.context, rt.apiKeyService, {
-          useClaude: input?.include_claude_analysis !== false,
+          useClaude: input?.include_claude_analysis === true,
           showPanel: false,
           showNotification: false,
         });

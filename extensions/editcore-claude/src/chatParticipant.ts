@@ -25,6 +25,66 @@ import {
   shouldShowToolProgressInChat,
 } from "./agent/communicationStyle";
 import { sanitizeAssistantText, isSubstantiveAssistantText } from "./agent/responseSanitizer";
+import {
+  isSystemIntelligenceQuery,
+  isAutonomyExecuteQuery,
+  isAutonomousDeveloperQuery,
+  extractAutonomousObjective,
+} from "./intelligence/intelligenceQuery";
+import { runAutonomyCycle } from "./autonomy/autonomyEngine";
+import { buildAutonomyAgentTaskFromQueue } from "./autonomy/autonomyCommands";
+import { runAutonomousTaskEngine } from "./autonomous/taskEngine";
+
+async function handleRealAutonomyRequest(
+  context: vscode.ExtensionContext,
+  apiKeyService: ApiKeyService,
+  stream: vscode.ChatResponseStream,
+  userQuestion?: string
+): Promise<void> {
+  const result = await vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Notification,
+      title: "EditCore: autonomía real (datos + tareas)...",
+      cancellable: false,
+    },
+    () => runAutonomyCycle(context, apiKeyService)
+  );
+  stream.markdown(result.markdown);
+  if (result.cursorPromptPath) {
+    stream.button({
+      command: "vscode.open",
+      title: "Abrir prompts para Cursor",
+      arguments: [vscode.Uri.file(result.cursorPromptPath)],
+    });
+  }
+  if (result.queuePath) {
+    stream.button({
+      command: "vscode.open",
+      title: "Abrir cola de tareas",
+      arguments: [vscode.Uri.file(result.queuePath)],
+    });
+  }
+  if (result.savedMapPath) {
+    stream.button({
+      command: "vscode.open",
+      title: "Abrir mapa del sistema",
+      arguments: [vscode.Uri.file(result.savedMapPath)],
+    });
+  }
+  stream.button({
+    command: "editcore.autonomy.execute",
+    title: "Ejecutar siguiente tarea (agente)",
+  });
+  stream.button({
+    command: "editcore.evolution.cycle",
+    title: "Ciclo evolución completo (reportes + prompt)",
+  });
+  if (userQuestion && isAutonomyExecuteQuery(userQuestion)) {
+    stream.markdown(
+      "\n\n_Para ejecutar con herramientas, usa **Agent** y escribe «ejecuta las tareas de autonomía» o el botón de arriba._"
+    );
+  }
+}
 
 async function handleStreamingChatRequest(
   request: vscode.ChatRequest,
@@ -98,6 +158,76 @@ export function registerClaudeChatParticipant(
         OPENAI_MODELS.find((m) => m.id === selectedModelId)?.label ??
         selectedModelId;
 
+      if (isSystemIntelligenceQuery(request.prompt)) {
+        try {
+          await handleRealAutonomyRequest(
+            context,
+            apiKeyService,
+            stream,
+            request.prompt
+          );
+          return;
+        } catch (err: unknown) {
+          const message =
+            err instanceof Error ? err.message : "Error al ejecutar autonomía real.";
+          return { errorDetails: { message } };
+        }
+      }
+
+      if (isAutonomousDeveloperQuery(request.prompt) && shouldUseAgentLoop(request)) {
+        const objective = extractAutonomousObjective(request.prompt);
+        if (objective) {
+          try {
+            const result = await vscode.window.withProgress(
+              {
+                location: vscode.ProgressLocation.Notification,
+                title: "EditCore: desarrollador autónomo...",
+                cancellable: false,
+              },
+              () => runAutonomousTaskEngine(context, apiKeyService, { objective })
+            );
+            stream.markdown(result.markdown);
+            stream.button({
+              command: "editcore.autonomous.openWorkbench",
+              title: "Historial de tareas",
+            });
+            return;
+          } catch (err: unknown) {
+            const message =
+              err instanceof Error ? err.message : "Error en desarrollador autónomo.";
+            return { errorDetails: { message } };
+          }
+        }
+      }
+
+      if (isAutonomyExecuteQuery(request.prompt) && shouldUseAgentLoop(request)) {
+        const apiKey = await apiKeyService.getApiKey();
+        if (!apiKey?.trim()) {
+          stream.markdown(
+            "**Sin API Key de Claude.** Configura la key para ejecutar tareas con el agente real."
+          );
+          return;
+        }
+        try {
+          await handleRealAutonomyRequest(context, apiKeyService, stream, request.prompt);
+          const agentTask = await buildAutonomyAgentTaskFromQueue();
+          return handleAgentRequest(
+            apiKey,
+            { ...request, prompt: agentTask } as vscode.ChatRequest,
+            chatContext,
+            stream,
+            token,
+            apiKeyService,
+            modelLabel,
+            selectedModelId
+          );
+        } catch (err: unknown) {
+          const message =
+            err instanceof Error ? err.message : "Error al ejecutar tareas de autonomía.";
+          return { errorDetails: { message } };
+        }
+      }
+
       if (shouldUseAgentLoop(request) && !isOpenAiModelId(selectedModelId)) {
         const apiKey = await apiKeyService.getApiKey();
         return handleAgentRequest(
@@ -141,8 +271,42 @@ async function handleAgentRequest(
   let totalInput = 0;
   let totalOutput = 0;
 
-  const { role, cleanPrompt } = detectRoleFromPrompt(request.prompt);
-  const task = await buildAgentTask(chatContext.history, cleanPrompt, request.references);
+  const { role, cleanPrompt, customAgentId } = detectRoleFromPrompt(request.prompt);
+  let taskPrompt = cleanPrompt || request.prompt;
+
+  if (customAgentId) {
+    void import("./ecosystem/usageAnalytics").then((m) => m.trackUsage("agentsUsed"));
+  }
+
+  if (isSystemIntelligenceQuery(taskPrompt)) {
+    try {
+      const rt = (await import("./diagnostics/diagnosticRuntime")).getDiagnosticRuntime();
+      if (rt) {
+        await handleRealAutonomyRequest(rt.context, apiKeyService, stream, taskPrompt);
+        return;
+      }
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Error al ejecutar autonomía real.";
+      return { errorDetails: { message } };
+    }
+  }
+
+  if (isAutonomyExecuteQuery(taskPrompt)) {
+    try {
+      const rt = (await import("./diagnostics/diagnosticRuntime")).getDiagnosticRuntime();
+      if (rt) {
+        await handleRealAutonomyRequest(rt.context, apiKeyService, stream, taskPrompt);
+      }
+      taskPrompt = await buildAutonomyAgentTaskFromQueue();
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Error al ejecutar tareas de autonomía.";
+      return { errorDetails: { message } };
+    }
+  }
+
+  const task = await buildAgentTask(chatContext.history, taskPrompt, request.references);
 
   const sessionStore = getSessionStore();
   const session = await sessionStore.create(cleanPrompt || request.prompt, role);
@@ -180,7 +344,7 @@ async function handleAgentRequest(
           streamAgentEvent(event, stream, (text) => {
             assistantSummary += text;
           });
-        }, abortController.signal, onUsage, onTool)
+        }, abortController.signal, onUsage, onTool, apiKeyService)
       : useOrchestrator
       ? runOrchestratedTask(apiKey, task, (event: OrchestratorEvent) => {
           if (token.isCancellationRequested) return;
@@ -207,7 +371,8 @@ async function handleAgentRequest(
           onUsage,
           onTool,
           role,
-          apiKeyService
+          apiKeyService,
+          customAgentId
         );
 
     await run;

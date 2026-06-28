@@ -8,6 +8,10 @@ export type AgentRoleId =
   | 'fullstack'
   | 'devops'
   | 'qa'
+  | 'reviewer'
+  | 'prompt_engineer'
+  | 'debug'
+  | 'documenter'
   | 'gps'
   | 'founder'
   | 'cto'
@@ -61,6 +65,40 @@ export const AGENT_ROLES: Record<AgentRoleId, AgentRole> = {
 - Buscá bugs, casos borde, regresiones y falta de tests.
 - Proponé y ejecutá tests (npm test, etc.) con aprobación del usuario.
 - Reportá hallazgos con pasos de reproducción claros.`,
+  },
+  reviewer: {
+    id: 'reviewer',
+    label: 'Reviewer',
+    systemPrompt: `Rol: Code Reviewer de EditCore.
+- Revisá cambios propuestos: legibilidad, seguridad, patrones del repo, edge cases.
+- No reimplementes desde cero; señalá problemas concretos y sugerí fixes mínimos.
+- Verificá que no se expongan secretos ni se rompan convenciones del proyecto.
+- Priorizá feedback accionable antes de aprobar.`,
+  },
+  prompt_engineer: {
+    id: 'prompt_engineer',
+    label: 'Prompt Engineer',
+    systemPrompt: `Rol: Prompt Engineer de EditCore.
+- Sintetizá el estado del ciclo de desarrollo y generá prompts evolutivos para el siguiente paso.
+- Incluí contexto real (archivos tocados, errores, decisiones) — nunca inventes estado.
+- Formato: objetivo, restricciones, pasos verificables, criterios de done.
+- Sugerí mejoras al flujo de agentes y memoria persistente cuando detectes gaps.`,
+  },
+  debug: {
+    id: 'debug',
+    label: 'Debug Agent',
+    systemPrompt: `Rol: Debug Agent de EditCore.
+- Analizá errores, stack traces y logs con herramientas reales (read_file, read_logs, search_files).
+- Identificá causa raíz antes de proponer fixes.
+- Aplicá correcciones mínimas con apply_patch; no refactorices de más.`,
+  },
+  documenter: {
+    id: 'documenter',
+    label: 'Documentation Agent',
+    systemPrompt: `Rol: Documentation Agent de EditCore.
+- Creá y actualizá documentación basada en cambios reales del ciclo.
+- Escribí en .editcore/docs/, README o ADRs según corresponda.
+- Sin inventar features; solo documentar lo implementado.`,
   },
   gps: {
     id: 'gps',
@@ -117,9 +155,25 @@ Sé directo; priorizá validación sobre perfección técnica.`,
 };
 
 const ROLE_MENTION =
-  /^@(architect|fullstack|devops|qa|gps|founder|cto|saas|security)\b\s*/i;
+  /^@(architect|fullstack|devops|qa|reviewer|prompt_engineer|debug|documenter|gps|founder|cto|saas|security)\b\s*/i;
 
-export function detectRoleFromPrompt(prompt: string): { role: AgentRoleId; cleanPrompt: string } {
+const CUSTOM_MENTION = /^@custom:([a-z0-9_-]+)\b\s*/i;
+
+export interface RoleDetection {
+  role: AgentRoleId;
+  cleanPrompt: string;
+  customAgentId?: string;
+}
+
+export function detectRoleFromPrompt(prompt: string): RoleDetection {
+  const customMatch = prompt.match(CUSTOM_MENTION);
+  if (customMatch?.[1]) {
+    return {
+      role: 'default',
+      cleanPrompt: prompt.slice(customMatch[0].length).trim(),
+      customAgentId: customMatch[1],
+    };
+  }
   const match = prompt.match(ROLE_MENTION);
   if (!match) {
     return { role: 'default', cleanPrompt: prompt };
@@ -128,7 +182,18 @@ export function detectRoleFromPrompt(prompt: string): { role: AgentRoleId; clean
   return { role, cleanPrompt: prompt.slice(match[0].length).trim() };
 }
 
-export async function buildSystemPrompt(base: string, roleId: AgentRoleId): Promise<string> {
+export async function buildSystemPrompt(
+  base: string,
+  roleId: AgentRoleId,
+  customAgentId?: string
+): Promise<string> {
+  if (customAgentId) {
+    const { resolveCustomAgentPrompt } = await import('../ecosystem/agentCatalog');
+    const custom = await resolveCustomAgentPrompt(customAgentId);
+    if (custom) {
+      return `${base}\n\n---\n${custom}`;
+    }
+  }
   const role = AGENT_ROLES[roleId] ?? AGENT_ROLES.default;
   if (!role.systemPrompt) {
     return base;

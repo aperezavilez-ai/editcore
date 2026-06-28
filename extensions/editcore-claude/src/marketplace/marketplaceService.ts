@@ -116,11 +116,51 @@ export class MarketplaceService {
   }
 
   async uninstall(itemId: string): Promise<void> {
-    const p = path.join(this.getInstalledDir(), `${itemId}.json`);
+    const manifestPath = path.join(this.getInstalledDir(), `${itemId}.json`);
+    let manifest: MarketplaceItem | undefined;
     try {
-      await fs.promises.unlink(p);
+      manifest = JSON.parse(await fs.promises.readFile(manifestPath, 'utf8')) as MarketplaceItem;
+    } catch {
+      // sin manifest
+    }
+
+    try {
+      await fs.promises.unlink(manifestPath);
     } catch {
       // ya no existe
+    }
+
+    if (!manifest) return;
+
+    if (manifest.type === 'agent') {
+      const agentMd = path.join(this.getWorkspaceEditcore(), 'agents', `${itemId}.md`);
+      try {
+        await fs.promises.unlink(agentMd);
+      } catch {
+        // ok
+      }
+    }
+
+    if (manifest.type === 'template') {
+      const templateDir = path.join(this.getWorkspaceEditcore(), 'templates', itemId);
+      try {
+        await fs.promises.rm(templateDir, { recursive: true, force: true });
+      } catch {
+        // ok
+      }
+    }
+
+    if (manifest.type === 'mcp' && manifest.mcpServer) {
+      const mcpPath = path.join(this.getWorkspaceEditcore(), 'mcp.json');
+      try {
+        const config = JSON.parse(await fs.promises.readFile(mcpPath, 'utf8')) as { servers: Array<{ name: string }> };
+        if (Array.isArray(config.servers)) {
+          config.servers = config.servers.filter((s) => s.name !== manifest!.mcpServer!.name);
+          await fs.promises.writeFile(mcpPath, JSON.stringify(config, null, 2), 'utf8');
+        }
+      } catch {
+        // ok
+      }
     }
   }
 

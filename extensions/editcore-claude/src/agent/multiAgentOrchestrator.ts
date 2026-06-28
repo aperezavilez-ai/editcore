@@ -1,52 +1,38 @@
 import Anthropic from '@anthropic-ai/sdk';
 import * as vscode from 'vscode';
+import { ApiKeyService } from '../apiKeyService';
 import { runAgentTask, AgentEvent } from './agentLoop';
 import { AgentRoleId } from '../agents/roles';
 import { createClaudeClient, mapClaudeApiError } from '../anthropicClient';
 import { LLM_CONFIG } from '../llmConfig';
 import { resolveClaudeModelId } from '../models';
 import {
+  EDITCORE_AGENT_PIPELINE,
+  formatPipelineStepContext,
+  getPipelineForTask,
+  type PipelineAgentStep,
+} from '../orchestration/agentPipeline';
+import { recordAgentTrace } from '../memory/memoryManager';
+import {
   runPostChangeValidation,
   saveValidationReport,
   formatValidationMarkdown,
   isPostChangeValidationEnabled,
 } from '../platform/postChangeValidator';
+import {
+  collectGitChanges,
+  formatChangeReportMarkdown,
+  writeChangeReport,
+} from '../evolution/changeReportGenerator';
+import { buildQaChecklistMarkdown, writeQaChecklist } from '../evolution/qaChecklistGenerator';
 
 export type MultiAgentEvent =
   | { type: 'phase'; phase: string; agent: AgentRoleId; message: string }
   | AgentEvent;
 
-interface AgentStep {
-  role: AgentRoleId;
-  label: string;
-  instruction: string;
-}
-
-const PIPELINE: AgentStep[] = [
-  {
-    role: 'architect',
-    label: 'Arquitecto',
-    instruction: 'Diseñá la solución: arquitectura, archivos a tocar, riesgos. No implementes aún.',
-  },
-  {
-    role: 'fullstack',
-    label: 'Programador',
-    instruction: 'Implementá según el diseño del arquitecto. Usá las tools disponibles.',
-  },
-  {
-    role: 'qa',
-    label: 'QA',
-    instruction: 'Revisá lo implementado: bugs, casos borde, tests faltantes. Corregí si es crítico.',
-  },
-  {
-    role: 'devops',
-    label: 'DevOps',
-    instruction: 'Verificá build, deploy readiness, variables de entorno y CI. Resume estado.',
-  },
-];
-
 /**
- * Multiagente v2: pipeline secuencial con handoffs entre roles especializados.
+ * Multiagente v3: pipeline Architect → Coder → Reviewer → QA → Prompt Engineer.
+ * Memoria compartida por contexto acumulado + trazas en .editcore/memory/agent-traces.jsonl.
  */
 export async function runMultiAgentPipeline(
   apiKey: string,
@@ -54,65 +40,90 @@ export async function runMultiAgentPipeline(
   onEvent: (event: MultiAgentEvent) => void,
   abortSignal?: AbortSignal,
   onUsage?: (input: number, output: number) => void,
-  onToolCall?: (name: string) => void
+  onToolCall?: (name: string) => void,
+  apiKeyService?: ApiKeyService
 ): Promise<void> {
-  let context = `Tarea del usuario:\n${userTask}\n`;
+  let sharedContext = `Tarea del usuario:\n${userTask}\n`;
   const config = vscode.workspace.getConfiguration('editcore');
   const model = resolveClaudeModelId(config.get<string>('model', LLM_CONFIG.claude.defaultModel));
   const client = createClaudeClient(apiKey);
+  const pipeline = getPipelineForTask(userTask);
+  const agentsRun: string[] = [];
 
-  for (const step of PIPELINE) {
+  for (const step of pipeline) {
     if (abortSignal?.aborted) {
       onEvent({ type: 'done', reason: 'cancelled' });
       return;
     }
 
+    agentsRun.push(step.label);
     onEvent({
       type: 'phase',
       phase: step.label,
       agent: step.role,
-      message: `${step.label} trabajando…`,
+      message: `${step.label} (${step.preferredProvider}/${step.preferredModel})…`,
     });
 
-    const stepTask = `${context}\n\n## Rol actual: ${step.label}\n${step.instruction}`;
-
+    const stepTask = formatPipelineStepContext(step, sharedContext);
     let stepOutput = '';
-    await runAgentTask(
-      apiKey,
-      stepTask,
-      (ev) => {
-        if (ev.type === 'assistant_text') stepOutput += ev.text;
-        onEvent(ev);
-      },
-      abortSignal,
-      onUsage,
-      onToolCall,
-      step.role
-    );
 
-    context += `\n\n## Salida de ${step.label}\n${stepOutput.slice(0, 4000)}`;
+    if (step.usesTools) {
+      await runAgentTask(
+        apiKey,
+        stepTask,
+        (ev) => {
+          if (ev.type === 'assistant_text') stepOutput += ev.text;
+          onEvent(ev);
+        },
+        abortSignal,
+        onUsage,
+      onToolCall,
+      step.role,
+      apiKeyService
+    );
+    } else {
+      try {
+        const res = await client.messages.create(
+          {
+            model,
+            max_tokens: 2000,
+            system: `Sos ${step.label} de EditCore. ${step.instruction}`,
+            messages: [{ role: 'user', content: stepTask }],
+          },
+          { signal: abortSignal }
+        );
+        onUsage?.(res.usage.input_tokens, res.usage.output_tokens);
+        stepOutput = res.content
+          .filter((b): b is Anthropic.Messages.TextBlock => b.type === 'text')
+          .map((b) => b.text)
+          .join('\n');
+        onEvent({ type: 'assistant_text', text: stepOutput });
+      } catch (err: unknown) {
+        const message = err instanceof Error ? mapClaudeApiError(err).message : String(err);
+        stepOutput = `_Error en ${step.label}: ${message}_`;
+        onEvent({ type: 'assistant_text', text: stepOutput });
+      }
+    }
+
+    await recordAgentTrace(step.label, step.instruction, stepOutput.slice(0, 2000), stepOutput.length > 0);
+    sharedContext += `\n\n## Salida de ${step.label}\n${stepOutput.slice(0, 4000)}`;
   }
 
-  onEvent({ type: 'phase', phase: 'Documentador', agent: 'default', message: 'Generando resumen final…' });
-
-  try {
-    const docRes = await client.messages.create(
-      {
-        model,
-        max_tokens: 1500,
-        system: 'Sos el documentador de EditCore. Generá README/changelog breve de lo hecho.',
-        messages: [{ role: 'user', content: context }],
-      },
-      { signal: abortSignal }
-    );
-    onUsage?.(docRes.usage.input_tokens, docRes.usage.output_tokens);
-    const doc = docRes.content
-      .filter((b): b is Anthropic.Messages.TextBlock => b.type === 'text')
-      .map((b) => b.text)
-      .join('\n');
-    onEvent({ type: 'assistant_text', text: `\n\n## Documentación\n\n${doc}\n` });
-  } catch {
-    // opcional
+  const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  if (root && config.get<boolean>('evolution.generateReportsAfterPipeline', true)) {
+    try {
+      const git = await collectGitChanges(root);
+      const report = formatChangeReportMarkdown(git, { agents: agentsRun });
+      await writeChangeReport(root, report);
+      const qa = buildQaChecklistMarkdown({ gitClean: git.unstaged.length === 0 });
+      await writeQaChecklist(root, qa);
+      onEvent({
+        type: 'assistant_text',
+        text: '\n\n_Reportes guardados en `.editcore/docs/` y `.editcore/reports/`._\n',
+      });
+    } catch {
+      // opcional
+    }
   }
 
   if (isPostChangeValidationEnabled()) {
@@ -130,3 +141,5 @@ export async function runMultiAgentPipeline(
 export function isMultiAgentEnabled(): boolean {
   return vscode.workspace.getConfiguration('editcore').get<boolean>('multiAgent.enabled', false);
 }
+
+export { EDITCORE_AGENT_PIPELINE, type PipelineAgentStep };

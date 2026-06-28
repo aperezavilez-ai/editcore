@@ -56,6 +56,9 @@ async function readPerformanceStats(): Promise<PerformanceStatsSummary> {
 }
 
 async function probeMcpHealth(): Promise<McpHealthSummary> {
+  const skipConnect = vscode.workspace
+    .getConfiguration("editcore")
+    .get<boolean>("intelligence.skipMcpProbe", true);
   const configured = await loadMcpServers();
   const servers: McpHealthSummary["servers"] = [];
   let toolCount = 0;
@@ -67,6 +70,15 @@ async function probeMcpHealth(): Promise<McpHealthSummary> {
       connectedServers: 0,
       toolCount: 0,
       servers: [],
+    };
+  }
+
+  if (skipConnect) {
+    return {
+      configuredServers: configured.length,
+      connectedServers: 0,
+      toolCount: 0,
+      servers: configured.map((s) => ({ name: s.name, connected: false })),
     };
   }
 
