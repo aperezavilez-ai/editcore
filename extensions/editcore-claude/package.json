@@ -2,7 +2,7 @@
   "name": "editcore-claude",
   "displayName": "EditCore - Claude Assistant",
   "description": "Chat con Claude (Anthropic) y OpenAI integrado nativamente en EditCore IDE.",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "publisher": "editcore",
   "engines": {
     "vscode": "^1.85.0"
@@ -287,6 +287,16 @@
         "command": "editcore.diagnoseNativeModels",
         "title": "EditCore: Diagnosticar modelos nativos",
         "shortTitle": "Diagnosticar modelos"
+      },
+      {
+        "command": "editcore.intelligence.snapshot",
+        "title": "EditCore: Snapshot del sistema (SIL)",
+        "shortTitle": "System Snapshot"
+      },
+      {
+        "command": "editcore.intelligence.health",
+        "title": "EditCore: Health Monitor (SIL)",
+        "shortTitle": "Health Monitor"
       }
     ],
     "menus": {
@@ -496,6 +506,34 @@
           "minimum": 256,
           "maximum": 8192,
           "description": "Tokens maximos del analisis de autodiagnostico"
+        },
+        "editcore.intelligence.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Activa EditCore System Intelligence Layer (lectura del sistema)"
+        },
+        "editcore.intelligence.permissionLevel": {
+          "type": "string",
+          "enum": [
+            "read",
+            "write_docs",
+            "write_config",
+            "write_code"
+          ],
+          "default": "read",
+          "description": "Nivel maximo de permiso SIL sin aprobacion explicita"
+        },
+        "editcore.intelligence.autoGenerateMap": {
+          "type": "boolean",
+          "default": false,
+          "description": "Regenerar mapa del sistema al abrir workspace (Sprint 2)"
+        },
+        "editcore.intelligence.healthIntervalMinutes": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 1440,
+          "description": "Intervalo de health check automatico (0 = solo manual)"
         },
         "editcore.mcp.servers": {
           "type": "array",

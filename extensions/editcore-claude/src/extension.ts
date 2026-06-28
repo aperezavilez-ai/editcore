@@ -30,6 +30,7 @@ import { showCommandHub } from "./hub/commandHub";
 import { createStatusBarItem, showAbout } from "./hub/statusBar";
 import { initVoyageService } from "./rag/voyageService";
 import { registerDiagnosticCommands } from "./diagnostics/diagnosticCommands";
+import { registerIntelligenceCommands } from "./intelligence/intelligenceCommands";
 import { registerQuickActionsBar } from "./hub/quickActionsBar";
 import { registerWelcomePanel, showWelcomeIfNeeded } from "./welcome/welcomePanel";
 import { runFirstRunWizardIfNeeded } from "./welcome/firstRunWizard";
@@ -213,6 +214,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   createStatusBarItem(context);
   registerDiagnosticCommands(context, apiKeyService);
+  registerIntelligenceCommands(context, apiKeyService);
 
   const configProvider = new ClaudeConfigViewProvider(context, apiKeyService);
   const homeProvider = new EditCoreHomeViewProvider(apiKeyService);
