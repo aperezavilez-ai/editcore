@@ -50,6 +50,8 @@ import { registerGlobalCommands } from "./global/globalCommands";
 import { migrateLegacyApiKeysFile } from "./platform/legacyApiKeysMigration";
 import { registerApiKeyBridgeCommands } from "./platform/apiKeyBridgeCommands";
 import { migrateDeprecatedModelSettings } from "./platform/modelMigration";
+import { registerVectorEngineCommands } from "./rag/vectorEngine";
+import { startIncrementalWatcher, runIncrementalIndex } from "./knowledge/incrementalIndexer";
 
 export async function activate(context: vscode.ExtensionContext) {
   const apiKeyService = new ApiKeyService(context);
@@ -224,7 +226,14 @@ export async function activate(context: vscode.ExtensionContext) {
   registerAosCommands(context, apiKeyService);
   registerAutonomousCommands(context, apiKeyService);
   registerKnowledgeCommands(context, apiKeyService);
+  registerVectorEngineCommands(context);
+  startIncrementalWatcher(context);
   scheduleContinuousEvolution(context, apiKeyService);
+
+  // Indexado incremental en background al activar
+  setTimeout(() => {
+    void runIncrementalIndex().catch(() => {/* no crítico */});
+  }, 8000);
 
   const configProvider = new ClaudeConfigViewProvider(context, apiKeyService);
   const homeProvider = new EditCoreHomeViewProvider(apiKeyService);

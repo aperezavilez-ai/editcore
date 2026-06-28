@@ -1,3 +1,38 @@
 {
-  "servers": []
+  "servers": [
+    {
+      "id": "filesystem",
+      "name": "EditCore Filesystem MCP",
+      "description": "Acceso al filesystem del workspace — lectura, escritura y búsqueda de archivos.",
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "${workspaceFolder}"],
+      "enabled": true,
+      "autoStart": true,
+      "capabilities": ["read_file", "write_file", "list_directory", "search_files"]
+    },
+    {
+      "id": "git",
+      "name": "EditCore Git MCP",
+      "description": "Operaciones Git: status, diff, log, commit, branch.",
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-git", "--repository", "${workspaceFolder}"],
+      "enabled": true,
+      "autoStart": false,
+      "capabilities": ["git_status", "git_diff", "git_log", "git_commit", "git_branch"]
+    },
+    {
+      "id": "qdrant",
+      "name": "Qdrant Vector DB MCP",
+      "description": "Búsqueda semántica vectorial vía Qdrant local (http://127.0.0.1:6333).",
+      "transport": "http",
+      "url": "http://127.0.0.1:6333",
+      "enabled": false,
+      "autoStart": false,
+      "note": "Activa cuando Qdrant esté corriendo localmente. Instalar: https://qdrant.tech/documentation/quick-start/",
+      "capabilities": ["vector_search", "upsert_points", "create_collection"]
+    }
+  ],
+  "_comment": "MCP configurado en Prompt 7. Para agregar servidores ver .editcore/docs/MCP_SETUP.md"
 }

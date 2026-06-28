@@ -1,0 +1,1462 @@
+{
+  "generatedAt": "2026-06-28T23:26:10.649Z",
+  "nodes": [
+    {
+      "id": "extensions/editcore-claude/src/agent/agentContext.ts",
+      "imports": [
+        "../memory/contextAssembler",
+        "../diagnostics/diagnosticRuntime"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/agent/agentLoop.ts",
+      "imports": [
+        "../apiKeyService",
+        "../aiRouter",
+        "../anthropicClient",
+        "../llmConfig",
+        "../models",
+        "./tools",
+        "./agentContext",
+        "../agents/roles",
+        "./communicationStyle",
+        "./openaiAgentLoop"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/agent/agentPanel.ts",
+      "imports": [
+        "./agent/agentPanel",
+        "./agentLoop",
+        "../apiKeyService"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/agent/communicationStyle.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/agent/impactAnalyzer.ts",
+      "imports": [
+        "./tools"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/agent/multiAgentOrchestrator.ts",
+      "imports": [
+        "../apiKeyService",
+        "./agentLoop",
+        "../agents/roles",
+        "../anthropicClient",
+        "../llmConfig",
+        "../models",
+        "../orchestration/agentPipeline",
+        "../memory/memoryManager",
+        "../platform/postChangeValidator",
+        "../evolution/changeReportGenerator",
+        "../evolution/qaChecklistGenerator"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/agent/openaiAgentLoop.ts",
+      "imports": [
+        "../apiKeyService",
+        "./agentContext",
+        "./agentLoop",
+        "./communicationStyle",
+        "./tools",
+        "../agents/roles",
+        "../llmConfig",
+        "../openaiClient"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/agent/orchestrator.ts",
+      "imports": [
+        "./agentLoop",
+        "../agents/roles",
+        "../anthropicClient",
+        "../llmConfig",
+        "../models",
+        "../platform/planApproval",
+        "../platform/postChangeValidator"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/agent/orchestratorPolicy.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/agent/responseSanitizer.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/agent/terminalApproval.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/agent/tools.ts",
+      "imports": [
+        "./terminalApproval",
+        "./impactAnalyzer",
+        "../twin/dependencyGraph",
+        "../mcp/mcpClient",
+        "../fs/workspaceFs"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/agents/roles.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/aiRouter.ts",
+      "imports": [
+        "./apiKeyService",
+        "./anthropicClient",
+        "./openaiClient",
+        "./models",
+        "./platform/modelMigration",
+        "./orchestration/orchestratorInvoke"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/anthropicClient.ts",
+      "imports": [
+        "./llmConfig",
+        "./models",
+        "./chat/multimodalContent",
+        "./chat/multimodalContent"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/aos/agentRegistry.ts",
+      "imports": [
+        "./types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/aos/aiOrchestrator.ts",
+      "imports": [
+        "../apiKeyService",
+        "../agent/agentLoop",
+        "../agent/openaiAgentLoop",
+        "../autonomy/autonomyLevel",
+        "../evolution/gitSafeFlow",
+        "../evolution/changeReportGenerator",
+        "../evolution/qaChecklistGenerator",
+        "../memory/memoryManager",
+        "../platform/observability",
+        "../platform/postChangeValidator",
+        "./agentRegistry",
+        "./modelRouter",
+        "./types",
+        "./workPlanGenerator",
+        "./evolutionManager"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/aos/aosCommands.ts",
+      "imports": [
+        "../apiKeyService",
+        "./aiOrchestrator",
+        "./docGenerator",
+        "./evolutionManager",
+        "./workPlanGenerator"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/aos/docGenerator.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/aos/evolutionManager.ts",
+      "imports": [
+        "../apiKeyService",
+        "../autonomy/autonomyEngine",
+        "../evolution/evolutionCycle",
+        "../evolution/phaseExecutor",
+        "../evolution/evolutionPromptGenerator",
+        "../autonomy/taskQueue",
+        "../platform/observability"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/aos/modelRouter.ts",
+      "imports": [
+        "../agents/roles",
+        "../llmConfig",
+        "../models",
+        "../providers/taskRouter",
+        "./types",
+        "./agentRegistry"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/aos/securityGuard.ts",
+      "imports": [
+        "../enterprise/orgConfig",
+        "../autonomy/autonomyLevel"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/aos/types.ts",
+      "imports": [
+        "../agents/roles",
+        "../orchestration/agentPipeline"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/aos/workPlanGenerator.ts",
+      "imports": [
+        "../agent/impactAnalyzer"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/apiKeyService.ts",
+      "imports": [
+        "./anthropicClient",
+        "./llmConfig",
+        "./models"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/autonomous/autonomousCoder.ts",
+      "imports": [
+        "../apiKeyService",
+        "../agent/agentLoop",
+        "../agent/openaiAgentLoop"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/autonomous/autonomousCommands.ts",
+      "imports": [
+        "../apiKeyService",
+        "./autonomousPlanner",
+        "./docGenerator",
+        "./promptCompletion",
+        "./taskWorkbench",
+        "./projectAnalyzer",
+        "./taskEngine",
+        "./taskWorkbench",
+        "./workMode"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/autonomous/autonomousPlanner.ts",
+      "imports": [
+        "./types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/autonomous/autonomousSecurity.ts",
+      "imports": [
+        "../aos/securityGuard",
+        "../enterprise/orgConfig",
+        "../autonomy/autonomyLevel"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/autonomous/docGenerator.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/autonomous/executionLog.ts",
+      "imports": [
+        "./types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/autonomous/gitManager.ts",
+      "imports": [
+        "../evolution/gitSafeFlow",
+        "./autonomousSecurity"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/autonomous/improvementGenerator.ts",
+      "imports": [
+        "./qualityGate",
+        "./types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/autonomous/projectAnalyzer.ts",
+      "imports": [
+        "./types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/autonomous/promptCompletion.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/autonomous/qualityGate.ts",
+      "imports": [
+        "../apiKeyService",
+        "../agent/agentLoop",
+        "../evolution/changeReportGenerator",
+        "../platform/postChangeValidator",
+        "./types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/autonomous/selfDebugLoop.ts",
+      "imports": [
+        "../apiKeyService",
+        "../platform/postChangeValidator",
+        "./autonomousCoder",
+        "./executionLog"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/autonomous/taskEngine.ts",
+      "imports": [
+        "../apiKeyService",
+        "../autonomy/autonomyLevel",
+        "../aos/aiOrchestrator",
+        "../platform/observability",
+        "../memory/memoryManager",
+        "./autonomousCoder",
+        "./autonomousPlanner",
+        "./executionLog",
+        "./gitManager",
+        "./improvementGenerator",
+        "./projectAnalyzer",
+        "./qualityGate",
+        "./selfDebugLoop",
+        "./taskStore",
+        "../memory/changeMemory",
+        "./types",
+        "./workMode"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/autonomous/taskStore.ts",
+      "imports": [
+        "./types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/autonomous/taskWorkbench.ts",
+      "imports": [
+        "./gitManager",
+        "./executionLog",
+        "./taskStore",
+        "./types",
+        "./autonomousSecurity",
+        "../memory/interactionLearning"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/autonomous/types.ts",
+      "imports": [
+        "../platform/postChangeValidator"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/autonomous/workMode.ts",
+      "imports": [
+        "../autonomy/autonomyLevel",
+        "./types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/autonomy/autonomyCommands.ts",
+      "imports": [
+        "../apiKeyService",
+        "../agent/agentLoop",
+        "./autonomyLevel",
+        "../intelligence/permissionGate",
+        "./autonomyEngine",
+        "./taskQueue"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/autonomy/autonomyEngine.ts",
+      "imports": [
+        "../apiKeyService",
+        "../platform/observability",
+        "../intelligence/docGenerator",
+        "../intelligence/healthMonitor",
+        "../intelligence/localAnalysis",
+        "../intelligence/permissionGate",
+        "../intelligence/systemReader",
+        "../intelligence/techMemoryStore",
+        "./taskPlanner",
+        "./taskQueue",
+        "./types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/autonomy/autonomyLevel.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/autonomy/taskPlanner.ts",
+      "imports": [
+        "../diagnostics/diagnosticTypes",
+        "../intelligence/types",
+        "./types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/autonomy/taskQueue.ts",
+      "imports": [
+        "../intelligence/types",
+        "./types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/autonomy/types.ts",
+      "imports": [
+        "../diagnostics/diagnosticTypes",
+        "../intelligence/types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/chat/chatEditorGuard.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/chat/multimodalContent.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/chat/openFreshChat.ts",
+      "imports": [
+        "./chatEditorGuard"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/chatParticipant.ts",
+      "imports": [
+        "./apiKeyService",
+        "./aiRouter",
+        "./llmConfig",
+        "./models",
+        "./anthropicClient",
+        "./agent/agentLoop",
+        "./agent/orchestratorPolicy",
+        "./agent/orchestrator",
+        "./agent/multiAgentOrchestrator",
+        "./agents/roles",
+        "./chatRequestTypes",
+        "./enterprise/orgConfig",
+        "./sessions/agentSessionStore",
+        "./sessions/sessionSummarizer",
+        "./workspace/workspaceContext",
+        "./workspace/workspaceMessages",
+        "./chat/multimodalContent",
+        "./agent/communicationStyle",
+        "./agent/responseSanitizer",
+        "./intelligence/intelligenceQuery",
+        "./autonomy/autonomyEngine",
+        "./autonomy/autonomyCommands",
+        "./autonomous/taskEngine"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/chatRequestTypes.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/chatViewProvider.ts",
+      "imports": [
+        "./apiKeyService",
+        "./aiRouter",
+        "./anthropicClient",
+        "./models",
+        "./llmConfig"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/configViewProvider.ts",
+      "imports": [
+        "./apiKeyService",
+        "./models"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/diagnostics/checks/editcoreChecks.ts",
+      "imports": [
+        "../../llmConfig",
+        "../../apiKeyService",
+        "../../rag/chunkIndex",
+        "../../index/workspaceIndex",
+        "../../mcp/mcpClient",
+        "../../mcp/mcpConfig",
+        "../diagnosticTypes"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/diagnostics/checks/workspaceChecks.ts",
+      "imports": [
+        "../diagnosticTypes"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/diagnostics/diagnosticCommands.ts",
+      "imports": [
+        "../apiKeyService",
+        "./diagnosticService"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/diagnostics/diagnosticPanel.ts",
+      "imports": [
+        "./diagnosticTypes"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/diagnostics/diagnosticPrompt.ts",
+      "imports": [
+        "./diagnosticTypes"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/diagnostics/diagnosticRuntime.ts",
+      "imports": [
+        "../apiKeyService"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/diagnostics/diagnosticService.ts",
+      "imports": [
+        "../apiKeyService",
+        "../aiRouter",
+        "../enterprise/orgConfig",
+        "./checks/editcoreChecks",
+        "./checks/workspaceChecks",
+        "./diagnosticTypes",
+        "./diagnosticPrompt"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/diagnostics/diagnosticTypes.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/ecosystem/agentBuilder.ts",
+      "imports": [
+        "../enterprise/orgConfig",
+        "./types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/ecosystem/agentCatalog.ts",
+      "imports": [
+        "../marketplace/marketplaceService",
+        "./agentBuilder",
+        "./types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/ecosystem/aiHub.ts",
+      "imports": [
+        "../enterprise/orgConfig",
+        "./types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/ecosystem/aiHubViewProvider.ts",
+      "imports": [
+        "../marketplace/marketplaceService",
+        "../marketplace/marketplaceViewProvider",
+        "./aiHub",
+        "./teamService",
+        "./usageAnalytics",
+        "./commercialPlans"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/ecosystem/collaborationService.ts",
+      "imports": [
+        "./types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/ecosystem/commercialPlans.ts",
+      "imports": [
+        "../enterprise/orgConfig",
+        "../enterprise/orgConfig"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/ecosystem/docGenerator.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/ecosystem/ecosystemCommands.ts",
+      "imports": [
+        "../marketplace/marketplaceService",
+        "../marketplace/marketplaceViewProvider",
+        "./agentBuilder",
+        "./agentCatalog",
+        "./templateLibrary",
+        "./integrationHub",
+        "./teamService",
+        "./teamRoles",
+        "./types",
+        "./aiHub",
+        "./collaborationService",
+        "./versionControl",
+        "./pluginSdk",
+        "./usageAnalytics",
+        "./commercialPlans",
+        "./enterpriseSecurity",
+        "./docGenerator",
+        "./promptCompletion",
+        "./aiHubViewProvider"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/ecosystem/enterpriseSecurity.ts",
+      "imports": [
+        "../enterprise/orgConfig",
+        "./teamService",
+        "./teamRoles",
+        "./types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/ecosystem/integrationHub.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/ecosystem/pluginSdk.ts",
+      "imports": [
+        "./types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/ecosystem/promptCompletion.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/ecosystem/teamRoles.ts",
+      "imports": [
+        "./types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/ecosystem/teamService.ts",
+      "imports": [
+        "../enterprise/orgConfig",
+        "../enterprise/orgConfig",
+        "./types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/ecosystem/templateLibrary.ts",
+      "imports": [
+        "../marketplace/marketplaceService"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/ecosystem/types.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/ecosystem/usageAnalytics.ts",
+      "imports": [
+        "./commercialPlans",
+        "./types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/ecosystem/versionControl.ts",
+      "imports": [
+        "./types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/enterprise/orgConfig.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/evolution/changeReportGenerator.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/evolution/evolutionCommands.ts",
+      "imports": [
+        "../apiKeyService",
+        "../autonomy/autonomyLevel",
+        "./evolutionCycle",
+        "./phaseExecutor"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/evolution/evolutionCycle.ts",
+      "imports": [
+        "../apiKeyService",
+        "../autonomy/autonomyEngine",
+        "../autonomy/taskQueue",
+        "../memory/memoryManager",
+        "../platform/observability",
+        "../platform/postChangeValidator",
+        "./changeReportGenerator",
+        "./planGenerator",
+        "./evolutionPromptGenerator",
+        "./qaChecklistGenerator"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/evolution/evolutionPromptGenerator.ts",
+      "imports": [
+        "../autonomy/types",
+        "../intelligence/types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/evolution/gitSafeFlow.ts",
+      "imports": [
+        "../autonomy/autonomyLevel"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/evolution/phaseExecutor.ts",
+      "imports": [
+        "../apiKeyService",
+        "../autonomy/autonomyLevel",
+        "../autonomy/autonomyEngine",
+        "../autonomy/taskQueue",
+        "../agent/agentLoop",
+        "../agent/openaiAgentLoop",
+        "../memory/memoryManager",
+        "../platform/observability",
+        "../platform/postChangeValidator",
+        "./changeReportGenerator",
+        "./evolutionPromptGenerator",
+        "./gitSafeFlow",
+        "./planGenerator",
+        "./qaChecklistGenerator"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/evolution/planGenerator.ts",
+      "imports": [
+        "../intelligence/types",
+        "../autonomy/types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/evolution/qaChecklistGenerator.ts",
+      "imports": [
+        "../diagnostics/diagnosticTypes",
+        "../platform/postChangeValidator"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/extension.ts",
+      "imports": [
+        "./configViewProvider",
+        "./homeViewProvider",
+        "./aiRouter",
+        "./agent/agentPanel",
+        "./chatParticipant",
+        "./languageModelProvider",
+        "./workspace/workspaceContextProvider",
+        "./apiKeyService",
+        "./llmConfig",
+        "./index/workspaceIndex",
+        "./rag/chunkIndex",
+        "./twin/dependencyGraph",
+        "./mcp/mcpClient",
+        "./ops/warRoom",
+        "./marketplace/marketplaceService",
+        "./marketplace/marketplaceViewProvider",
+        "./verticals/verticalCommands",
+        "./sessions/agentSessionStore",
+        "./enterprise/orgConfig",
+        "./workspace/workspaceBootstrap",
+        "./hub/commandHub",
+        "./hub/statusBar",
+        "./rag/voyageService",
+        "./diagnostics/diagnosticCommands",
+        "./intelligence/intelligenceCommands",
+        "./autonomy/autonomyCommands",
+        "./evolution/evolutionCommands",
+        "./aos/aosCommands",
+        "./autonomous/autonomousCommands",
+        "./knowledge/knowledgeCommands",
+        "./ecosystem/ecosystemCommands",
+        "./hub/quickActionsBar",
+        "./welcome/welcomePanel",
+        "./welcome/firstRunWizard",
+        "./product/productCommands",
+        "./product/updateChecker",
+        "./diagnostics/diagnosticRuntime",
+        "./chat/openFreshChat",
+        "./chat/chatEditorGuard",
+        "./platform/platformCommands",
+        "./global/globalCommands",
+        "./platform/legacyApiKeysMigration",
+        "./platform/apiKeyBridgeCommands",
+        "./platform/modelMigration"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/fs/workspaceFs.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/global/globalCommands.ts",
+      "imports": [
+        "./projectRegistry",
+        "./globalMemory",
+        "./projectIntelligence",
+        "../platform/observability"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/global/globalMemory.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/global/projectIntelligence.ts",
+      "imports": [
+        "./projectRegistry"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/global/projectRegistry.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/homeViewProvider.ts",
+      "imports": [
+        "./apiKeyService"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/hub/commandHub.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/hub/quickActionsBar.ts",
+      "imports": [
+        "../preview/localPreview"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/hub/statusBar.ts",
+      "imports": [
+        "../llmConfig",
+        "../models",
+        "../rag/chunkIndex",
+        "../index/workspaceIndex",
+        "../product/productVersion"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/index/workspaceIndex.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/intelligence/architectureScanner.ts",
+      "imports": [
+        "./types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/intelligence/docGenerator.ts",
+      "imports": [
+        "./types",
+        "./healthMonitor",
+        "./systemReader"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/intelligence/groundedAnalysis.ts",
+      "imports": [
+        "../apiKeyService",
+        "../anthropicClient",
+        "../openaiClient",
+        "./types",
+        "./localAnalysis"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/intelligence/healthMonitor.ts",
+      "imports": [
+        "../apiKeyService",
+        "../diagnostics/checks/editcoreChecks",
+        "../diagnostics/checks/workspaceChecks",
+        "../diagnostics/diagnosticTypes",
+        "../mcp/mcpClient",
+        "../mcp/mcpConfig",
+        "../platform/observability",
+        "./types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/intelligence/index.ts",
+      "imports": [
+        "./types",
+        "./permissionGate",
+        "./redact",
+        "./systemReader",
+        "./healthMonitor",
+        "./docGenerator",
+        "./techMemoryStore",
+        "./groundedAnalysis",
+        "./intelligencePipeline",
+        "./intelligenceCommands",
+        "./intelligenceQuery"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/intelligence/intelligenceCommands.ts",
+      "imports": [
+        "../apiKeyService",
+        "../platform/observability",
+        "./permissionGate",
+        "./healthMonitor",
+        "./intelligencePipeline",
+        "./systemReader"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/intelligence/intelligencePipeline.ts",
+      "imports": [
+        "../apiKeyService",
+        "../platform/observability",
+        "./docGenerator",
+        "./groundedAnalysis",
+        "./healthMonitor",
+        "./permissionGate",
+        "./systemReader",
+        "./techMemoryStore",
+        "./localAnalysis"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/intelligence/intelligenceQuery.ts",
+      "imports": [
+        "../apiKeyService",
+        "./intelligencePipeline"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/intelligence/localAnalysis.ts",
+      "imports": [
+        "./types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/intelligence/permissionGate.ts",
+      "imports": [
+        "./types",
+        "../autonomy/autonomyLevel"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/intelligence/redact.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/intelligence/systemReader.ts",
+      "imports": [
+        "../apiKeyService",
+        "../mcp/mcpConfig",
+        "../llmConfig",
+        "./architectureScanner",
+        "./redact",
+        "./types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/intelligence/techMemoryStore.ts",
+      "imports": [
+        "./redact"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/intelligence/types.ts",
+      "imports": [
+        "../diagnostics/diagnosticTypes",
+        "../platform/observability"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/knowledge/docGenerator.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/knowledge/incrementalIndexer.ts",
+      "imports": [
+        "../rag/chunkIndex",
+        "../index/workspaceIndex",
+        "../intelligence/techMemoryStore"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/knowledge/knowledgeCommands.ts",
+      "imports": [
+        "../apiKeyService",
+        "./knowledgeIndexer",
+        "./projectKnowledgeEngine",
+        "./ragPipeline",
+        "./semanticAnalyzer",
+        "./docGenerator",
+        "./promptCompletion",
+        "../memory/architectureMemory",
+        "../memory/memorySecurity",
+        "../memory/changeMemory",
+        "../memory/multiProjectMemory",
+        "./knowledgeViewProvider"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/knowledge/knowledgeIndexer.ts",
+      "imports": [
+        "../memory/memoryManager",
+        "../memory/changeMemory",
+        "../rag/chunkIndex",
+        "../index/workspaceIndex",
+        "./projectKnowledgeEngine",
+        "./types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/knowledge/knowledgeViewProvider.ts",
+      "imports": [
+        "./knowledgeIndexer",
+        "./projectKnowledgeEngine",
+        "./semanticAnalyzer",
+        "../memory/memorySecurity",
+        "../memory/conversationMemory",
+        "../memory/changeMemory"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/knowledge/projectKnowledgeEngine.ts",
+      "imports": [
+        "../autonomous/projectAnalyzer",
+        "../twin/dependencyGraph",
+        "../rag/chunkIndex",
+        "../index/workspaceIndex",
+        "./types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/knowledge/promptCompletion.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/knowledge/ragPipeline.ts",
+      "imports": [
+        "../rag/chunkIndex",
+        "../memory/memoryManager",
+        "../memory/architectureMemory",
+        "../memory/changeMemory",
+        "../memory/interactionLearning",
+        "./types",
+        "./tokenOptimizer"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/knowledge/semanticAnalyzer.ts",
+      "imports": [
+        "../rag/chunkIndex",
+        "./types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/knowledge/tokenOptimizer.ts",
+      "imports": [
+        "./types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/knowledge/types.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/languageModelProvider.ts",
+      "imports": [
+        "./apiKeyService",
+        "./aiRouter",
+        "./anthropicClient",
+        "./llmConfig",
+        "./models",
+        "./workspace/workspaceMessages",
+        "./chat/multimodalContent"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/llmConfig.ts",
+      "imports": [
+        "./models"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/marketplace/catalogMerge.ts",
+      "imports": [
+        "./marketplaceService"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/marketplace/marketplaceService.ts",
+      "imports": [
+        "./catalogMerge",
+        "../enterprise/orgConfig",
+        "./catalogMerge"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/marketplace/marketplaceViewProvider.ts",
+      "imports": [
+        "./marketplaceService",
+        "../enterprise/orgConfig"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/mcp/mcpClient.ts",
+      "imports": [
+        "./mcpTypes",
+        "./mcpConfig"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/mcp/mcpConfig.ts",
+      "imports": [
+        "./mcpTypes"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/mcp/mcpTypes.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/memory/architectureMemory.ts",
+      "imports": [
+        "../twin/dependencyGraph",
+        "../intelligence/architectureScanner"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/memory/changeMemory.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/memory/contextAssembler.ts",
+      "imports": [
+        "./memoryManager",
+        "./conversationMemory",
+        "./architectureMemory",
+        "./multiProjectMemory",
+        "../knowledge/ragPipeline",
+        "../knowledge/projectKnowledgeEngine",
+        "../workspace/workspaceContext",
+        "./changeMemory",
+        "../knowledge/tokenOptimizer"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/memory/conversationMemory.ts",
+      "imports": [
+        "../intelligence/redact",
+        "./memorySecurity"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/memory/interactionLearning.ts",
+      "imports": [
+        "../knowledge/types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/memory/memoryManager.ts",
+      "imports": [
+        "./projectMemory",
+        "../intelligence/techMemoryStore",
+        "../intelligence/techMemoryStore",
+        "../global/globalMemory"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/memory/memorySecurity.ts",
+      "imports": [
+        "../intelligence/redact",
+        "../knowledge/types"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/memory/multiProjectMemory.ts",
+      "imports": [
+        "../global/globalMemory"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/memory/projectMemory.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/models.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/openaiClient.ts",
+      "imports": [
+        "./llmConfig",
+        "./models",
+        "./anthropicClient",
+        "./chat/multimodalContent"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/ops/warRoom.ts",
+      "imports": [
+        "../agent/agentContext",
+        "../agent/agentLoop"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/orchestration/agentPipeline.ts",
+      "imports": [
+        "../agents/roles",
+        "../aos/agentRegistry"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/orchestration/orchestrator.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/orchestration/orchestratorApi.ts",
+      "imports": [
+        "../apiKeyService",
+        "../anthropicClient",
+        "../anthropicClient",
+        "../openaiClient",
+        "../platform/modelMigration",
+        "./orchestratorInvoke"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/orchestration/orchestratorInvoke.ts",
+      "imports": [
+        "../anthropicClient",
+        "../models",
+        "../rag/voyageService",
+        "./orchestrator",
+        "../diagnostics/diagnosticRuntime",
+        "./validateGenerationBridge"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/orchestration/validateGenerationBridge.ts",
+      "imports": [
+        "../apiKeyService",
+        "../anthropicClient",
+        "../models",
+        "./orchestrator"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/platform/apiKeyBridgeCommands.ts",
+      "imports": [
+        "../apiKeyService"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/platform/auditService.ts",
+      "imports": [
+        "../diagnostics/checks/workspaceChecks"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/platform/legacyApiKeysMigration.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/platform/modelMigration.ts",
+      "imports": [
+        "../models"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/platform/observability.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/platform/planApproval.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/platform/platformCommands.ts",
+      "imports": [
+        "./auditService",
+        "./postChangeValidator"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/platform/postChangeValidator.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/preview/localPreview.ts",
+      "imports": [
+        "./projectDevServer"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/preview/projectDevServer.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/product/licenseService.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/product/productCommands.ts",
+      "imports": [
+        "../apiKeyService",
+        "./licenseService",
+        "../platform/modelMigration",
+        "../models",
+        "./updateChecker",
+        "./productVersion"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/product/productVersion.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/product/updateChecker.ts",
+      "imports": [
+        "./productVersion"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/providers/ollamaClient.ts",
+      "imports": [
+        "../anthropicClient"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/providers/openRouterClient.ts",
+      "imports": [
+        "../anthropicClient"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/providers/providerBridge.ts",
+      "imports": [
+        "../apiKeyService",
+        "../anthropicClient",
+        "../anthropicClient",
+        "../openaiClient",
+        "./ollamaClient",
+        "./openRouterClient",
+        "./taskRouter",
+        "../aiRouter",
+        "../orchestration/orchestratorApi"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/providers/taskRouter.ts",
+      "imports": [
+        "../anthropicClient",
+        "../models",
+        "../orchestration/orchestrator",
+        "../orchestration/orchestratorInvoke"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/rag/chunkIndex.ts",
+      "imports": [
+        "./textUtils"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/rag/textUtils.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/rag/vectorEngine.ts",
+      "imports": [
+        "./chunkIndex"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/rag/voyageService.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/sessions/agentSessionStore.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/sessions/sessionSummarizer.ts",
+      "imports": [
+        "../apiKeyService",
+        "../anthropicClient",
+        "../llmConfig",
+        "./agentSessionStore"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/twin/dependencyGraph.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/verticals/scaffoldService.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/verticals/verticalCommands.ts",
+      "imports": [
+        "./scaffoldService"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/welcome/firstRunWizard.ts",
+      "imports": [
+        "../product/licenseService",
+        "../product/productVersion"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/welcome/recentWorkspaces.ts",
+      "imports": []
+    },
+    {
+      "id": "extensions/editcore-claude/src/welcome/welcomePanel.ts",
+      "imports": [
+        "./recentWorkspaces",
+        "../product/productVersion"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/workspace/workspaceBootstrap.ts",
+      "imports": [
+        "../enterprise/orgConfig"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/workspace/workspaceContext.ts",
+      "imports": [
+        "../preview/projectDevServer",
+        "../fs/workspaceFs"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/workspace/workspaceContextProvider.ts",
+      "imports": [
+        "./workspaceContext"
+      ]
+    },
+    {
+      "id": "extensions/editcore-claude/src/workspace/workspaceMessages.ts",
+      "imports": [
+        "../anthropicClient",
+        "./workspaceContext",
+        "../chat/multimodalContent"
+      ]
+    }
+  ]
+}

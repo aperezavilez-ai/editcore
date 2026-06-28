@@ -3,8 +3,10 @@
   "startedAt": "2026-06-28T23:20:55.429Z",
   "task": "adelante",
   "role": "default",
-  "status": "running",
-  "toolCalls": 0,
-  "tokensIn": 0,
-  "tokensOut": 0
+  "status": "completed",
+  "toolCalls": 40,
+  "tokensIn": 949704,
+  "tokensOut": 11440,
+  "endedAt": "2026-06-28T23:29:41.844Z",
+  "summary": "adelante"
 }
