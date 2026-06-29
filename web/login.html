@@ -27,36 +27,51 @@
     <div id="msg" class="msg"></div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="/assets/supabase-config.js"></script>
   <script>
-    const supabase = window.supabase.createClient(window.EDITCORE_SUPABASE_URL, window.EDITCORE_SUPABASE_ANON_KEY);
     const msg = document.getElementById("msg");
     const btn = document.getElementById("sendBtn");
 
-    btn.addEventListener("click", async () => {
-      const email = document.getElementById("email").value.trim();
-      if (!email) {
-        msg.textContent = "Escribe un correo válido.";
-        msg.className = "msg err";
-        return;
-      }
-      btn.disabled = true;
-      msg.textContent = "Enviando...";
-      msg.className = "msg";
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: { emailRedirectTo: window.location.origin + "/account.html" },
+    function showError(text) {
+      msg.textContent = text;
+      msg.className = "msg err";
+    }
+
+    if (!window.supabase || typeof window.supabase.createClient !== "function") {
+      showError("No se pudo cargar la librería de Supabase (revisa tu conexión o bloqueador de anuncios).");
+    } else if (!window.EDITCORE_SUPABASE_URL || !window.EDITCORE_SUPABASE_ANON_KEY) {
+      showError("Falta configuración de Supabase (supabase-config.js).");
+    } else {
+      const client = window.supabase.createClient(window.EDITCORE_SUPABASE_URL, window.EDITCORE_SUPABASE_ANON_KEY);
+
+      btn.addEventListener("click", async () => {
+        const email = document.getElementById("email").value.trim();
+        if (!email) {
+          showError("Escribe un correo válido.");
+          return;
+        }
+        btn.disabled = true;
+        msg.textContent = "Enviando...";
+        msg.className = "msg";
+        try {
+          const { error } = await client.auth.signInWithOtp({
+            email,
+            options: { emailRedirectTo: window.location.origin + "/account.html" },
+          });
+          if (error) {
+            showError("Error: " + error.message);
+          } else {
+            msg.textContent = "Revisa tu correo y haz clic en el enlace para entrar.";
+            msg.className = "msg ok";
+          }
+        } catch (err) {
+          showError("Error de red: " + (err && err.message ? err.message : String(err)));
+        } finally {
+          btn.disabled = false;
+        }
       });
-      btn.disabled = false;
-      if (error) {
-        msg.textContent = "Error: " + error.message;
-        msg.className = "msg err";
-        return;
-      }
-      msg.textContent = "Revisa tu correo y haz clic en el enlace para entrar.";
-      msg.className = "msg ok";
-    });
+    }
   </script>
 </body>
 </html>
