@@ -4,5 +4,10 @@
   "framework": null,
   "rewrites": [
     { "source": "/download", "destination": "/index.html" }
+  ],
+  "crons": [
+    { "path": "/api/evolution/audit?kind=daily", "schedule": "0 6 * * *" },
+    { "path": "/api/evolution/audit?kind=weekly", "schedule": "0 7 * * 1" },
+    { "path": "/api/evolution/audit?kind=monthly", "schedule": "0 8 1 * *" }
   ]
 }
