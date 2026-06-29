@@ -243,6 +243,37 @@ export async function activate(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push(
+    vscode.commands.registerCommand("editcore.setOrgApiKey", async () => {
+      await apiKeyService.orgBackend.promptForOrgApiKey();
+    }),
+    vscode.commands.registerCommand("editcore.clearOrgApiKey", async () => {
+      await apiKeyService.orgBackend.clearOrgApiKey();
+      vscode.window.showInformationMessage("EditCore: clave de organización eliminada.");
+    }),
+    vscode.commands.registerCommand("editcore.showOrgPlan", async () => {
+      const [plan, summary] = await Promise.all([
+        apiKeyService.orgBackend.fetchPlan(),
+        apiKeyService.orgBackend.fetchUsageSummary(),
+      ]);
+      if (!plan || !summary) {
+        const setup = await vscode.window.showWarningMessage(
+          "EditCore: no hay clave de organización configurada o el backend no respondió.",
+          "Configurar clave"
+        );
+        if (setup === "Configurar clave") {
+          await vscode.commands.executeCommand("editcore.setOrgApiKey");
+        }
+        return;
+      }
+      vscode.window.showInformationMessage(
+        `${plan.organization.name} · plan ${summary.plan} · ` +
+          `${summary.tokensUsedThisMonth.toLocaleString()} / ${summary.monthlyTokenLimit.toLocaleString()} tokens este mes` +
+          (summary.overLimit ? " · LÍMITE SUPERADO" : "")
+      );
+    })
+  );
+
+  context.subscriptions.push(
     vscode.commands.registerCommand("editcore.openAccountPanel", async () => {
       try {
         await vscode.commands.executeCommand("workbench.view.extension.editcore-sidebar");
