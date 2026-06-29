@@ -45,11 +45,16 @@ fabricar la parte que de verdad no es viable sin un backend propio.
   activar la extensión y al cambiar de workspace (`agents/roles.ts`:
   `loadCustomAgents`/`saveCustomAgent`/`getCustomAgentsSync`), y queda disponible como
   `@nombre-del-agente` en el chat igual que los roles incluidos.
-  **Limitación real, no oculta**: el agente custom solo define su `systemPrompt`. No
-  hay enforcement de "tools permitidas" ni "modelo específico" por agente — usa las
-  mismas tools y el mismo modelo configurado globalmente que cualquier otro rol. Eso
-  requeriría cambiar `agentLoop.ts`/`tools.ts` para filtrar tools por rol, que no se
-  hizo en esta pasada.
+  **Enforcement real de tools por agente** (agregado tras el "adelante hazlas"): al
+  crear el agente se puede elegir qué tools puede usar (`allowedTools` en
+  `agents.json`). `agent/tools.ts` (`getAllAgentTools`) filtra las tools que se envían
+  a la API según el rol activo — si una tool no está en la lista, el modelo
+  literalmente no puede invocarla (no es solo una instrucción en el prompt, es la
+  lista real de `tools` del request a Anthropic). Si no se restringe nada, el agente
+  usa todas las tools, igual que los roles incluidos.
+  **Lo que sigue sin existir**: restricción por modelo específico por agente (todos
+  usan el modelo configurado globalmente) y memoria/contexto persistente propio por
+  agente (todos comparten el mismo historial de conversación del chat).
 
 - **Automation Builder (fase 7) — real, con el límite arquitectónico de una extensión.**
   Nuevo motor `automation/automationEngine.ts`, registrado al activar la extensión.
@@ -91,8 +96,9 @@ fabricar la parte que de verdad no es viable sin un backend propio.
 
 ## 5. Qué sigue sin existir (límites reales, no pendientes de "ánimo")
 
-- Enforcement de tools/modelo/permisos por agente personalizado (fase 6): todo agente
-  custom usa las mismas tools globales; no hay sandboxing por agente.
+- Restricción por modelo/memoria propia por agente personalizado (fase 6): el
+  enforcement de tools ya es real (ver sección 3); modelo y memoria siguen siendo
+  globales para todos los agentes.
 - Automatizaciones disparadas por eventos externos (webhooks, cron fuera del editor,
   fase 7): requeriría un backend, que EditCore no tiene ni se fabricó aquí.
 - Mockups/diseño visual real (fase 4): `@ui-design` genera código, no imágenes.

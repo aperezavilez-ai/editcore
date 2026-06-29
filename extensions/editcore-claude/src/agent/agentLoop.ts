@@ -7,7 +7,7 @@ import { LLM_CONFIG } from "../llmConfig";
 import { resolveClaudeModelId } from "../models";
 import { getAllAgentTools, executeAgentTool, setToolCallRecorder } from "./tools";
 import { buildAgentContext } from "./agentContext";
-import { AgentRoleId, buildSystemPrompt } from "../agents/roles";
+import { AgentRoleId, buildSystemPrompt, getAllowedToolsForRole } from "../agents/roles";
 import { buildAgentSystemPromptBase, getAgentCommunicationStyle } from "./communicationStyle";
 
 const MAX_ITERATIONS = 30;
@@ -56,7 +56,7 @@ export async function runAgentTask(
 
   const client = createClaudeClient(apiKey);
   const systemPrompt = await buildSystemPrompt(buildAgentSystemPromptBase(), roleId);
-  const tools = await getAllAgentTools();
+  const tools = await getAllAgentTools(getAllowedToolsForRole(roleId));
 
   setToolCallRecorder(onToolCall);
 
