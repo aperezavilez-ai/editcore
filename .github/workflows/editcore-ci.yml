@@ -23,11 +23,19 @@ jobs:
           npm run compile
           npm test
 
+      - name: Audit dependencies (editcore-claude)
+        working-directory: extensions/editcore-claude
+        run: npm audit --audit-level=high
+
       - name: Compile editcore-connect
         working-directory: extensions/editcore-connect
         run: |
           npm install
           npm run compile
+
+      - name: Audit dependencies (editcore-connect)
+        working-directory: extensions/editcore-connect
+        run: npm audit --audit-level=high
 
       - name: Validate patch script
         run: node scripts/apply-editcore-patches.js editcore-src
