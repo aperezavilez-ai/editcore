@@ -174,6 +174,10 @@
         "title": "EditCore: Abrir Marketplace"
       },
       {
+        "command": "editcore.generateFromIdea",
+        "title": "EditCore: Generar proyecto desde una idea"
+      },
+      {
         "command": "editcore.founderMode",
         "title": "EditCore: Modo Fundador"
       },

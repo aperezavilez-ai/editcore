@@ -154,6 +154,30 @@ export async function ctoMode(): Promise<void> {
   });
 }
 
+export async function generateFromIdea(): Promise<void> {
+  const idea = await vscode.window.showInputBox({
+    prompt: 'Describe tu idea de app/producto en una línea',
+    placeHolder: 'ej: App de turnos para peluquerías con recordatorios por WhatsApp',
+  });
+  if (!idea?.trim()) return;
+
+  const config = vscode.workspace.getConfiguration('editcore');
+  const enabled = config.get<boolean>('multiAgent.enabled', false);
+  if (!enabled) {
+    const choice = await vscode.window.showInformationMessage(
+      'Este generador usa el pipeline multi-agente (Arquitecto → Programador → QA → DevOps → Documentador), real pero más lento y con más consumo de tokens que está desactivado por defecto. ¿Activarlo para esta sesión?',
+      { modal: true },
+      'Activar'
+    );
+    if (choice !== 'Activar') return;
+    await config.update('multiAgent.enabled', true, vscode.ConfigurationTarget.Global);
+  }
+
+  await vscode.commands.executeCommand('workbench.action.chat.open', {
+    query: `@claude ${idea.trim()}`,
+  });
+}
+
 export async function showAuditLog(): Promise<void> {
   const { readRecentAudit } = await import('../enterprise/orgConfig');
   const lines = await readRecentAudit(30);
