@@ -27,24 +27,75 @@ conocimiento, control de calidad y una UI de "describe tu idea".
 | Test Generator | **No existe como generador estructurado.** El rol "QA" puede escribir tests si se le pide en el chat, pero no hay un comando dedicado que genere una suite de tests con cobertura objetivo | — |
 | Deployment Agent | **Existe un comando real pero genérico**, no un "agente" con lógica propia de deployment: `editcore.deployAutonomous` ejecuta test+build+deploy a Vercel vía script, sin razonamiento de IA involucrado | `ops/warRoom.ts` (`runAutonomousDeploy`) |
 
-## 3. Qué NO existe (y por qué no se fabricó)
+## 3. Fases 4/6/7/12 — implementadas con alcance honesto (actualizado)
 
-- **UI Design Agent**: no hay ningún componente que genere mockups, wireframes o diseños visuales. No existe ningún esbozo de esto en el código.
-- **Agent Factory real (fase 6)**: los "roles" del agente (`@architect`, `@gps`, `@saas`, etc.) son un diccionario fijo de 9 personas hardcodeadas en `agents/roles.ts`. Un usuario **no puede** crear, persistir ni editar un agente propio (nombre, objetivo, modelo, tools, memoria, permisos) desde la UI. Esto requeriría una capa de configuración nueva (ej. `.editcore/agents.json` + UI de edición) que no se construyó en esta sesión porque es una pieza nueva y no trivial — se puede evaluar a futuro como tarea separada.
-- **Automation Builder (fase 7)**: no existe ningún sistema de triggers (evento → acción) ni flujo visual. Una extensión de VS Code tiene limitaciones reales aquí: no hay proceso en background persistente fuera de la sesión del editor, ni forma de recibir webhooks entrantes sin un servidor — construir esto "de verdad" implicaría decidir si se necesita un backend, lo cual está fuera del alcance de "aplicar lo que ya existe".
-- **Product Factory con cobros (fase 12)**: no existe ningún código de facturación, pasarela de pago ni panel de administración generado. Fabricar esto sin una decisión de producto real (qué pasarela, qué modelo de cobro, quién opera la cuenta) habría significado inventar funcionalidad que no se puede verificar ni usar — se excluyó deliberadamente.
+Estas cuatro fases se dejaron fuera en la primera pasada porque "hacerlas de verdad"
+sin inventar nada requería decisiones de alcance. Con el "adelante hazlas" del usuario
+se implementó la versión real y verificable de cada una — explícitamente **sin**
+fabricar la parte que de verdad no es viable sin un backend propio.
+
+- **UI Design Agent (fase 4) — real, es una persona, no un generador visual.**
+  Nuevo rol `@ui-design` en `agents/roles.ts`. Genera código (HTML/CSS/JSX/TSX) siguiendo
+  la librería de UI ya usada en el proyecto, no imágenes ni mockups — el propio system
+  prompt aclara esa distinción para que el usuario no espere algo que no es.
+
+- **Agent Factory (fase 6) — real, persistido en el workspace.**
+  Nuevo comando `EditCore: Crear agente personalizado` (`editcore.createCustomAgent`):
+  pide nombre + objetivo y guarda el agente en `.editcore/agents.json`. Se carga al
+  activar la extensión y al cambiar de workspace (`agents/roles.ts`:
+  `loadCustomAgents`/`saveCustomAgent`/`getCustomAgentsSync`), y queda disponible como
+  `@nombre-del-agente` en el chat igual que los roles incluidos.
+  **Limitación real, no oculta**: el agente custom solo define su `systemPrompt`. No
+  hay enforcement de "tools permitidas" ni "modelo específico" por agente — usa las
+  mismas tools y el mismo modelo configurado globalmente que cualquier otro rol. Eso
+  requeriría cambiar `agentLoop.ts`/`tools.ts` para filtrar tools por rol, que no se
+  hizo en esta pasada.
+
+- **Automation Builder (fase 7) — real, con el límite arquitectónico de una extensión.**
+  Nuevo motor `automation/automationEngine.ts`, registrado al activar la extensión.
+  Reglas en `.editcore/automations.json` (`{id, trigger, glob, action, payload}`),
+  triggers reales: `onSave` y `onCreate` de archivos (vía `vscode.workspace.onDidSaveTextDocument`
+  / `onDidCreateFiles`), acciones reales: `chatPrompt` (abre el chat con un prompt,
+  pasa por la aprobación normal del agente) o `runCommand` (ejecuta un comando de
+  VS Code). Comando `EditCore: Gestionar automatizaciones` (`editcore.manageAutomations`)
+  abre/crea el archivo de configuración con un ejemplo desactivado.
+  **Limitación real, no oculta**: esto solo corre mientras VS Code está abierto con la
+  extensión activa. No hay proceso en background persistente fuera del editor, ni
+  forma de recibir webhooks entrantes — eso requeriría un servidor, que no existe ni se
+  fabricó.
+
+- **Product Factory con cobros (fase 12) — real como generador de código, no como
+  procesador de pagos.**
+  Nuevo rol `@billing` en `agents/roles.ts`: genera integraciones reales (Stripe,
+  Mercado Pago, etc. — checkout, webhooks, suscripciones) cuando se le pide, usando
+  `.env.example` para credenciales en vez de inventar claves. El system prompt prohíbe
+  explícitamente simular que un cobro fue procesado.
+  **Lo que sigue sin existir, deliberadamente**: no hay panel de administración de
+  facturación generado automáticamente, no hay cuenta de pasarela de pago operada por
+  EditCore, y el agente no puede probar un cobro real sin que el usuario tenga su
+  propia cuenta con el proveedor — fabricar eso sería inventar una funcionalidad que
+  nadie podría verificar.
 
 ## 4. Cómo usarlo hoy
 
-1. Comando `EditCore: Generar proyecto desde una idea` (`editcore.generateFromIdea`).
-2. Describir la idea en una línea.
-3. Confirmar la activación del pipeline multi-agente (queda activado en la configuración global hasta que el usuario lo desactive).
-4. El chat ejecuta el pipeline real: cada escritura de archivo y cada comando de terminal sigue pasando por la aprobación manual ya existente (`showDiffAndConfirm`, `requestCommandApproval`) — nada se ejecuta sin confirmación.
+1. Comando `EditCore: Generar proyecto desde una idea` (`editcore.generateFromIdea`):
+   describir la idea, confirmar activación del pipeline multi-agente, y el chat corre
+   el pipeline real. Cada escritura de archivo y cada comando de terminal sigue
+   pasando por la aprobación manual ya existente — nada se ejecuta sin confirmación.
+2. `@ui-design <pedido>` en el chat — genera código de UI siguiendo la librería del proyecto.
+3. `@billing <pedido>` en el chat — genera integraciones de cobro reales (con credenciales del propio usuario).
+4. `EditCore: Crear agente personalizado` (`editcore.createCustomAgent`) — define un
+   agente propio (`@nombre`) guardado en `.editcore/agents.json`.
+5. `EditCore: Gestionar automatizaciones` (`editcore.manageAutomations`) — edita
+   `.editcore/automations.json` para definir reglas onSave/onCreate → chatPrompt/runCommand.
 
-## 5. Qué falta para que las fases 4/6/7/12 sean reales
+## 5. Qué sigue sin existir (límites reales, no pendientes de "ánimo")
 
-Igual que en la auditoría de infraestructura: estas cuatro fases no son "casi reales con
-un cable suelto", son piezas nuevas que requieren decisiones de producto (¿se necesita
-un backend para automatizaciones y pagos?, ¿cuánto control le damos al usuario para
-definir agentes propios?). Si se quiere avanzar, conviene discutirlas una por una en
-vez de construir las cuatro a la vez.
+- Enforcement de tools/modelo/permisos por agente personalizado (fase 6): todo agente
+  custom usa las mismas tools globales; no hay sandboxing por agente.
+- Automatizaciones disparadas por eventos externos (webhooks, cron fuera del editor,
+  fase 7): requeriría un backend, que EditCore no tiene ni se fabricó aquí.
+- Mockups/diseño visual real (fase 4): `@ui-design` genera código, no imágenes.
+- Procesamiento de pagos real y panel de administración de facturación (fase 12):
+  requiere que el usuario opere su propia cuenta con el proveedor de pagos; EditCore
+  no aloja ni procesa transacciones.

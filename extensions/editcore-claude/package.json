@@ -178,6 +178,14 @@
         "title": "EditCore: Generar proyecto desde una idea"
       },
       {
+        "command": "editcore.createCustomAgent",
+        "title": "EditCore: Crear agente personalizado"
+      },
+      {
+        "command": "editcore.manageAutomations",
+        "title": "EditCore: Gestionar automatizaciones"
+      },
+      {
         "command": "editcore.founderMode",
         "title": "EditCore: Modo Fundador"
       },
