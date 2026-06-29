@@ -1,26 +1,27 @@
 # EditCore Agent Store
 
-Estado: **no implementado**. No existe ninguna tienda de agentes, ni
-mecanismo de publicación, valoración o licenciamiento de agentes de IA.
+Estado: **modelo de datos real, sin tienda ni cobro todavía**. Los agentes ya
+existen como recursos de plataforma versionables; lo que falta es la capa de
+descubrimiento público y monetización.
 
-## 1. Lo que sí existe
+## 1. Lo que sí existe (real, en producción)
 
-- Agentes/roles predefinidos dentro de la extensión (`extensions/editcore-claude/src/agents/roles.ts`, `src/verticals/verticalCommands.ts`): son configuraciones de prompts y comportamiento creadas por el propio equipo de EditCore, fijas en el código de la extensión.
-- Estos "agentes" no son recursos independientes con su propio ciclo de vida (no se pueden publicar, versionar ni instalar por separado del binario de la extensión).
+- Tabla `agent_definitions` (Supabase, `supabase/migrations/0005_agents_and_community.sql`): cada agente es una fila propia (dueño, slug, nombre, descripción, `is_public`, `current_version`), no configuración fija del código de la extensión.
+- Tabla `agent_versions`: historial inmutable de versiones por agente (`config` en JSON + `changelog`), nunca se sobrescribe.
+- `/api/v1/agents` (GET/POST) — lista agentes públicos (sin sesión) o propios+públicos (con sesión); crea un agente nuevo con su versión 1.
+- `/api/v1/agents/:id/versions` (GET/POST) — historial de versiones; agregar una nueva versión solo si eres el dueño.
+- Agentes/roles predefinidos del equipo (`extensions/editcore-claude/src/agents/roles.ts`) siguen existiendo aparte, fijos en el código de la extensión — no se migraron a este sistema todavía.
 
 ## 2. Lo que NO existe todavía (honesto, no inventado)
 
-- **EDITCORE AGENT STORE**: no existe ningún catálogo público de agentes.
-- **Publicación de agentes por terceros**: no hay ningún formato de exportación/empaquetado de un agente como artefacto independiente, ni endpoint para subirlo.
-- **Categorías, valoraciones, versiones, actualizaciones, licencias**: ninguno de estos conceptos tiene modelo de datos ni interfaz.
-- **Monetización de agentes**: no hay ningún mecanismo de pago asociado a un agente individual (distinto del cobro por plan general, que tampoco existe aún realmente — ver `EDITCORE_BILLING_SYSTEM.md`).
+- **Catálogo público navegable**: `/api/v1/agents` devuelve JSON, pero no hay una página web tipo tienda para explorar agentes públicos.
+- **Valoraciones/reviews**: no hay tabla `agent_reviews` ni interfaz para calificar un agente.
+- **Monetización**: no hay ningún mecanismo de pago asociado a un agente individual — requiere integrar Stripe primero (ver `EDITCORE_ECOSYSTEM_ARCHITECTURE.md` §2 y `EDITCORE_BILLING_SYSTEM.md`).
+- **Instalación directa en la extensión**: hoy nada en `extensions/editcore-claude` consume `/api/v1/agents`; publicar un agente vía API no lo hace utilizable automáticamente dentro del IDE.
 
-## 3. Plan honesto para implementarlo (no construido aún)
+## 3. Próximos pasos honestos
 
-1. Definir un formato serializable de "agente" (ej. JSON: nombre, prompt de sistema, herramientas permitidas, modelo recomendado) separado del código fuente de la extensión.
-2. Tabla `agents` en Supabase (autor, versión, categoría, licencia, estado de publicación).
-3. Endpoint para publicar/listar/instalar agentes desde la extensión.
-4. Sistema de valoraciones (tabla `agent_reviews`) y de versionado (ver también `EDITCORE_AGENT_VERSION_CONTROL`, no implementado).
-
-Hoy todos los agentes de EditCore son fijos, creados por el equipo interno,
-y no hay forma de que un tercero publique uno.
+1. Página web `web/agent-store.html` que consuma `/api/v1/agents` para explorar agentes públicos.
+2. Integrar Stripe para permitir cobro por agente (requiere que el usuario cree la cuenta de Stripe, ver `EDITCORE_ECOSYSTEM_ARCHITECTURE.md`).
+3. Conectar la extensión para que pueda importar/instalar un `agent_definitions` público vía `/api/v1/agents/:id/versions`.
+4. Tabla y endpoint de valoraciones.
