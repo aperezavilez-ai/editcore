@@ -1,13 +1,15 @@
 import * as vscode from "vscode";
+import type Anthropic from "@anthropic-ai/sdk";
 import { ApiKeyService } from "./apiKeyService";
-import { streamForSelectedModel } from "./aiRouter";
 import type { ChatMessage } from "./anthropicClient";
 import { getModelLabel, getOpenAiModelLabel } from "./models";
-import { LLM_CONFIG } from "./llmConfig";
+import { runAgentTask, AgentEvent } from "./agent/agentLoop";
 
 export class ClaudeChatViewProvider implements vscode.WebviewViewProvider {
   private view?: vscode.WebviewView;
   private history: ChatMessage[] = [];
+  private agentConversation: Anthropic.Messages.MessageParam[] = [];
+  private abortController: AbortController | undefined;
 
   constructor(
     private readonly context: vscode.ExtensionContext,
@@ -35,6 +37,8 @@ export class ClaudeChatViewProvider implements vscode.WebviewViewProvider {
         this.insertIntoActiveEditor(msg.code);
       } else if (msg.type === "openAccount") {
         await vscode.commands.executeCommand("editcore.openAccountPanel");
+      } else if (msg.type === "cancel") {
+        this.abortController?.abort();
       }
     });
 
@@ -78,29 +82,59 @@ export class ClaudeChatViewProvider implements vscode.WebviewViewProvider {
 
     this.history.push({ role: "user", content: text });
     this.view?.webview.postMessage({ type: "userEcho", text });
-    this.view?.webview.postMessage({ type: "assistantStart" });
+    this.view?.webview.postMessage({ type: "agentBusy", busy: true });
+
+    const apiKey = (await this.apiKeyService.getApiKey()) ?? "";
+    this.abortController = new AbortController();
 
     let fullText = "";
     try {
-      const config = vscode.workspace.getConfiguration("editcore");
-      const modelId = config.get<string>("model", LLM_CONFIG.claude.defaultModel);
-      const usage = await streamForSelectedModel(
-        this.apiKeyService,
-        this.history,
-        modelId,
-        (token) => {
-          fullText += token;
-          this.view?.webview.postMessage({ type: "assistantToken", text: token });
+      await runAgentTask(
+        apiKey,
+        text,
+        (event: AgentEvent) => {
+          switch (event.type) {
+            case "assistant_text":
+              fullText += (fullText ? "\n\n" : "") + event.text;
+              this.view?.webview.postMessage({ type: "assistantFull", text: event.text });
+              break;
+            case "tool_call_start":
+              this.view?.webview.postMessage({
+                type: "toolCallStart",
+                name: event.name,
+                input: event.input,
+              });
+              break;
+            case "tool_call_result":
+              this.view?.webview.postMessage({
+                type: "toolCallResult",
+                name: event.name,
+                output: event.output,
+                isError: event.isError,
+              });
+              break;
+            case "done":
+              this.view?.webview.postMessage({ type: "agentBusy", busy: false });
+              break;
+            case "error":
+              this.view?.webview.postMessage({ type: "error", text: event.message });
+              this.view?.webview.postMessage({ type: "agentBusy", busy: false });
+              break;
+          }
         },
-        { allowFallback: false }
+        this.abortController.signal,
+        (inputTokens, outputTokens) => this.apiKeyService.recordUsage(inputTokens, outputTokens),
+        (toolName) => this.apiKeyService.recordToolCall(toolName),
+        "default",
+        this.apiKeyService,
+        this.agentConversation
       );
       this.history.push({ role: "assistant", content: fullText });
-      this.apiKeyService.recordUsage(usage.inputTokens, usage.outputTokens);
-      this.view?.webview.postMessage({ type: "assistantDone" });
       await this.pushStatus();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Error al contactar al proveedor de IA.";
       this.view?.webview.postMessage({ type: "error", text: message });
+      this.view?.webview.postMessage({ type: "agentBusy", busy: false });
     }
   }
 
@@ -138,6 +172,10 @@ export class ClaudeChatViewProvider implements vscode.WebviewViewProvider {
   pre { background: var(--vscode-textCodeBlock-background); padding:8px; border-radius:4px; overflow-x:auto; font-size:12px; position:relative; }
   .insert-btn { position:absolute; top:4px; right:4px; font-size:10px; background:var(--vscode-button-background);
     color:var(--vscode-button-foreground); border:none; border-radius:3px; padding:2px 6px; cursor:pointer; }
+  .msg.tool-call { background: var(--vscode-inputValidation-infoBackground); font-size:12px; font-family:var(--vscode-editor-font-family); }
+  .msg.tool-result { background: var(--vscode-textBlockQuote-background); font-size:12px; font-family:var(--vscode-editor-font-family); }
+  .msg.tool-error { background: var(--vscode-inputValidation-errorBackground); font-size:12px; font-family:var(--vscode-editor-font-family); }
+  .msg.busy { background:none; opacity:.7; font-style:italic; font-size:12px; }
   #inputRow { display:flex; gap:6px; padding:8px; border-top:1px solid var(--vscode-panel-border); }
   #inputBox { flex:1; resize:none; background:var(--vscode-input-background); color:var(--vscode-input-foreground);
     border:1px solid var(--vscode-input-border,transparent); border-radius:4px; padding:6px 8px; font-family:inherit; font-size:13px; }
@@ -157,6 +195,7 @@ export class ClaudeChatViewProvider implements vscode.WebviewViewProvider {
   <div id="inputRow">
     <textarea id="inputBox" rows="2" placeholder="Describe qué quieres construir..."></textarea>
     <button id="sendBtn">Enviar</button>
+    <button id="cancelBtn" style="display:none;">Cancelar</button>
   </div>
 
 <script>
@@ -164,11 +203,12 @@ export class ClaudeChatViewProvider implements vscode.WebviewViewProvider {
   const messagesEl = document.getElementById('messages');
   const inputBox = document.getElementById('inputBox');
   const sendBtn = document.getElementById('sendBtn');
+  const cancelBtn = document.getElementById('cancelBtn');
   const accountBtn = document.getElementById('accountBtn');
-  let currentAssistantEl = null;
-  let currentAssistantRaw = '';
+  let busyEl = null;
 
   accountBtn.addEventListener('click', () => vscode.postMessage({ type: 'openAccount' }));
+  cancelBtn.addEventListener('click', () => vscode.postMessage({ type: 'cancel' }));
 
   function escapeHtml(s) {
     return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -213,6 +253,17 @@ export class ClaudeChatViewProvider implements vscode.WebviewViewProvider {
     vscode.postMessage({ type: 'send', text });
   }
 
+  function setBusy(isBusy) {
+    sendBtn.disabled = isBusy;
+    cancelBtn.style.display = isBusy ? 'inline-block' : 'none';
+    if (isBusy && !busyEl) {
+      busyEl = addMessage('busy', 'Pensando / ejecutando herramientas…');
+    } else if (!isBusy && busyEl) {
+      busyEl.remove();
+      busyEl = null;
+    }
+  }
+
   sendBtn.addEventListener('click', send);
   inputBox.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
@@ -226,25 +277,17 @@ export class ClaudeChatViewProvider implements vscode.WebviewViewProvider {
       document.getElementById('sessOut').textContent = msg.sessionOut.toLocaleString();
     } else if (msg.type === 'userEcho') {
       addMessage('user', msg.text);
-    } else if (msg.type === 'assistantStart') {
-      currentAssistantRaw = '';
-      currentAssistantEl = addMessage('assistant', '');
-    } else if (msg.type === 'assistantToken') {
-      currentAssistantRaw += msg.text;
-      if (currentAssistantEl) currentAssistantEl.innerHTML = renderMarkdownLite(currentAssistantRaw);
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-    } else if (msg.type === 'assistantDone') {
-      if (currentAssistantEl && msg.usage) {
-        const u = document.createElement('div');
-        u.className = 'usage';
-        u.textContent = msg.usage;
-        currentAssistantEl.appendChild(u);
-      }
-      currentAssistantEl = null;
     } else if (msg.type === 'assistantFull') {
       addMessage('assistant', msg.text);
+    } else if (msg.type === 'toolCallStart') {
+      addMessage('tool-call', '🔧 ' + msg.name + '(' + JSON.stringify(msg.input) + ')');
+    } else if (msg.type === 'toolCallResult') {
+      addMessage(msg.isError ? 'tool-error' : 'tool-result', String(msg.output).slice(0, 4000));
+    } else if (msg.type === 'agentBusy') {
+      setBusy(!!msg.busy);
     } else if (msg.type === 'error') {
       addMessage('error', msg.text);
+      setBusy(false);
     }
   });
 </script>
