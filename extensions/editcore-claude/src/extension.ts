@@ -22,6 +22,7 @@ import {
   gpsBuilder,
   scaffoldVertical,
   showAuditLog,
+  generateFromIdea,
 } from "./verticals/verticalCommands";
 import { showSessionsPicker, exportSessionsReport, resumeSession } from "./sessions/agentSessionStore";
 import { initOrgConfig } from "./enterprise/orgConfig";
@@ -191,6 +192,7 @@ export async function activate(context: vscode.ExtensionContext) {
         "Las habilidades de EditCore (Arquitecto, GPS, SaaS, Security…) están integradas en el agente. Usá @architect, @gps, @saas, etc. en el chat."
       );
     }),
+    vscode.commands.registerCommand("editcore.generateFromIdea", () => generateFromIdea()),
     vscode.commands.registerCommand("editcore.founderMode", () => founderMode()),
     vscode.commands.registerCommand("editcore.ctoMode", () => ctoMode()),
     vscode.commands.registerCommand("editcore.saasBuilder", () => saasBuilder()),
