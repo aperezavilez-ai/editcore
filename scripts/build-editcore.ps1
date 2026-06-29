@@ -167,9 +167,13 @@ foreach ($extName in $extensionsToRemove) {
 $extensionsTsPath = Join-Path $REPO_DIR "build\lib\extensions.ts"
 if (Test-Path $extensionsTsPath) {
   $lines = Get-Content $extensionsTsPath
+  # Quita líneas que referencian extensiones eliminadas Y líneas de .pipe()
+  # utilitarias que quedarían huérfanas al romper la cadena.
   $cleanLines = $lines | Where-Object {
     $line = $_
-    -not ($extensionsToRemove | Where-Object { $line -match [regex]::Escape($_) })
+    $refersToRemoved = $extensionsToRemove | Where-Object { $line -match [regex]::Escape($_) }
+    $orphanedPipe = $line -match "setExecutableBit|cleanNodeModules"
+    -not $refersToRemoved -and -not $orphanedPipe
   }
   $cleanLines | Set-Content $extensionsTsPath
   Write-Host "Referencias a extensiones eliminadas limpiadas en build/lib/extensions.ts." -ForegroundColor Green
