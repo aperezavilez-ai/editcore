@@ -2,9 +2,6 @@
   "version": 2,
   "outputDirectory": "web",
   "framework": null,
-  "functions": {
-    "api/**/*.ts": { "runtime": "nodejs20.x" }
-  },
   "rewrites": [
     { "source": "/download", "destination": "/index.html" }
   ]
