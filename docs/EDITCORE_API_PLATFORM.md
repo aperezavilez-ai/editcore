@@ -1,29 +1,30 @@
 # EditCore API Platform
 
-Estado: **no implementado**. Hoy EditCore expone únicamente 3 endpoints
-internos para la extensión (organización, plan, consumo), no una plataforma
-de API pública para terceros. Este documento distingue lo real de la visión.
+Estado: **arrancada, primera versión real**. EditCore ahora expone una API
+pública versionada (`/api/v1/*`) con claves de desarrollador propias,
+separadas de la clave de organización. Es deliberadamente mínima — un solo
+endpoint real — para no fabricar recursos que no existen.
 
-## 1. Lo que sí existe (base real, no pública)
+## 1. Lo que sí existe (real, en producción)
 
-- 3 endpoints en producción (`editcore.mx`), pensados para la extensión, no para terceros: `/api/org/plan`, `/api/usage/summary`, `/api/usage/track` (ver `EDITCORE_SAAS_ARCHITECTURE.md`).
-- Autenticación por clave opaca de organización (`x-editcore-org-key`, hash SHA-256 en `organization_api_keys`) — el mecanismo de auth ya es real y podría reutilizarse como base de API keys públicas, pero hoy solo da acceso a esos 3 endpoints, no a "proyectos, agentes, automatizaciones, plantillas, flujos de trabajo" (ninguno de esos conceptos existe como recurso en la base de datos).
+- Tabla `developer_api_keys` (Supabase, `supabase/migrations/0004_developer_api_keys.sql`): claves por usuario individual (vinculadas a `auth.users`, no a una organización), con hash SHA-256, prefijo visible, scopes, `rate_limit_per_minute` (campo guardado, **no enforced todavía**), `is_active`, `expires_at`.
+- `lib/developerAuth.ts` — genera y valida claves (`ec_live_...`), header `x-editcore-api-key`.
+- `/api/developer/keys` (GET/POST/DELETE) — requiere sesión de Supabase Auth (Bearer token, la misma cuenta de `login.html`). Crea, lista y revoca claves. La clave en texto plano solo se devuelve una vez, al crearla.
+- `/api/v1/me` (GET) — primer endpoint público real: valida la `x-editcore-api-key` y devuelve `{ authenticated: true, scopes: [...] }`. Es la base para futuros endpoints versionados.
+- `web/developers.html` — portal real donde un usuario logueado crea/revoca sus propias claves desde el navegador.
+- `sdk/typescript/` — paquete `@editcore/sdk` (no publicado en npm todavía, pero compila y funciona localmente) con un cliente mínimo: `new EditCoreClient({ apiKey }).me()`.
 
 ## 2. Lo que NO existe todavía (honesto, no inventado)
 
-- **API pública documentada**: no hay ningún endpoint pensado para que un desarrollador externo (fuera de la propia extensión) construya integraciones.
-- **Recursos de la plataforma**: no existen tablas ni endpoints para "proyectos", "agentes" (como entidad publicable), "automatizaciones", "plantillas" o "flujos de trabajo". Lo que hoy se llama "agente" en el código (`extensions/editcore-claude/src/agents/roles.ts`) es una configuración local de prompts dentro de la extensión, no un recurso de plataforma con API propia.
-- **Sistema de API keys para terceros**: las claves actuales son de organización (acceso administrativo a uso/plan), no claves de desarrollador con scopes/permisos granulares.
-- **Límites de tasa (rate limiting)**: no implementado en ningún endpoint.
-- **Documentación pública de API** (tipo OpenAPI/Swagger): no existe.
+- **Recursos de plataforma reales**: no hay "proyectos", "agentes publicables", "automatizaciones" ni "plantillas" como entidades en la base de datos. `/api/v1/me` es el único endpoint — confirma que la clave funciona, nada más.
+- **Rate limiting real**: el campo `rate_limit_per_minute` se guarda pero ningún middleware lo aplica todavía.
+- **Documentación OpenAPI/Swagger**: no existe, solo este documento y el ejemplo de `curl` en `developers.html`.
+- **SDK publicado**: `@editcore/sdk` existe como código fuente compilable en el repo, pero no se ha publicado a npm.
+- **Scopes con efecto real**: la columna `scopes` existe y se guarda (`api:read` por defecto), pero ningún endpoint todavía rechaza una llamada por scope insuficiente.
 
-## 3. Plan honesto para implementarlo (no construido aún)
+## 3. Próximos pasos honestos
 
-1. Definir qué recursos son realmente publicables (empezar por "agentes" como configuración exportable) y modelarlos en Supabase.
-2. Endpoint `/api/v1/...` versionado, separado de los endpoints internos actuales.
-3. Sistema de API keys de desarrollador con scopes (lectura/escritura por recurso) distinto de la clave de organización.
-4. Rate limiting (ej. con un contador en Supabase o un servicio externo tipo Upstash).
-5. Especificación OpenAPI generada y publicada.
-
-Nada de esto está construido. La "plataforma de API pública" es, hoy, una
-visión sobre una base de autenticación real pero muy limitada.
+1. Aplicar rate limiting real sobre `/api/v1/*` usando `rate_limit_per_minute`.
+2. Agregar el primer recurso real de plataforma (candidato: agentes personalizados como configuración exportable, ver `EDITCORE_AGENT_STORE.md`).
+3. Publicar `@editcore/sdk` en npm.
+4. Generar especificación OpenAPI a partir de los endpoints reales (no antes, para no documentar lo que no existe).
