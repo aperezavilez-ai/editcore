@@ -252,7 +252,7 @@ export const AGENT_TOOLS = [
 export type BuiltinToolName = (typeof AGENT_TOOLS)[number]['name'];
 export type AgentToolName = BuiltinToolName | string;
 
-export async function getAllAgentTools(): Promise<AnthropicTool[]> {
+export async function getAllAgentTools(allowedTools?: string[]): Promise<AnthropicTool[]> {
   const builtin: AnthropicTool[] = AGENT_TOOLS.map((t) => ({
     name: t.name,
     description: t.description,
@@ -273,7 +273,11 @@ export async function getAllAgentTools(): Promise<AnthropicTool[]> {
   } catch {
     // MCP opcional
   }
-  return builtin;
+  if (!allowedTools || allowedTools.length === 0) {
+    return builtin;
+  }
+  const allowedSet = new Set(allowedTools);
+  return builtin.filter((t) => allowedSet.has(t.name));
 }
 
 type AnthropicTool = {
@@ -582,7 +586,15 @@ async function showDiffAndConfirm(
     'Cancelar'
   );
   fs.promises.unlink(tmpPath).catch(() => {});
-  return choice === 'Aplicar';
+  const approved = choice === 'Aplicar';
+  const { appendAudit } = await import('../enterprise/orgConfig');
+  await appendAudit({
+    type: 'decision',
+    kind: 'file_write',
+    action: approved ? 'apply' : 'cancel',
+    path: relativeLabel,
+  });
+  return approved;
 }
 
 async function execWriteAdr(input: {
