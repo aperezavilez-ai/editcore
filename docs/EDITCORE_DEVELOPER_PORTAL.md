@@ -1,29 +1,26 @@
 # EditCore Developer Portal
 
-Estado: **no implementado**. No existe ningún portal para desarrolladores
-externos. Este documento lo dice sin rodeos.
+Estado: **primera versión real**. Existe un portal mínimo donde un usuario
+con cuenta de EditCore puede generar y gestionar sus propias claves de API.
+Sigue siendo muy limitado frente a la visión de "Developers Center" completo.
 
-## 1. Lo que sí existe
+## 1. Lo que sí existe (real, en producción)
 
-- Documentación técnica interna en `docs/*.md`, pero escrita para el propio equipo/usuario, no publicada como portal de desarrolladores con navegación, guías paso a paso o ejemplos ejecutables.
-- El propio código de la extensión (`extensions/editcore-claude/`) como referencia de implementación, pero sin ningún empaquetado como "guía para terceros".
+- `web/developers.html` — página real: requiere sesión de Supabase Auth (la misma cuenta de `login.html`), permite crear claves de API (`/api/developer/keys`), las lista con prefijo/fecha/estado, y permite revocarlas.
+- Ejemplo de uso real con `curl` mostrado directamente en la página.
+- `sdk/typescript/` — código fuente del SDK, usable localmente (`npm install` + `npm run build` dentro de `sdk/typescript/`), referenciado desde el portal.
+- Enlace al portal desde `web/account.html` ("Panel de desarrolladores (API keys)").
 
 ## 2. Lo que NO existe todavía (honesto, no inventado)
 
-- **EDITCORE DEVELOPERS CENTER**: no existe ningún sitio, subdominio ni sección de `web/` dedicada a desarrolladores.
-- **Documentación de API navegable**: no hay ninguna referencia de API pública que documentar (ver `EDITCORE_API_PLATFORM.md` — la API pública en sí no existe).
-- **Guías y ejemplos**: no hay tutoriales de "cómo integrar con EditCore" para terceros.
-- **SDKs**: no existen (ver `EDITCORE_SDK.md` no aplica aún; cubierto abajo en este mismo documento por brevedad del alcance pedido — no hay ningún paquete publicado en npm/PyPI).
-- **Claves de prueba / sandbox**: no hay ningún entorno aislado de pruebas distinto de producción; ni claves de demo.
-- **Comunidad técnica**: no hay foro, Discord, ni espacio de discusión para desarrolladores.
+- **Documentación de API navegable/generada**: el portal solo tiene un ejemplo de `curl`, no una referencia completa (porque la API solo tiene un endpoint real, ver `EDITCORE_API_PLATFORM.md`).
+- **Guías y tutoriales**: no hay contenido educativo más allá del ejemplo mínimo.
+- **Claves de prueba / sandbox separado de producción**: las claves que se generan en `developers.html` son reales contra producción, no hay entorno de pruebas aislado.
+- **Comunidad técnica**: no hay foro, Discord, ni espacio de discusión.
+- **SDKs en otros lenguajes** (Python, etc.): no existen.
 
-## 3. Plan honesto para implementarlo (no construido aún)
+## 3. Próximos pasos honestos
 
-1. Sitio estático en `web/developers` con documentación generada desde una futura especificación OpenAPI.
-2. Entorno sandbox: una organización de prueba con límites bajos y datos ficticios, separada de organizaciones reales.
-3. Página de registro para obtener una clave de prueba automáticamente (requiere endpoint de alta automatizada, ver `EDITCORE_BUSINESS_OPERATIONS.md`).
-4. Canal de comunidad (Discord o GitHub Discussions) enlazado desde el portal.
-
-Hoy, un desarrollador externo que quiera integrarse con EditCore no tiene
-ningún punto de entrada: no hay portal, no hay sandbox, no hay claves de
-prueba.
+1. Ampliar la documentación del portal a medida que se agreguen endpoints reales a `/api/v1/*`.
+2. Sandbox real con límites bajos y datos de prueba, separado de organizaciones reales.
+3. Canal de comunidad (Discord o GitHub Discussions) enlazado desde el portal.

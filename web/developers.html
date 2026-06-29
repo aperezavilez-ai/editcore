@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>EditCore — Desarrolladores</title>
+<link rel="icon" href="/assets/favicon-32.png" />
+<style>
+  body { font-family: -apple-system, system-ui, sans-serif; background: #0b0d12; color: #e8eaf0; margin: 0; padding: 40px 20px; }
+  .card { background: #14171f; border: 1px solid #232733; border-radius: 12px; padding: 32px; max-width: 640px; margin: 0 auto 20px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  p.sub { color: #8b909e; font-size: 13px; margin: 0 0 20px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px; border-bottom: 1px solid #232733; }
+  th { color: #8b909e; font-weight: 500; }
+  input { padding: 10px 12px; border-radius: 8px; border: 1px solid #2b3040; background: #0b0d12; color: #e8eaf0; font-size: 14px; }
+  button { padding: 10px 16px; border-radius: 8px; border: none; background: #5865f2; color: white; font-weight: 600; cursor: pointer; font-size: 14px; }
+  button.danger { background: #3a1f24; color: #f87171; padding: 4px 10px; font-size: 12px; }
+  .row-form { display: flex; gap: 8px; margin-bottom: 20px; }
+  .row-form input { flex: 1; }
+  .newkey { background: #0b0d12; border: 1px solid #4ade80; border-radius: 8px; padding: 12px; font-family: monospace; font-size: 13px; margin-bottom: 16px; word-break: break-all; }
+  .msg { font-size: 13px; margin-top: 14px; }
+  .msg.err { color: #f87171; }
+  code { background: #0b0d12; padding: 2px 6px; border-radius: 4px; }
+  a { color: #5865f2; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>EditCore — Panel de desarrolladores</h1>
+    <p class="sub">Genera claves para usar la API pública de EditCore (<code>/api/v1/*</code>) desde tu propio código o el SDK <code>@editcore/sdk</code>.</p>
+    <div id="gate">Cargando sesión...</div>
+    <div id="panel" style="display:none">
+      <div class="row-form">
+        <input id="keyName" type="text" placeholder="Nombre de la clave (ej: mi-script)" />
+        <button id="createBtn">Crear clave</button>
+      </div>
+      <div id="newKeyBox"></div>
+      <table>
+        <thead><tr><th>Nombre</th><th>Prefijo</th><th>Creada</th><th>Estado</th><th></th></tr></thead>
+        <tbody id="keysBody"></tbody>
+      </table>
+      <div id="msg" class="msg"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h1 style="font-size:16px;">Uso rápido</h1>
+    <pre style="font-size:12px; overflow-x:auto;"><code>curl https://editcore.mx/api/v1/me \
+  -H "x-editcore-api-key: TU_CLAVE"</code></pre>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="/assets/supabase-config.js"></script>
+  <script>
+    const gate = document.getElementById("gate");
+    const panel = document.getElementById("panel");
+    const msg = document.getElementById("msg");
+    const keysBody = document.getElementById("keysBody");
+    const newKeyBox = document.getElementById("newKeyBox");
+
+    const supabase = window.supabase.createClient(window.EDITCORE_SUPABASE_URL, window.EDITCORE_SUPABASE_ANON_KEY);
+    let accessToken = null;
+
+    function fmtDate(s) {
+      return s ? new Date(s).toLocaleString() : "—";
+    }
+
+    async function loadKeys() {
+      const res = await fetch("/api/developer/keys", { headers: { Authorization: "Bearer " + accessToken } });
+      const data = await res.json();
+      if (!res.ok) {
+        msg.textContent = data.error || "No se pudieron cargar las claves.";
+        msg.className = "msg err";
+        return;
+      }
+      keysBody.innerHTML = data.keys.map(k => `
+        <tr>
+          <td>${k.name}</td>
+          <td>${k.key_prefix}…</td>
+          <td>${fmtDate(k.created_at)}</td>
+          <td>${k.is_active ? "Activa" : "Revocada"}</td>
+          <td>${k.is_active ? `<button class="danger" data-id="${k.id}">Revocar</button>` : ""}</td>
+        </tr>
+      `).join("") || `<tr><td colspan="5">Sin claves todavía.</td></tr>`;
+
+      keysBody.querySelectorAll("button[data-id]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          await fetch("/api/developer/keys?id=" + btn.dataset.id, {
+            method: "DELETE",
+            headers: { Authorization: "Bearer " + accessToken },
+          });
+          await loadKeys();
+        });
+      });
+    }
+
+    document.getElementById("createBtn").addEventListener("click", async () => {
+      const name = document.getElementById("keyName").value.trim();
+      if (!name) {
+        msg.textContent = "Escribe un nombre para la clave.";
+        msg.className = "msg err";
+        return;
+      }
+      const res = await fetch("/api/developer/keys", {
+        method: "POST",
+        headers: { "content-type": "application/json", Authorization: "Bearer " + accessToken },
+        body: JSON.stringify({ name }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        msg.textContent = data.error || "No se pudo crear la clave.";
+        msg.className = "msg err";
+        return;
+      }
+      newKeyBox.innerHTML = `<div class="newkey">${data.apiKey}<br><strong>${data.warning}</strong></div>`;
+      document.getElementById("keyName").value = "";
+      await loadKeys();
+    });
+
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        gate.innerHTML = 'No has iniciado sesión. <a href="/login.html">Iniciar sesión</a>';
+        return;
+      }
+      accessToken = session.access_token;
+      gate.style.display = "none";
+      panel.style.display = "block";
+      await loadKeys();
+    })();
+  </script>
+</body>
+</html>
