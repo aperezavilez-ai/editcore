@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { createClaudeClient, mapClaudeApiError } from "./anthropicClient";
 import { LLM_CONFIG } from "./llmConfig";
 import { resolveClaudeModelId } from "./models";
+import { OrgBackendService } from "./enterprise/orgBackend";
 
 const SECRET_KEY = "anthropicApiKey";
 const OPENAI_SECRET_KEY = "openaiApiKey";
@@ -77,7 +78,11 @@ export class ApiKeyService {
   private readonly _onDidChange = new vscode.EventEmitter<void>();
   readonly onDidChange = this._onDidChange.event;
 
-  constructor(private readonly context: vscode.ExtensionContext) {}
+  readonly orgBackend: OrgBackendService;
+
+  constructor(private readonly context: vscode.ExtensionContext) {
+    this.orgBackend = new OrgBackendService(context);
+  }
 
   async hasApiKey(): Promise<boolean> {
     return Boolean(await this.getApiKey());
@@ -237,6 +242,14 @@ export class ApiKeyService {
     totals.estimatedCostUsd += cost;
     void this.context.globalState.update(USAGE_KEY, totals);
     this._onDidChange.fire();
+
+    void this.orgBackend.trackUsage({
+      provider: "anthropic",
+      model,
+      inputTokens,
+      outputTokens,
+      estimatedCostUsd: cost,
+    });
   }
 
   recordToolCall(toolName: string, roleId?: string): void {
