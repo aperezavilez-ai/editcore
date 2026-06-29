@@ -32,8 +32,13 @@ if ((Test-Path $buildInstaller) -and (Test-Path (Join-Path $ROOT "editcore-src")
   elseif ((Test-Path $repoIco) -and (Test-Path $iconIco) -and ((Get-FileHash $repoIco).Hash -ne (Get-FileHash $iconIco).Hash)) { $needRebuild = $true }
   if ($needRebuild) {
     Write-Host "Recompilando instalador Inno (logo actualizado)..." -ForegroundColor Cyan
-    & $buildInstaller -SetupOnly
-    if ($LASTEXITCODE -ne 0) { throw "build-win-installer.ps1 fallo con codigo $LASTEXITCODE" }
+    $prevErr = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    & $buildInstaller -SetupOnly 2>&1 | Out-Host
+    $ErrorActionPreference = $prevErr
+    if ($LASTEXITCODE -ne 0) {
+      Write-Host "AVISO: build-win-installer.ps1 fallo — se omite el instalador .exe." -ForegroundColor Yellow
+    }
   }
 }
 if ((Test-Path $setupBuilt) -and ((Test-Path $setupSrcRoot) -eq $false -or (Get-Item $setupBuilt).Length -gt (Get-Item $setupSrcRoot).Length)) {
