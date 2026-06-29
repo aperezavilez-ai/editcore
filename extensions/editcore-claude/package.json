@@ -154,6 +154,18 @@
         "title": "EditCore: Ver plan y consumo de la organización"
       },
       {
+        "command": "editcore.loginWithAccount",
+        "title": "EditCore: Iniciar sesión con mi cuenta (correo y contraseña)"
+      },
+      {
+        "command": "editcore.logoutAccount",
+        "title": "EditCore: Cerrar sesión de mi cuenta"
+      },
+      {
+        "command": "editcore.showAccount",
+        "title": "EditCore: Ver mi cuenta"
+      },
+      {
         "command": "editcore.openAgent",
         "title": "EditCore: Abrir Agente"
       },

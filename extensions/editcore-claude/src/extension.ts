@@ -29,6 +29,7 @@ import { loadCustomAgents } from "./agents/roles";
 import { registerAutomationEngine, openAutomationsConfig } from "./automation/automationEngine";
 import { showSessionsPicker, exportSessionsReport, resumeSession } from "./sessions/agentSessionStore";
 import { initOrgConfig } from "./enterprise/orgConfig";
+import { UserAccountAuthService } from "./enterprise/userAccountAuth";
 import { showInitWorkspaceResult } from "./workspace/workspaceBootstrap";
 import { showCommandHub } from "./hub/commandHub";
 import { createStatusBarItem, showAbout } from "./hub/statusBar";
@@ -270,6 +271,20 @@ export async function activate(context: vscode.ExtensionContext) {
           `${summary.tokensUsedThisMonth.toLocaleString()} / ${summary.monthlyTokenLimit.toLocaleString()} tokens este mes` +
           (summary.overLimit ? " · LÍMITE SUPERADO" : "")
       );
+    })
+  );
+
+  const userAccountAuth = new UserAccountAuthService(context);
+  context.subscriptions.push(
+    vscode.commands.registerCommand("editcore.loginWithAccount", async () => {
+      await userAccountAuth.promptLogin();
+    }),
+    vscode.commands.registerCommand("editcore.logoutAccount", async () => {
+      await userAccountAuth.logout();
+      vscode.window.showInformationMessage("EditCore: sesión cerrada.");
+    }),
+    vscode.commands.registerCommand("editcore.showAccount", async () => {
+      await userAccountAuth.showAccount();
     })
   );
 
