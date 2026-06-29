@@ -23,7 +23,10 @@ import {
   scaffoldVertical,
   showAuditLog,
   generateFromIdea,
+  createCustomAgent,
 } from "./verticals/verticalCommands";
+import { loadCustomAgents } from "./agents/roles";
+import { registerAutomationEngine, openAutomationsConfig } from "./automation/automationEngine";
 import { showSessionsPicker, exportSessionsReport, resumeSession } from "./sessions/agentSessionStore";
 import { initOrgConfig } from "./enterprise/orgConfig";
 import { showInitWorkspaceResult } from "./workspace/workspaceBootstrap";
@@ -82,8 +85,13 @@ export async function activate(context: vscode.ExtensionContext) {
   };
   warmWorkspaceIndex();
   context.subscriptions.push(
-    vscode.workspace.onDidChangeWorkspaceFolders(() => warmWorkspaceIndex())
+    vscode.workspace.onDidChangeWorkspaceFolders(() => {
+      warmWorkspaceIndex();
+      void loadCustomAgents();
+    })
   );
+  void loadCustomAgents();
+  registerAutomationEngine(context);
 
   if (vscode.workspace.workspaceFolders?.length) {
     context.subscriptions.push(
@@ -193,6 +201,8 @@ export async function activate(context: vscode.ExtensionContext) {
       );
     }),
     vscode.commands.registerCommand("editcore.generateFromIdea", () => generateFromIdea()),
+    vscode.commands.registerCommand("editcore.createCustomAgent", () => createCustomAgent()),
+    vscode.commands.registerCommand("editcore.manageAutomations", () => openAutomationsConfig()),
     vscode.commands.registerCommand("editcore.founderMode", () => founderMode()),
     vscode.commands.registerCommand("editcore.ctoMode", () => ctoMode()),
     vscode.commands.registerCommand("editcore.saasBuilder", () => saasBuilder()),

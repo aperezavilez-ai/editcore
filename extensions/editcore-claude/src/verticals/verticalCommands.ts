@@ -178,6 +178,34 @@ export async function generateFromIdea(): Promise<void> {
   });
 }
 
+export async function createCustomAgent(): Promise<void> {
+  const { saveCustomAgent } = await import('../agents/roles');
+
+  const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  if (!root) {
+    vscode.window.showWarningMessage('Abre un workspace primero.');
+    return;
+  }
+
+  const name = await vscode.window.showInputBox({
+    prompt: 'Nombre del agente (se usará como @nombre en el chat)',
+    placeHolder: 'ej: redactor-legal',
+    validateInput: (v) => (/^[a-z0-9-]+$/i.test(v.trim()) ? undefined : 'Solo letras, números y guiones.'),
+  });
+  if (!name?.trim()) return;
+
+  const objective = await vscode.window.showInputBox({
+    prompt: 'Objetivo / instrucciones del agente (esto se usa como su system prompt)',
+    placeHolder: 'ej: Redactá contratos y términos legales en español claro, citando riesgos.',
+  });
+  if (!objective?.trim()) return;
+
+  await saveCustomAgent({ id: name.trim().toLowerCase(), label: name.trim(), systemPrompt: objective.trim() });
+  vscode.window.showInformationMessage(
+    `Agente @${name.trim().toLowerCase()} guardado en .editcore/agents.json. Usalo en el chat con @${name.trim().toLowerCase()}.`
+  );
+}
+
 export async function showAuditLog(): Promise<void> {
   const { readRecentAudit } = await import('../enterprise/orgConfig');
   const lines = await readRecentAudit(30);
