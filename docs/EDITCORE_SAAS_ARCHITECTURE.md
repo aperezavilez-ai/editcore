@@ -60,9 +60,28 @@ si hay una clave de organización configurada, se envía automáticamente un
 evento a `/api/usage/track` (de forma asíncrona, sin bloquear ni romper nada
 si el backend no responde).
 
+## 4.1 Autenticación de usuario individual (nuevo, real pero incompleto)
+
+Primer paso real hacia login por usuario (no solo clave de organización
+compartida), usando Supabase Auth (magic link por correo):
+
+- `web/login.html` — pide el correo y llama a `supabase.auth.signInWithOtp`.
+- `web/account.html` — lee la sesión de Supabase, llama a `/api/auth/me` con el `access_token` como Bearer, y muestra usuario + organización + plan + rol.
+- `/api/auth/me` (GET) — verifica el JWT contra Supabase (`auth.getUser`), busca el `profile` (tabla `profiles`, ya vinculada a `auth.users`) y la organización asociada.
+- `lib/userAuth.ts` — `resolveUserFromBearerToken` y `getProfile`, paralelos a `lib/orgAuth.ts` pero para usuarios individuales en vez de claves de organización.
+
+**Pendiente para que funcione en producción**: `web/assets/supabase-config.js`
+tiene un valor placeholder (`REEMPLAZAR_CON_TU_ANON_KEY`) en `EDITCORE_SUPABASE_ANON_KEY`.
+Hay que pegar ahí la clave `anon`/`publishable` real del proyecto Supabase
+(Project Settings → API), que es segura para exponer en el cliente —no es
+la `service_role` key. Sin ese valor real, el login no funciona todavía.
+También hay que asignar manualmente `organization_id` en la tabla `profiles`
+para cada usuario que inicie sesión (no hay flujo de invitación todavía).
+
 ## 5. Lo que NO existe todavía (honesto, no inventado)
 
-- **Autenticación de usuarios final (login/signup, OAuth, SSO)**: no implementado. El acceso es por clave de organización compartida, no por usuario individual.
+- **Signup / OAuth / SSO**: el login por magic link ya existe (ver 4.1), pero no hay registro propio (today cualquiera con acceso a Supabase Auth puede pedir un magic link), ni OAuth con terceros, ni SSO empresarial.
+- **Flujo de invitación a organización**: no hay manera de invitar a un usuario nuevo y asignarle automáticamente una organización; hoy se hace a mano en la tabla `profiles`.
 - **Panel de administración web** (crear orgs, rotar claves, ver todas las organizaciones): no existe interfaz; todo se gestiona hoy vía SQL directo en Supabase.
 - **Webhooks de Stripe** y cobro real: no implementado (ver `EDITCORE_BILLING_SYSTEM.md`).
 - **Multi-región / alta disponibilidad**: es la configuración por defecto de Supabase/Vercel, sin configuración adicional.
