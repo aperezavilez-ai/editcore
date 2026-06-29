@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>EditCore — Mi cuenta</title>
+<link rel="icon" href="/assets/favicon-32.png" />
+<style>
+  body { font-family: -apple-system, system-ui, sans-serif; background: #0b0d12; color: #e8eaf0; display: flex; min-height: 100vh; align-items: center; justify-content: center; margin: 0; }
+  .card { background: #14171f; border: 1px solid #232733; border-radius: 12px; padding: 32px; width: 420px; }
+  h1 { font-size: 20px; margin: 0 0 16px; }
+  .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #232733; font-size: 14px; }
+  .row span:first-child { color: #8b909e; }
+  button { margin-top: 20px; width: 100%; padding: 10px; border-radius: 8px; border: none; background: #2b3040; color: white; cursor: pointer; font-size: 14px; }
+  .msg { font-size: 13px; margin-top: 14px; color: #f87171; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>Mi cuenta EditCore</h1>
+    <div id="content">Cargando...</div>
+    <div id="msg" class="msg"></div>
+    <button id="logoutBtn" style="display:none">Cerrar sesión</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="/assets/supabase-config.js"></script>
+  <script>
+    const supabase = window.supabase.createClient(window.EDITCORE_SUPABASE_URL, window.EDITCORE_SUPABASE_ANON_KEY);
+    const content = document.getElementById("content");
+    const msg = document.getElementById("msg");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    async function load() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        content.textContent = "No has iniciado sesión.";
+        const a = document.createElement("a");
+        a.href = "/login.html";
+        a.textContent = "Ir a iniciar sesión";
+        a.style.color = "#5865f2";
+        content.appendChild(document.createElement("br"));
+        content.appendChild(a);
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/auth/me", {
+          headers: { Authorization: "Bearer " + session.access_token },
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          msg.textContent = data.error || "No se pudo cargar la cuenta.";
+          return;
+        }
+        content.innerHTML = `
+          <div class="row"><span>Correo</span><span>${data.user.email ?? "—"}</span></div>
+          <div class="row"><span>Organización</span><span>${data.organization?.name ?? "Sin organización asignada"}</span></div>
+          <div class="row"><span>Plan</span><span>${data.organization?.plan ?? "—"}</span></div>
+          <div class="row"><span>Rol</span><span>${data.profile?.role ?? "—"}</span></div>
+        `;
+        logoutBtn.style.display = "block";
+      } catch (err) {
+        msg.textContent = "Error de red al consultar /api/auth/me.";
+      }
+    }
+
+    logoutBtn.addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      window.location.href = "/login.html";
+    });
+
+    load();
+  </script>
+</body>
+</html>

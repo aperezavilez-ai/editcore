@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>EditCore — Iniciar sesión</title>
+<link rel="icon" href="/assets/favicon-32.png" />
+<style>
+  body { font-family: -apple-system, system-ui, sans-serif; background: #0b0d12; color: #e8eaf0; display: flex; min-height: 100vh; align-items: center; justify-content: center; margin: 0; }
+  .card { background: #14171f; border: 1px solid #232733; border-radius: 12px; padding: 32px; width: 360px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  p.sub { color: #8b909e; font-size: 13px; margin: 0 0 24px; }
+  input { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 8px; border: 1px solid #2b3040; background: #0b0d12; color: #e8eaf0; font-size: 14px; margin-bottom: 12px; }
+  button { width: 100%; padding: 10px; border-radius: 8px; border: none; background: #5865f2; color: white; font-weight: 600; cursor: pointer; font-size: 14px; }
+  button:disabled { opacity: 0.6; cursor: default; }
+  .msg { font-size: 13px; margin-top: 14px; }
+  .msg.ok { color: #4ade80; }
+  .msg.err { color: #f87171; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>EditCore</h1>
+    <p class="sub">Inicia sesión con un enlace mágico enviado a tu correo.</p>
+    <input id="email" type="email" placeholder="tu@correo.com" autocomplete="email" />
+    <button id="sendBtn">Enviar enlace mágico</button>
+    <div id="msg" class="msg"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="/assets/supabase-config.js"></script>
+  <script>
+    const supabase = window.supabase.createClient(window.EDITCORE_SUPABASE_URL, window.EDITCORE_SUPABASE_ANON_KEY);
+    const msg = document.getElementById("msg");
+    const btn = document.getElementById("sendBtn");
+
+    btn.addEventListener("click", async () => {
+      const email = document.getElementById("email").value.trim();
+      if (!email) {
+        msg.textContent = "Escribe un correo válido.";
+        msg.className = "msg err";
+        return;
+      }
+      btn.disabled = true;
+      msg.textContent = "Enviando...";
+      msg.className = "msg";
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: window.location.origin + "/account.html" },
+      });
+      btn.disabled = false;
+      if (error) {
+        msg.textContent = "Error: " + error.message;
+        msg.className = "msg err";
+        return;
+      }
+      msg.textContent = "Revisa tu correo y haz clic en el enlace para entrar.";
+      msg.className = "msg ok";
+    });
+  </script>
+</body>
+</html>
