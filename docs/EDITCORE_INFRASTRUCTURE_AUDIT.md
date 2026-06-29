@@ -70,7 +70,7 @@ estático de la web de descarga.
 2. ~~Sin `npm audit`/escaneo de dependencias en CI~~ — **resuelto**: agregado a `editcore-ci.yml` para ambas extensiones (0 vulnerabilidades high/critical al momento de esta auditoría).
 3. ~~`continue-on-error: true` en la validación de parches~~ — **verificado, no es un riesgo real**: el script (`apply-editcore-patches.js`) solo hace `process.exit(1)` si falta el argumento de ruta (hardcodeado en el workflow, nunca falta); ante archivos de patch faltantes solo emite warnings y sale con `exit 0`. El `continue-on-error` no está ocultando ningún fallo actual.
 4. ~~Costos/uso de IA no eran visibles en ninguna UI~~ — **resuelto parcialmente**: los datos (`estimatedCostUsd`, `sessionEstimatedCostUsd`, `toolCalls`) ya se calculaban en `apiKeyService.ts` pero ninguna pantalla los mostraba. Se agregó una sección "Uso e costos estimados de IA" al panel Cuenta & API (`configViewProvider.ts`) con tokens/costo de sesión, totales históricos de la instalación, y ranking de tools más usadas. Sigue siendo **visibilidad local por usuario, no centralizada** — eso requiere el backend que no existe (ver sección 10).
-5. **CI corre en `windows-latest` para todo**, lo cual es más lento/caro que `ubuntu-latest` sin que haya, a priori, una dependencia de Windows en el código de las extensiones (a confirmar).
+5. ~~CI corre en `windows-latest` para todo~~ — **resuelto**: se verificó que los usos de `process.platform === 'win32'` en el código son ramas en tiempo de ejecución (elegir `cmd.exe` vs `/bin/sh` en la máquina del usuario), no dependencias de build/test. Ambas extensiones compilan y pasan sus tests en Linux. CI movido a `ubuntu-latest`.
 
 ## 9. Recomendaciones inmediatas (sin construir backend nuevo)
 

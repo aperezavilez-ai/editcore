@@ -180,6 +180,7 @@ export async function generateFromIdea(): Promise<void> {
 
 export async function createCustomAgent(): Promise<void> {
   const { saveCustomAgent } = await import('../agents/roles');
+  const { AGENT_TOOLS } = await import('../agent/tools');
 
   const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
   if (!root) {
@@ -200,9 +201,27 @@ export async function createCustomAgent(): Promise<void> {
   });
   if (!objective?.trim()) return;
 
-  await saveCustomAgent({ id: name.trim().toLowerCase(), label: name.trim(), systemPrompt: objective.trim() });
+  const toolPicks = await vscode.window.showQuickPick(
+    AGENT_TOOLS.map((t) => ({ label: t.name, description: t.description, picked: true })),
+    {
+      canPickMany: true,
+      placeHolder: 'Tools permitidas para este agente (todas marcadas = sin restricción)',
+    }
+  );
+  const allowedTools =
+    toolPicks && toolPicks.length > 0 && toolPicks.length < AGENT_TOOLS.length
+      ? toolPicks.map((p) => p.label)
+      : undefined;
+
+  await saveCustomAgent({
+    id: name.trim().toLowerCase(),
+    label: name.trim(),
+    systemPrompt: objective.trim(),
+    allowedTools,
+  });
+  const restriction = allowedTools ? ` (limitado a: ${allowedTools.join(', ')})` : ' (sin restricción de tools)';
   vscode.window.showInformationMessage(
-    `Agente @${name.trim().toLowerCase()} guardado en .editcore/agents.json. Usalo en el chat con @${name.trim().toLowerCase()}.`
+    `Agente @${name.trim().toLowerCase()} guardado en .editcore/agents.json${restriction}. Usalo en el chat con @${name.trim().toLowerCase()}.`
   );
 }
 

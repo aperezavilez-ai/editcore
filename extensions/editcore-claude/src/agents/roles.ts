@@ -21,6 +21,8 @@ export interface AgentRole {
   id: AgentRoleId;
   label: string;
   systemPrompt: string;
+  /** Si se define, el agente solo puede usar estas tools (por nombre). Si está vacío/undefined, usa todas. */
+  allowedTools?: string[];
 }
 
 /** Habilidades del agente incluidas en EditCore (sin instalar desde Marketplace). */
@@ -148,6 +150,7 @@ interface CustomAgentFile {
   id: string;
   label: string;
   systemPrompt: string;
+  allowedTools?: string[];
 }
 
 let customAgentsCache: Record<string, AgentRole> = {};
@@ -161,9 +164,11 @@ function getAgentsFilePath(): string | undefined {
 }
 
 /**
- * Agentes definidos por el usuario en .editcore/agents.json (id, label, systemPrompt).
- * No hay enforcement de "tools" o "permisos" por agente: todo agente custom usa el
- * mismo set de tools y las mismas aprobaciones manuales que cualquier rol incluido.
+ * Agentes definidos por el usuario en .editcore/agents.json (id, label, systemPrompt,
+ * allowedTools opcional). Si allowedTools está definido, se filtran las tools que se
+ * envían a la API para ese agente (enforcement real: el modelo no puede llamar una
+ * tool que no está en la lista que se le envía). Las aprobaciones manuales de
+ * write_file/run_command siguen aplicando igual sobre las tools permitidas.
  */
 export async function loadCustomAgents(): Promise<Record<string, AgentRole>> {
   const filePath = getAgentsFilePath();
@@ -177,7 +182,12 @@ export async function loadCustomAgents(): Promise<Record<string, AgentRole>> {
     const result: Record<string, AgentRole> = {};
     for (const entry of parsed) {
       if (!entry?.id || !entry?.systemPrompt) continue;
-      result[entry.id] = { id: entry.id, label: entry.label || entry.id, systemPrompt: entry.systemPrompt };
+      result[entry.id] = {
+        id: entry.id,
+        label: entry.label || entry.id,
+        systemPrompt: entry.systemPrompt,
+        allowedTools: Array.isArray(entry.allowedTools) && entry.allowedTools.length > 0 ? entry.allowedTools : undefined,
+      };
     }
     customAgentsCache = result;
   } catch {
@@ -210,6 +220,11 @@ export async function saveCustomAgent(agent: CustomAgentFile): Promise<void> {
 
 function resolveRole(roleId: AgentRoleId): AgentRole | undefined {
   return AGENT_ROLES[roleId as string] ?? customAgentsCache[roleId as string];
+}
+
+/** Tools permitidas para un rol/agente, o undefined si puede usar todas (comportamiento por defecto). */
+export function getAllowedToolsForRole(roleId: AgentRoleId): string[] | undefined {
+  return resolveRole(roleId)?.allowedTools;
 }
 
 const BUILTIN_ROLE_IDS = 'architect|fullstack|devops|qa|gps|founder|cto|saas|security|ui-design|billing';
