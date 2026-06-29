@@ -586,7 +586,15 @@ async function showDiffAndConfirm(
     'Cancelar'
   );
   fs.promises.unlink(tmpPath).catch(() => {});
-  return choice === 'Aplicar';
+  const approved = choice === 'Aplicar';
+  const { appendAudit } = await import('../enterprise/orgConfig');
+  await appendAudit({
+    type: 'decision',
+    kind: 'file_write',
+    action: approved ? 'apply' : 'cancel',
+    path: relativeLabel,
+  });
+  return approved;
 }
 
 async function execWriteAdr(input: {
