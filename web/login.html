@@ -11,6 +11,9 @@
   h1 { font-size: 20px; margin: 0 0 4px; }
   p.sub { color: #8b909e; font-size: 13px; margin: 0 0 24px; }
   input { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 8px; border: 1px solid #2b3040; background: #0b0d12; color: #e8eaf0; font-size: 14px; margin-bottom: 12px; }
+  .pwd-wrap { position: relative; margin-bottom: 12px; }
+  .pwd-wrap input { margin-bottom: 0; padding-right: 40px; }
+  .pwd-toggle { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; width: auto; padding: 4px; cursor: pointer; font-size: 16px; line-height: 1; }
   button { width: 100%; padding: 10px; border-radius: 8px; border: none; background: #5865f2; color: white; font-weight: 600; cursor: pointer; font-size: 14px; }
   button.secondary { background: #2b3040; margin-top: 8px; }
   button:disabled { opacity: 0.6; cursor: default; }
@@ -24,7 +27,10 @@
     <h1>EditCore</h1>
     <p class="sub">Inicia sesión o crea una cuenta con tu correo y contraseña.</p>
     <input id="email" type="email" placeholder="tu@correo.com" autocomplete="email" />
-    <input id="password" type="password" placeholder="Contraseña" autocomplete="current-password" />
+    <div class="pwd-wrap">
+      <input id="password" type="password" placeholder="Contraseña" autocomplete="current-password" />
+      <button type="button" id="togglePwd" class="pwd-toggle">👁</button>
+    </div>
     <button id="loginBtn">Iniciar sesión</button>
     <button id="signupBtn" class="secondary">Crear cuenta</button>
     <div id="msg" class="msg"></div>
@@ -36,6 +42,14 @@
     const msg = document.getElementById("msg");
     const loginBtn = document.getElementById("loginBtn");
     const signupBtn = document.getElementById("signupBtn");
+    const togglePwd = document.getElementById("togglePwd");
+    const passwordInput = document.getElementById("password");
+
+    togglePwd.addEventListener("click", () => {
+      const isHidden = passwordInput.type === "password";
+      passwordInput.type = isHidden ? "text" : "password";
+      togglePwd.textContent = isHidden ? "🙈" : "👁";
+    });
 
     function showError(text) {
       msg.textContent = text;
