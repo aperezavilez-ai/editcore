@@ -1,8 +1,8 @@
 {
-  "name": "editcore-backend",
+  "name": "editcore",
   "version": "0.1.0",
   "private": true,
-  "description": "Backend real de EditCore (Prompt 10): organizaciones, planes, consumo IA. Despliega como proyecto Vercel separado.",
+  "description": "Sitio y backend real de EditCore: organizaciones, planes, consumo IA, junto con la landing page estática.",
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
     "stripe": "^16.12.0"
