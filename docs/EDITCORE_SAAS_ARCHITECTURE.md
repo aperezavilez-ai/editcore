@@ -60,26 +60,32 @@ si hay una clave de organización configurada, se envía automáticamente un
 evento a `/api/usage/track` (de forma asíncrona, sin bloquear ni romper nada
 si el backend no responde).
 
-## 4.1 Autenticación de usuario individual (nuevo, real pero incompleto)
+## 4.1 Autenticación de usuario individual (real, probado en producción)
 
-Primer paso real hacia login por usuario (no solo clave de organización
-compartida), usando Supabase Auth (magic link por correo):
+Login por usuario (no solo clave de organización compartida), usando
+Supabase Auth con correo y contraseña (no magic link — se descartó por la
+fricción de depender de envío de correo):
 
-- `web/login.html` — pide el correo y llama a `supabase.auth.signInWithOtp`.
+- `web/login.html` — formulario de correo + contraseña con dos botones: "Iniciar sesión" (`supabase.auth.signInWithPassword`) y "Crear cuenta" (`supabase.auth.signUp`). Incluye botón para mostrar/ocultar la contraseña.
 - `web/account.html` — lee la sesión de Supabase, llama a `/api/auth/me` con el `access_token` como Bearer, y muestra usuario + organización + plan + rol.
 - `/api/auth/me` (GET) — verifica el JWT contra Supabase (`auth.getUser`), busca el `profile` (tabla `profiles`, ya vinculada a `auth.users`) y la organización asociada.
 - `lib/userAuth.ts` — `resolveUserFromBearerToken` y `getProfile`, paralelos a `lib/orgAuth.ts` pero para usuarios individuales en vez de claves de organización.
 
-**Estado actual**: `web/assets/supabase-config.js` ya tiene la clave `anon`
-real del proyecto Supabase de EditCore (segura para exponer en el cliente,
-distinta de `service_role`), así que el login por magic link ya puede
-probarse en producción. Lo único pendiente para que un usuario nuevo vea su
-organización en `/account.html` es asignarle manualmente `organization_id`
-en la tabla `profiles` (no hay flujo de invitación automático todavía).
+**Estado actual**: probado de extremo a extremo en `editcore.mx` — registro
+con correo y contraseña, sesión activa, y `/account.html` mostrando
+correctamente organización ("EditCore"), plan ("free") y rol ("owner") tras
+vincular manualmente el usuario a la organización vía SQL
+(`supabase/migrations/0003_link_user_to_org.sql`, ejecutado a mano en el SQL
+Editor de Supabase). La confirmación por correo está desactivada en
+Supabase (Authentication → Sign In / Providers → "Confirm email" = off),
+así que el registro es inmediato, sin depender de ningún proveedor de
+correo. Lo único pendiente para que un usuario nuevo vea su organización en
+`/account.html` es asignarle manualmente `organization_id` en la tabla
+`profiles` (no hay flujo de invitación automático todavía).
 
 ## 5. Lo que NO existe todavía (honesto, no inventado)
 
-- **Signup / OAuth / SSO**: el login por magic link ya existe (ver 4.1), pero no hay registro propio (today cualquiera con acceso a Supabase Auth puede pedir un magic link), ni OAuth con terceros, ni SSO empresarial.
+- **OAuth / SSO**: el login con correo y contraseña ya existe y está probado (ver 4.1), pero no hay OAuth con terceros (Google, GitHub, etc.) ni SSO empresarial.
 - **Flujo de invitación a organización**: no hay manera de invitar a un usuario nuevo y asignarle automáticamente una organización; hoy se hace a mano en la tabla `profiles`.
 - **Panel de administración web** (crear orgs, rotar claves, ver todas las organizaciones): no existe interfaz; todo se gestiona hoy vía SQL directo en Supabase.
 - **Webhooks de Stripe** y cobro real: no implementado (ver `EDITCORE_BILLING_SYSTEM.md`).
