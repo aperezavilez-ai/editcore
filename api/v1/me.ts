@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { resolveDeveloperKey } from "../../lib/developerAuth";
+import { resolveDeveloperKey, hasScope, checkRateLimit } from "../../lib/developerAuth";
 
 /**
  * GET /api/v1/me — primer endpoint real de la API pública de EditCore
@@ -15,6 +15,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const key = await resolveDeveloperKey(req.headers["x-editcore-api-key"] as string | undefined);
   if (!key) {
     return res.status(401).json({ error: "API key inválida, inactiva o expirada." });
+  }
+  if (!hasScope(key, "api:read")) {
+    return res.status(403).json({ error: "La clave no tiene el scope api:read." });
+  }
+  const { allowed, remaining } = checkRateLimit(key);
+  res.setHeader("X-RateLimit-Limit", String(key.rateLimitPerMinute));
+  res.setHeader("X-RateLimit-Remaining", String(Math.max(remaining, 0)));
+  if (!allowed) {
+    return res.status(429).json({ error: "Límite de solicitudes por minuto excedido." });
   }
   return res.status(200).json({ authenticated: true, scopes: key.scopes });
 }
