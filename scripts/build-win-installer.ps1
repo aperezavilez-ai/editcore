@@ -63,22 +63,32 @@ try {
 
   Write-Host ""
   Write-Host "=== EditCore: herramientas Inno (inno_updater) ===" -ForegroundColor Cyan
-  npm run gulp -- vscode-win32-x64-inno-updater
-  if ($LASTEXITCODE -ne 0) { throw "gulp vscode-win32-x64-inno-updater fallo con codigo $LASTEXITCODE" }
+  $prevErr = $ErrorActionPreference
+  $ErrorActionPreference = "Continue"
+  npm run gulp -- vscode-win32-x64-inno-updater 2>&1 | Out-Host
+  $innoOk = ($LASTEXITCODE -eq 0)
+  $ErrorActionPreference = $prevErr
 
-  Write-Host ""
-  Write-Host "=== EditCore: instalador usuario (EditCoreUserSetup.exe) ===" -ForegroundColor Cyan
-  npm run gulp -- vscode-win32-x64-user-setup
-  if ($LASTEXITCODE -ne 0) { throw "gulp vscode-win32-x64-user-setup fallo con codigo $LASTEXITCODE" }
-
-  $userSetup = Join-Path $REPO ".build\win32-x64\user-setup\EditCoreUserSetup.exe"
-  if (Test-Path $userSetup) {
-    $distUser = Join-Path $ROOT "EditCoreUserSetup-x64.exe"
-    Copy-Item $userSetup $distUser -Force
-    Write-Host "Instalador usuario: $userSetup" -ForegroundColor Green
-    Write-Host "Copia en raiz:      $distUser" -ForegroundColor Green
+  if (-not $innoOk) {
+    Write-Host "AVISO: inno-updater no se pudo compilar (bug conocido de extensions.ts en Code-OSS)." -ForegroundColor Yellow
+    Write-Host "El portable .zip se generara igual. El instalador .exe queda pendiente." -ForegroundColor Yellow
   } else {
-    Write-Host "No se encontro EditCoreUserSetup.exe - revisa el log de gulp." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "=== EditCore: instalador usuario (EditCoreUserSetup.exe) ===" -ForegroundColor Cyan
+    npm run gulp -- vscode-win32-x64-user-setup
+    if ($LASTEXITCODE -ne 0) {
+      Write-Host "AVISO: user-setup fallo. El portable .zip se generara igual." -ForegroundColor Yellow
+    } else {
+      $userSetup = Join-Path $REPO ".build\win32-x64\user-setup\EditCoreUserSetup.exe"
+      if (Test-Path $userSetup) {
+        $distUser = Join-Path $ROOT "EditCoreUserSetup-x64.exe"
+        Copy-Item $userSetup $distUser -Force
+        Write-Host "Instalador usuario: $userSetup" -ForegroundColor Green
+        Write-Host "Copia en raiz:      $distUser" -ForegroundColor Green
+      } else {
+        Write-Host "No se encontro EditCoreUserSetup.exe - revisa el log de gulp." -ForegroundColor Yellow
+      }
+    }
   }
 
   $sysSetupDir = Join-Path $REPO ".build\win32-x64\system-setup"
