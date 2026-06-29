@@ -27,7 +27,8 @@ export async function runAgentTask(
   onUsage?: (inputTokens: number, outputTokens: number) => void,
   onToolCall?: (name: string) => void,
   roleId: AgentRoleId = "default",
-  apiKeyService?: ApiKeyService
+  apiKeyService?: ApiKeyService,
+  conversation: Anthropic.Messages.MessageParam[] = []
 ): Promise<void> {
   const config = vscode.workspace.getConfiguration("editcore");
   const model = resolveClaudeModelId(config.get<string>("model", LLM_CONFIG.claude.defaultModel));
@@ -61,7 +62,8 @@ export async function runAgentTask(
 
   try {
     const enrichedTask = await buildAgentContext(userTask);
-    const messages: Anthropic.Messages.MessageParam[] = [{ role: "user", content: enrichedTask }];
+    const messages = conversation;
+    messages.push({ role: "user", content: enrichedTask });
 
     for (let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
       if (abortSignal?.aborted) {
