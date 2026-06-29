@@ -70,13 +70,12 @@ compartida), usando Supabase Auth (magic link por correo):
 - `/api/auth/me` (GET) — verifica el JWT contra Supabase (`auth.getUser`), busca el `profile` (tabla `profiles`, ya vinculada a `auth.users`) y la organización asociada.
 - `lib/userAuth.ts` — `resolveUserFromBearerToken` y `getProfile`, paralelos a `lib/orgAuth.ts` pero para usuarios individuales en vez de claves de organización.
 
-**Pendiente para que funcione en producción**: `web/assets/supabase-config.js`
-tiene un valor placeholder (`REEMPLAZAR_CON_TU_ANON_KEY`) en `EDITCORE_SUPABASE_ANON_KEY`.
-Hay que pegar ahí la clave `anon`/`publishable` real del proyecto Supabase
-(Project Settings → API), que es segura para exponer en el cliente —no es
-la `service_role` key. Sin ese valor real, el login no funciona todavía.
-También hay que asignar manualmente `organization_id` en la tabla `profiles`
-para cada usuario que inicie sesión (no hay flujo de invitación todavía).
+**Estado actual**: `web/assets/supabase-config.js` ya tiene la clave `anon`
+real del proyecto Supabase de EditCore (segura para exponer en el cliente,
+distinta de `service_role`), así que el login por magic link ya puede
+probarse en producción. Lo único pendiente para que un usuario nuevo vea su
+organización en `/account.html` es asignarle manualmente `organization_id`
+en la tabla `profiles` (no hay flujo de invitación automático todavía).
 
 ## 5. Lo que NO existe todavía (honesto, no inventado)
 
