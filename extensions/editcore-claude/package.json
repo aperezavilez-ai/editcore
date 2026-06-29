@@ -309,6 +309,11 @@
         "command": "editcore.intelligence.health",
         "title": "EditCore: Health Monitor (SIL)",
         "shortTitle": "Health Monitor"
+      },
+      {
+        "command": "editcore.intelligence.commandCenter",
+        "title": "EditCore: Command Center (uso, costos, decisiones, recomendaciones)",
+        "shortTitle": "Command Center"
       }
     ],
     "menus": {

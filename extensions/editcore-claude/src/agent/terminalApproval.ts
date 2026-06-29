@@ -8,6 +8,7 @@
  */
 
 import * as vscode from 'vscode';
+import { appendAudit } from '../enterprise/orgConfig';
 
 export type CommandApprovalDecision =
   | { action: 'run' }
@@ -29,6 +30,7 @@ export async function requestCommandApproval(
   );
 
   if (choice === 'Ejecutar') {
+    await appendAudit({ type: 'decision', kind: 'command', action: 'run', command });
     return { action: 'run' };
   }
 
@@ -39,10 +41,13 @@ export async function requestCommandApproval(
       ignoreFocusOut: true,
     });
     if (!edited) {
+      await appendAudit({ type: 'decision', kind: 'command', action: 'cancel', command });
       return { action: 'cancel' };
     }
+    await appendAudit({ type: 'decision', kind: 'command', action: 'edit', command, editedCommand: edited });
     return { action: 'edit', editedCommand: edited };
   }
 
+  await appendAudit({ type: 'decision', kind: 'command', action: 'cancel', command });
   return { action: 'cancel' };
 }

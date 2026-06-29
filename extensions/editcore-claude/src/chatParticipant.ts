@@ -151,7 +151,7 @@ async function handleAgentRequest(
 
   const onTool = (toolName: string) => {
     toolCalls += 1;
-    apiKeyService.recordToolCall(toolName);
+    apiKeyService.recordToolCall(toolName, role);
   };
   const onUsage = (input: number, output: number) => {
     totalInput += input;
