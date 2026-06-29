@@ -200,6 +200,16 @@ export class ClaudeConfigViewProvider implements vscode.WebviewViewProvider {
   </section>
 
   <section>
+    <p class="hint" style="margin-top:0;"><strong>Uso e costos estimados de IA</strong></p>
+    <table style="width:100%; font-size:12px; border-collapse:collapse;">
+      <tr><td style="opacity:.7;">Sesión actual</td><td id="sessTokens" style="text-align:right;"></td><td id="sessCost" style="text-align:right; font-weight:600;"></td></tr>
+      <tr><td style="opacity:.7;">Total histórico (esta instalación)</td><td id="totalTokens" style="text-align:right;"></td><td id="totalCost" style="text-align:right; font-weight:600;"></td></tr>
+    </table>
+    <p class="hint" id="toolCallsHint" style="margin-top:8px;"></p>
+    <p class="hint" style="margin-top:6px; opacity:.6;">Estimado a partir de tokens reportados por la API y precios públicos por modelo. Solo visible localmente — EditCore no envía estos datos a ningún servidor.</p>
+  </section>
+
+  <section>
     <p class="hint" style="margin-top:0;"><strong>Habilidades del agente</strong> (sin instalar nada):</p>
     <ul class="skills">
       <li><code>@architect</code> — Arquitectura y ADRs</li>
@@ -298,6 +308,17 @@ export class ClaudeConfigViewProvider implements vscode.WebviewViewProvider {
       openAiModel.appendChild(opt);
     }
     openAiModelDesc.textContent = (msg.openAiModels || []).find(m => m.id === s.openAiModel)?.description || '';
+
+    document.getElementById('sessTokens').textContent =
+      '↑' + (s.sessionInputTokens || 0).toLocaleString() + ' ↓' + (s.sessionOutputTokens || 0).toLocaleString() + ' tok';
+    document.getElementById('sessCost').textContent = '$' + (s.sessionEstimatedCostUsd || 0).toFixed(4);
+    document.getElementById('totalTokens').textContent =
+      '↑' + (s.inputTokens || 0).toLocaleString() + ' ↓' + (s.outputTokens || 0).toLocaleString() + ' tok · ' + (s.requestCount || 0) + ' req';
+    document.getElementById('totalCost').textContent = '$' + (s.estimatedCostUsd || 0).toFixed(4);
+    const toolEntries = Object.entries(s.toolCalls || {}).sort((a, b) => b[1] - a[1]).slice(0, 6);
+    document.getElementById('toolCallsHint').textContent = toolEntries.length
+      ? 'Tools más usadas: ' + toolEntries.map(([name, count]) => name + ' (' + count + ')').join(', ')
+      : 'Sin uso del Agent Mode registrado todavía.';
   });
 </script>
 </body>

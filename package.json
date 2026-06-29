@@ -1,0 +1,14 @@
+{
+  "name": "editcore",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sitio y backend real de EditCore: organizaciones, planes, consumo IA, junto con la landing page estática.",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "stripe": "^16.12.0"
+  },
+  "devDependencies": {
+    "@vercel/node": "^3.2.0",
+    "typescript": "^5.5.4"
+  }
+}

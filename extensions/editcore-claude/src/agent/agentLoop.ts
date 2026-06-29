@@ -7,7 +7,7 @@ import { LLM_CONFIG } from "../llmConfig";
 import { resolveClaudeModelId } from "../models";
 import { getAllAgentTools, executeAgentTool, setToolCallRecorder } from "./tools";
 import { buildAgentContext } from "./agentContext";
-import { AgentRoleId, buildSystemPrompt } from "../agents/roles";
+import { AgentRoleId, buildSystemPrompt, getAllowedToolsForRole } from "../agents/roles";
 import { buildAgentSystemPromptBase, getAgentCommunicationStyle } from "./communicationStyle";
 
 const MAX_ITERATIONS = 30;
@@ -27,7 +27,8 @@ export async function runAgentTask(
   onUsage?: (inputTokens: number, outputTokens: number) => void,
   onToolCall?: (name: string) => void,
   roleId: AgentRoleId = "default",
-  apiKeyService?: ApiKeyService
+  apiKeyService?: ApiKeyService,
+  conversation: Anthropic.Messages.MessageParam[] = []
 ): Promise<void> {
   const config = vscode.workspace.getConfiguration("editcore");
   const model = resolveClaudeModelId(config.get<string>("model", LLM_CONFIG.claude.defaultModel));
@@ -55,13 +56,14 @@ export async function runAgentTask(
 
   const client = createClaudeClient(apiKey);
   const systemPrompt = await buildSystemPrompt(buildAgentSystemPromptBase(), roleId);
-  const tools = await getAllAgentTools();
+  const tools = await getAllAgentTools(getAllowedToolsForRole(roleId));
 
   setToolCallRecorder(onToolCall);
 
   try {
     const enrichedTask = await buildAgentContext(userTask);
-    const messages: Anthropic.Messages.MessageParam[] = [{ role: "user", content: enrichedTask }];
+    const messages = conversation;
+    messages.push({ role: "user", content: enrichedTask });
 
     for (let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
       if (abortSignal?.aborted) {
