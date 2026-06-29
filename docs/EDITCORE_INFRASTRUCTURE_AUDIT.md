@@ -21,7 +21,7 @@ estático de la web de descarga.
 
 ## 2. Hosting y despliegue actual
 
-- **Web estática**: dos pipelines coexisten — `pages.yml` (GitHub Pages, build con Python/Pillow/fpdf2 para generar iconos y un PDF) y `vercel.json` (apunta `outputDirectory: web`). Confirmar cuál es el canal "oficial" hoy; tener ambos activos es redundante y puede generar confusión sobre cuál URL es la real.
+- **Web estática**: el canal oficial es **Vercel** (`https://editcore.mx/`, confirmado — ver `vercel.json`, `outputDirectory: web`, y README). El workflow `pages.yml` (GitHub Pages) quedó como **respaldo manual** (`workflow_dispatch` únicamente, sin disparo automático en push) para no servir una versión paralela/desactualizada de la web. _Resuelto en esta auditoría._
 - **Extensiones**: no se publican a un marketplace público en este pipeline (no hay step de `vsce publish` en `editcore-release.yml`); el release crea el `.vsix` y lo adjunta a un GitHub Release. La distribución es manual/descarga directa.
 - **No hay ambientes** (dev/staging/production) en el sentido de infraestructura desplegada, porque no hay servicio desplegado que tenga ambientes.
 
@@ -66,10 +66,10 @@ estático de la web de descarga.
 
 ## 8. Riesgos identificados (reales, sobre el código actual)
 
-1. **Doble pipeline de despliegue web** (GitHub Pages + Vercel) sin que quede claro en el repo cuál es la fuente de verdad — riesgo de servir contenido desactualizado desde una de las dos.
-2. **Sin `npm audit`/escaneo de dependencias en CI** — vulnerabilidades en dependencias (SDKs de Anthropic/OpenAI, etc.) no se detectan automáticamente.
-3. **`continue-on-error: true`** en la validación de parches enmascara fallos reales sin que nadie se entere desde CI.
-4. **Costos/uso de IA no son visibles para el equipo de EditCore** — solo el usuario final ve su propio gasto. Si el objetivo de negocio es ofrecer planes pagos o límites, hoy no hay ningún dato centralizado para soportarlo.
+1. ~~Doble pipeline de despliegue web (GitHub Pages + Vercel)~~ — **resuelto**: Vercel/`editcore.mx` confirmado como canal oficial, GitHub Pages pasado a respaldo manual sin disparo automático.
+2. ~~Sin `npm audit`/escaneo de dependencias en CI~~ — **resuelto**: agregado a `editcore-ci.yml` para ambas extensiones (0 vulnerabilidades high/critical al momento de esta auditoría).
+3. ~~`continue-on-error: true` en la validación de parches~~ — **verificado, no es un riesgo real**: el script (`apply-editcore-patches.js`) solo hace `process.exit(1)` si falta el argumento de ruta (hardcodeado en el workflow, nunca falta); ante archivos de patch faltantes solo emite warnings y sale con `exit 0`. El `continue-on-error` no está ocultando ningún fallo actual.
+4. ~~Costos/uso de IA no eran visibles en ninguna UI~~ — **resuelto parcialmente**: los datos (`estimatedCostUsd`, `sessionEstimatedCostUsd`, `toolCalls`) ya se calculaban en `apiKeyService.ts` pero ninguna pantalla los mostraba. Se agregó una sección "Uso e costos estimados de IA" al panel Cuenta & API (`configViewProvider.ts`) con tokens/costo de sesión, totales históricos de la instalación, y ranking de tools más usadas. Sigue siendo **visibilidad local por usuario, no centralizada** — eso requiere el backend que no existe (ver sección 10).
 5. **CI corre en `windows-latest` para todo**, lo cual es más lento/caro que `ubuntu-latest` sin que haya, a priori, una dependencia de Windows en el código de las extensiones (a confirmar).
 
 ## 9. Recomendaciones inmediatas (sin construir backend nuevo)

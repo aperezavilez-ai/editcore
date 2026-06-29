@@ -1,14 +1,10 @@
-name: EditCore Web (GitHub Pages)
+# El canal oficial de la web de EditCore es Vercel (https://editcore.mx/, ver
+# vercel.json y README.md). Este workflow queda como respaldo manual, no se
+# dispara automáticamente para evitar servir una versión paralela/desactualizada
+# desde GitHub Pages.
+name: EditCore Web (GitHub Pages) [respaldo manual]
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'web/**'
-      - 'scripts/generate-web-pdf.py'
-      - 'branding/icons/editcore-logo-source.png'
-      - 'branding/icons/editcore-logo-web.png'
-      - '.github/workflows/pages.yml'
   workflow_dispatch:
 
 permissions:
