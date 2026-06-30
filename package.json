@@ -5,6 +5,7 @@
   "description": "Sitio y backend real de EditCore: organizaciones, planes, consumo IA, junto con la landing page estática.",
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
+    "playwright": "^1.61.1",
     "stripe": "^16.12.0"
   },
   "devDependencies": {
