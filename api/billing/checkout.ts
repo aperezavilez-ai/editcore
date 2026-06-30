@@ -1,12 +1,12 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getSupabaseAdmin } from "../../lib/supabaseAdmin";
 import { resolveOrganizationFromKey } from "../../lib/orgAuth";
-import { getStripe, priceIdForPlan } from "../../lib/stripeClient";
+import { getStripe, priceIdForInterval, type BillingInterval } from "../../lib/stripeClient";
 
 /**
- * POST /api/billing/checkout { plan, successUrl, cancelUrl }
+ * POST /api/billing/checkout { interval, successUrl, cancelUrl }
  * Crea una sesión de Stripe Checkout para que la organización autenticada
- * suscriba (o cambie a) el plan pedido. Devuelve { url } para redirigir.
+ * suscriba el plan "pro" (único plan pago), mensual o anual. Devuelve { url }.
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
@@ -18,14 +18,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(401).json({ error: "Organization key inválida o revocada." });
   }
 
-  const { plan, successUrl, cancelUrl } = req.body ?? {};
-  if (!plan || !successUrl || !cancelUrl) {
-    return res.status(400).json({ error: "plan, successUrl y cancelUrl son requeridos." });
+  const { interval, successUrl, cancelUrl } = req.body ?? {};
+  if ((interval !== "monthly" && interval !== "annual") || !successUrl || !cancelUrl) {
+    return res
+      .status(400)
+      .json({ error: 'interval ("monthly" o "annual"), successUrl y cancelUrl son requeridos.' });
   }
 
-  const priceId = priceIdForPlan(plan);
+  const priceId = priceIdForInterval(interval as BillingInterval);
   if (!priceId) {
-    return res.status(400).json({ error: `No hay un Price de Stripe configurado para el plan "${plan}".` });
+    return res.status(400).json({ error: `No hay un Price de Stripe configurado para la frecuencia "${interval}".` });
   }
 
   const supabase = getSupabaseAdmin();

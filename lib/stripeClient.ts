@@ -2,6 +2,8 @@ import Stripe from "stripe";
 
 let cached: Stripe | undefined;
 
+export type BillingInterval = "monthly" | "annual";
+
 /** Cliente de Stripe server-side. Lanza si falta STRIPE_SECRET_KEY (nunca hardcodeada). */
 export function getStripe(): Stripe {
   if (cached) return cached;
@@ -13,25 +15,15 @@ export function getStripe(): Stripe {
   return cached;
 }
 
-/** Mapea un plan de EditCore al ID de Price de Stripe (configurado por variable de entorno). */
-export function priceIdForPlan(plan: string): string | undefined {
-  const map: Record<string, string | undefined> = {
-    starter: process.env.STRIPE_PRICE_STARTER,
-    professional: process.env.STRIPE_PRICE_PROFESSIONAL,
-    team: process.env.STRIPE_PRICE_TEAM,
-    enterprise: process.env.STRIPE_PRICE_ENTERPRISE,
-  };
-  return map[plan];
+/** Único plan pago de EditCore ("pro"), facturable mensual ($19) o anual ($182.40, -20%). */
+export function priceIdForInterval(interval: BillingInterval): string | undefined {
+  return interval === "annual" ? process.env.STRIPE_PRICE_PRO_ANNUAL : process.env.STRIPE_PRICE_PRO_MONTHLY;
 }
 
-/** Mapea un Price ID de Stripe de vuelta al plan de EditCore, para procesar webhooks. */
-export function planForPriceId(priceId: string | undefined): string | undefined {
+/** Mapea un Price ID de Stripe de vuelta a la frecuencia de facturación, para procesar webhooks. */
+export function intervalForPriceId(priceId: string | undefined): BillingInterval | undefined {
   if (!priceId) return undefined;
-  const pairs: Array<[string, string | undefined]> = [
-    ["starter", process.env.STRIPE_PRICE_STARTER],
-    ["professional", process.env.STRIPE_PRICE_PROFESSIONAL],
-    ["team", process.env.STRIPE_PRICE_TEAM],
-    ["enterprise", process.env.STRIPE_PRICE_ENTERPRISE],
-  ];
-  return pairs.find(([, id]) => id === priceId)?.[0];
+  if (priceId === process.env.STRIPE_PRICE_PRO_ANNUAL) return "annual";
+  if (priceId === process.env.STRIPE_PRICE_PRO_MONTHLY) return "monthly";
+  return undefined;
 }

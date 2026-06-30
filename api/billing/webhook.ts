@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import type Stripe from "stripe";
 import { getSupabaseAdmin } from "../../lib/supabaseAdmin";
-import { getStripe, planForPriceId } from "../../lib/stripeClient";
+import { getStripe, intervalForPriceId } from "../../lib/stripeClient";
 
 /** Necesitamos el body crudo (sin parsear) para verificar la firma de Stripe. */
 export const config = { api: { bodyParser: false } };
@@ -82,7 +82,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
 async function upsertSubscription(supabase: any, organizationId: string, subscription: Stripe.Subscription) {
   const priceId = subscription.items.data[0]?.price?.id;
-  const plan = planForPriceId(priceId);
+  const billingInterval = intervalForPriceId(priceId);
+  const plan = billingInterval ? "pro" : "free";
   const status =
     subscription.status === "active" || subscription.status === "trialing"
       ? subscription.status
@@ -100,8 +101,9 @@ async function upsertSubscription(supabase: any, organizationId: string, subscri
     organization_id: organizationId,
     stripe_customer_id: subscription.customer as string,
     stripe_subscription_id: subscription.id,
-    plan: plan ?? "free",
+    plan,
     status,
+    billing_interval: billingInterval ?? null,
     current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
     updated_at: new Date().toISOString(),
   };
@@ -112,7 +114,5 @@ async function upsertSubscription(supabase: any, organizationId: string, subscri
     await supabase.from("subscriptions").insert(row);
   }
 
-  if (plan) {
-    await supabase.from("organizations").update({ plan }).eq("id", organizationId);
-  }
+  await supabase.from("organizations").update({ plan }).eq("id", organizationId);
 }
