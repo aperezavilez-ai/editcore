@@ -81,7 +81,7 @@ create table if not exists public.ai_agent_activations (
   agent_slug      text not null,
   status          text not null default 'idle'
                     check (status in ('idle','active','paused','terminated')),
-  session_context jsonb not null default '{}',
+  agent_context   jsonb not null default '{}',
   last_active_at  timestamptz default now(),
   created_at      timestamptz not null default now()
 );
