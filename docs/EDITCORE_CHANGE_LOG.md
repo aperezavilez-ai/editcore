@@ -40,6 +40,18 @@ Registro de cambios reales, derivado del historial real de `git log` (no reconst
 - **Hallazgos**: CI existente no cubre `api/`/`lib/` (solo extensiones del IDE); 2+ pares de docs con nombres solapados; catálogo de modelos solo incluye Anthropic pese a que el prompt pedía también OpenAI (documentado como brecha real, no fabricado).
 - **Próximos pasos**: ejecutar `EDITCORE_MASTER_ROADMAP.md` Prioridad 1 (P1.1 — tests de `lib/`, P1.2 — CI extendido) en un prompt/sprint futuro, siguiendo `EDITCORE_SPRINT_SYSTEM.md`.
 
+### 2026-06-30 — Flujo real de registro → plan gratuito → descarga
+
+- **Tipo de cambio**: código de producto + 1 migración SQL aditiva.
+- **Motivo**: la landing (`web/index.html`) ofrecía descarga directa sin registro; se pidió pasar a registro → plan → descarga, con un solo plan real por ahora ("Community", gratis).
+- **Archivos modificados**:
+  - `web/index.html`: el CTA principal cambia de "Descargar EditCore" a "Registrarse" (enlaza a `/login.html`); se quitó el script que reescribía ese botón con la URL del último release.
+  - `web/account.html`: muestra el plan real de la organización (`free` → "Community (gratis)", etc.) y agrega el botón real de descarga + versión dinámica (lógica movida desde `index.html`).
+  - `supabase/migrations/0014_auto_org_on_signup.sql` (nueva): trigger `on_auth_user_created` sobre `auth.users` que crea automáticamente una `organization` en plan `free` y un `profile` como `owner` al registrarse — reemplaza el proceso manual que existía en `0003_link_user_to_org.sql` (correr SQL a mano por cada usuario), que no escalaba.
+- **Pruebas**: `npx tsc --noEmit` → sin errores.
+- **Lo que NO se hizo (gap real, documentado)**: el pop-up de inicio de sesión dentro del IDE de escritorio al abrir la app no se implementó — el código fuente del shell de escritorio (fork de Code-OSS) no está en este repositorio, que solo contiene `extensions/editcore-claude` y `extensions/editcore-connect` más el backend web. Implementarlo requiere trabajar en el repo del IDE de escritorio, fuera del alcance de este cambio.
+- **Próximo paso real**: cuando exista acceso al repo del shell de escritorio, agregar ahí una pantalla de login obligatoria al primer arranque que valide contra el mismo Supabase Auth (`EDITCORE_SUPABASE_URL`/`EDITCORE_SUPABASE_ANON_KEY`) ya usado en `web/login.html`.
+
 ## Cómo se actualiza este archivo a futuro
 
 Cada sprint ejecutado desde `EDITCORE_MASTER_ROADMAP.md` agrega una entrada nueva siguiendo el mismo formato (fecha, tipo, archivos, pruebas, hallazgos, próximos pasos), inmediatamente después de la última entrada — no se reescriben entradas anteriores.
