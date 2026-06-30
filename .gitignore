@@ -24,6 +24,11 @@ __pycache__/
 
 # Telemetría local del orquestador (solo metadatos)
 .editcore/stats.json
+# Índice RAG local (puede pesar cientos de MB)
+.editcore/rag/
+
+# Backups de instalador
+*.exe.bak
 
 # Secretos y configuración local
 .env
