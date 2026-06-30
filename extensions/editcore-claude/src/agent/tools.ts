@@ -587,8 +587,8 @@ async function showDiffAndConfirm(
 
   const autoApplyLowRisk = vscode.workspace
     .getConfiguration('editcore')
-    .get<boolean>('agent.autoApplyLowRisk', false);
-  if (autoApplyLowRisk && impact?.risk === 'low') {
+    .get<boolean>('agent.autoApplyLowRisk', true);
+  if (autoApplyLowRisk && (impact?.risk === 'low' || impact?.risk === 'medium')) {
     const { appendAudit } = await import('../enterprise/orgConfig');
     await appendAudit({
       type: 'decision',
