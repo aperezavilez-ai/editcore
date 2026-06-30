@@ -343,6 +343,120 @@
       line-height: 1.45;
     }
 
+    /* Planes */
+    .pricing {
+      padding: 1rem 0 3rem;
+    }
+    .pricing h2 {
+      text-align: center;
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin-bottom: 0.4rem;
+    }
+    .pricing .pricing-sub {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin-bottom: 1.75rem;
+    }
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.25rem;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    .plan-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-neon);
+      border-radius: 14px;
+      padding: 1.5rem 1.4rem;
+      display: flex;
+      flex-direction: column;
+    }
+    .plan-card.featured {
+      border-color: var(--cyan);
+      box-shadow: 0 0 28px rgba(0, 229, 255, 0.18);
+      position: relative;
+    }
+    .plan-card.featured::before {
+      content: 'Recomendado';
+      position: absolute;
+      top: -11px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--cyan);
+      color: #001318;
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 0.25rem 0.7rem;
+      border-radius: 99px;
+    }
+    .plan-name {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+    }
+    .plan-price {
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: var(--cyan);
+      margin-bottom: 0.15rem;
+    }
+    .plan-price span {
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--muted);
+    }
+    .plan-price-note {
+      font-size: 0.74rem;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+    .plan-features {
+      list-style: none;
+      flex: 1;
+      margin-bottom: 1.25rem;
+    }
+    .plan-features li {
+      font-size: 0.82rem;
+      color: var(--muted);
+      padding: 0.32rem 0;
+      padding-left: 1.3rem;
+      position: relative;
+    }
+    .plan-features li::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: var(--cyan);
+      font-weight: 700;
+    }
+    .plan-cta {
+      display: block;
+      text-align: center;
+      padding: 0.7rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-decoration: none;
+      color: var(--text);
+      background: rgba(0, 229, 255, 0.08);
+      border: 1px solid var(--border-neon);
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .plan-card.featured .plan-cta {
+      background: var(--cyan);
+      color: #001318;
+      border-color: var(--cyan);
+    }
+    .plan-cta:hover { opacity: 0.88; }
+    @media (max-width: 640px) {
+      .pricing-grid { grid-template-columns: 1fr; }
+    }
+
     /* Footer */
     footer {
       padding: 1.75rem 0 2.5rem;
@@ -466,6 +580,7 @@
       <div class="header-right">
         <nav>
           <a href="#descargar">Descargar</a>
+          <a href="#planes">Planes</a>
           <button type="button" class="nav-btn" data-info-open="guia">Guía</button>
           <a href="login.html">Iniciar sesión</a>
         </nav>
@@ -528,6 +643,37 @@
           <p>IDE local, sin telemetría. Tus API keys y tokens se guardan cifrados en tu propio equipo.</p>
         </article>
       </section>
+
+      <section class="pricing" id="planes" aria-label="Planes">
+        <h2>Planes</h2>
+        <p class="pricing-sub">Empezá gratis. Subí a Pro cuando lo necesites — se elige y se paga desde Mi cuenta, después de registrarte.</p>
+        <div class="pricing-grid">
+          <article class="plan-card">
+            <div class="plan-name">Community</div>
+            <div class="plan-price">$0 <span>/ siempre</span></div>
+            <div class="plan-price-note">Sin tarjeta requerida</div>
+            <ul class="plan-features">
+              <li>EditCore IDE completo (descarga)</li>
+              <li>Chat y agentes IA integrados</li>
+              <li>Conecta GitHub, Vercel y Supabase</li>
+              <li>Acceso a la comunidad EditCore</li>
+            </ul>
+            <a class="plan-cta" href="/login.html">Crear cuenta gratis</a>
+          </article>
+          <article class="plan-card featured">
+            <div class="plan-name">Pro</div>
+            <div class="plan-price">$19 <span>/ mes</span></div>
+            <div class="plan-price-note">o $182.40 / año (2 meses gratis)</div>
+            <ul class="plan-features">
+              <li>Todo lo de Community</li>
+              <li>Límites ampliados de uso de IA</li>
+              <li>Panel de desarrolladores (API keys)</li>
+              <li>Soporte prioritario</li>
+            </ul>
+            <a class="plan-cta" href="/login.html">Registrarme y subir a Pro</a>
+          </article>
+        </div>
+      </section>
     </main>
 
     <footer>
@@ -589,7 +735,7 @@
     <h2>4. Sin garantía</h2>
     <p>El software se proporciona «tal cual», sin garantías de comerciabilidad o idoneidad para un fin particular.</p>
     <h2>5. Precios</h2>
-    <p>Los planes de pago se definirán en una actualización posterior. La edición comunidad descargable desde editcore.mx es gratuita.</p>
+    <p>La edición Community descargable desde editcore.mx es gratuita. El plan Pro tiene un costo de $19/mes o $182.40/año, gestionado vía Stripe desde Mi cuenta una vez registrado (ver sección "Planes" en la página principal).</p>
   </template>
 
   <template id="tpl-privacidad">
