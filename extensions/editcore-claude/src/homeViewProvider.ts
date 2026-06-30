@@ -138,11 +138,11 @@ export class EditCoreHomeViewProvider implements vscode.WebviewViewProvider {
     const badge = document.getElementById('statusBadge');
     badge.className = 'status ' + (msg.hasApiKey ? 'ok' : 'bad');
     if (msg.hasAnthropic && msg.hasOpenAi) {
-      badge.textContent = 'Claude + OpenAI · ' + (msg.apiKeyHint || '');
+      badge.textContent = 'EditCore AI · ' + (msg.apiKeyHint || '');
     } else if (msg.hasOpenAi) {
-      badge.textContent = 'Solo OpenAI · ' + (msg.openAiKeyHint || '');
+      badge.textContent = 'EditCore AI · ' + (msg.openAiKeyHint || '');
     } else if (msg.hasAnthropic) {
-      badge.textContent = 'Claude activo · ' + (msg.apiKeyHint || '');
+      badge.textContent = 'EditCore AI · ' + (msg.apiKeyHint || '');
     } else {
       badge.textContent = 'Sin API Key — configúrala abajo';
     }

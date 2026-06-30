@@ -79,9 +79,7 @@ export async function runAgentTask(
         onEvent({
           type: "error",
           message:
-            `${claudeError.message} El modo Agent no puede continuar sin Claude porque es el único proveedor con ` +
-            "las herramientas de archivos conectadas; no se usa un respaldo sin herramientas para evitar respuestas " +
-            "que digan poder editar código sin poder hacerlo de verdad.",
+            `${claudeError.message} El agente de EditCore no puede continuar — verifica tu API Key en el panel de configuración.`,
         });
         return;
       }

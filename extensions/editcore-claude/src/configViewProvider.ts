@@ -273,7 +273,7 @@ export class ClaudeConfigViewProvider implements vscode.WebviewViewProvider {
     const s = msg.snapshot;
     const hasAny = s.hasApiKey || s.hasOpenAiKey;
     statusBadge.className = 'status ' + (s.hasApiKey ? 'ok' : 'bad');
-    statusBadge.textContent = s.hasApiKey ? 'Claude activo' : 'Claude sin configurar';
+    statusBadge.textContent = s.hasApiKey ? 'EditCore AI activo' : 'Sin configurar';
     keyHint.textContent = s.hasApiKey
       ? 'Key: ' + s.apiKeyHint
       : 'Pegá tu key de Anthropic y pulsá Guardar.';

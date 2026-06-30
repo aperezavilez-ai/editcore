@@ -150,7 +150,7 @@ export class ApiKeysPanelProvider implements vscode.WebviewViewProvider {
     const aSt = document.getElementById('anthropicStatus');
     const oSt = document.getElementById('openaiStatus');
     aSt.className = msg.hasAnthropic ? 'ok' : 'bad';
-    aSt.textContent = msg.hasAnthropic ? 'Claude activa · ' + msg.anthropicHint : 'Sin Claude';
+    aSt.textContent = msg.hasAnthropic ? 'EditCore AI activa · ' + msg.anthropicHint : 'Sin configurar';
     oSt.className = msg.hasOpenAi ? 'ok' : 'bad';
     oSt.textContent = msg.hasOpenAi ? 'OpenAI activa · ' + msg.openaiHint : 'Sin OpenAI (opcional)';
     document.getElementById('anthropicHint').textContent = msg.hasAnthropic ? 'Key: ' + msg.anthropicHint : 'Pega tu key de console.anthropic.com';

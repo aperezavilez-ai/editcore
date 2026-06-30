@@ -78,7 +78,7 @@ export function registerClaudeChatParticipant(
       const hasOpenAi = await apiKeyService.hasOpenAiKey();
       if (!hasAnthropic && !hasOpenAi) {
         stream.markdown(
-          "**Sin API Key configurada.** Abre el panel de **API Keys** (icono de llave en la barra izquierda) y pega tu key de **Claude (Anthropic)** o **OpenAI** (`sk-...`).\n\nEditCore usa Claude primero y OpenAI como respaldo automatico si falla."
+          "**Sin API Key configurada.** Abre el panel de **API Keys** (icono de llave en la barra izquierda) y pega tu key de Anthropic o OpenAI.\n\nEditCore AI usa Anthropic como proveedor principal y OpenAI como respaldo automático."
         );
         stream.button({
           command: "editcore.openAccountPanel",
