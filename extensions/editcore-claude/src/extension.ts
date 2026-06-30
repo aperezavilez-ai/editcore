@@ -38,6 +38,7 @@ import { registerDiagnosticCommands } from "./diagnostics/diagnosticCommands";
 import { registerIntelligenceCommands } from "./intelligence/intelligenceCommands";
 import { registerQuickActionsBar } from "./hub/quickActionsBar";
 import { registerDevServerWatcher } from "./preview/devServerWatcher";
+import { disposeAll as disposeProxies } from "./preview/cssProxy";
 import { registerWelcomePanel, showWelcomeIfNeeded } from "./welcome/welcomePanel";
 import { runFirstRunWizardIfNeeded } from "./welcome/firstRunWizard";
 import { registerProductCommands } from "./product/productCommands";
@@ -441,4 +442,6 @@ async function maybePromptWorkspaceInit(context: vscode.ExtensionContext): Promi
   }
 }
 
-export function deactivate() {}
+export function deactivate() {
+  disposeProxies();
+}

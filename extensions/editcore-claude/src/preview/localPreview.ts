@@ -1,15 +1,17 @@
 import * as http from "http";
 import * as vscode from "vscode";
 import { candidateDevPorts, detectDevServerSync } from "./projectDevServer";
+import { proxied } from "./cssProxy";
 
 const DEV_TERMINAL_NAME = "EditCore — Dev Server";
 const FALLBACK_PORTS = [3000, 5173, 8080, 4200, 8000];
 
 export async function openIntegratedBrowser(url: string): Promise<void> {
-  const origin = safeOrigin(url);
+  const proxyUrl = await proxied(url);
+  const origin = safeOrigin(proxyUrl);
   await vscode.commands.executeCommand("workbench.action.browser.open", {
-    url,
-    reuseUrlFilter: origin ?? url,
+    url: proxyUrl,
+    reuseUrlFilter: origin ?? proxyUrl,
   });
 }
 
