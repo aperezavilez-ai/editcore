@@ -64,6 +64,17 @@ Registro de cambios reales, derivado del historial real de `git log` (no reconst
 - **Validación**: pendiente de confirmación del usuario probando el modo Agent real con su API Key de Claude configurada.
 - **Próximo paso real**: si el usuario reporta el mismo síntoma con la API Key de Claude ya configurada, el siguiente sospechoso a revisar es si está usando el panel de **chat normal** (sin herramientas por diseño, ese modo solo conversa) en vez del panel **Agent** (el que sí tiene herramientas) — los dos modos existen por separado en el código (`chatViewProvider.ts`/`chatParticipant.ts` vs `agentPanel.ts`).
 
+### 2026-06-30 — Narración de progreso en el panel de chat nativo + auto-aplicar cambios de bajo riesgo
+
+- **Tipo de cambio**: fix de comportamiento real en el agente del IDE (`extensions/editcore-claude`), sin nuevas dependencias.
+- **Síntoma reportado por el usuario**: en el panel de chat principal (el registrado vía `vscode.chat.createChatParticipant` en `chatParticipant.ts`), durante una tarea de Agent solo se veía la etiqueta nativa de VS Code "Thinking" parpadeando, sin ningún detalle de qué estaba haciendo el agente, a diferencia de Claude Code (este asistente), que narra cada paso.
+- **Causa raíz encontrada**: el estilo de comunicación por defecto `editcore.agent.style = "cursor"` hace que `shouldShowToolProgressInChat()` devuelva `false`, por lo que `streamAgentEvent()` en `chatParticipant.ts` no llamaba a `stream.markdown(...)` en ningún evento `tool_call_start`. Como el panel de chat es la API nativa de chat de VS Code, mientras el handler no llama a ningún método de `stream`, VS Code sigue mostrando su indicador genérico "Thinking" — no hay forma de narrar sin usar la API de `stream`.
+- **Archivos modificados**:
+  - `extensions/editcore-claude/src/chatParticipant.ts`: se agregó una llamada a `stream.progress(...)` (indicador transitorio nativo de VS Code, no persiste en el historial del chat) en cada `tool_call_start`, con un mensaje breve generado por la nueva función `describeToolProgress(name, input)` (p. ej. "Leyendo src/app/layout.tsx…", "Ejecutando: npm run build…"). Esto se hace siempre, independientemente del estilo `cursor`/`verbose`, porque `stream.progress` es justamente el mecanismo de VS Code para reemplazar el "Thinking" genérico por un estado real, sin contradecir el diseño de "cero texto narrado en la respuesta final" del estilo `cursor`.
+  - `extensions/editcore-claude/src/agent/tools.ts` (`showDiffAndConfirm`): se terminó de conectar el setting `editcore.agent.autoApplyLowRisk` (agregado en un cambio anterior a `package.json` pero nunca usado) — cuando está en `true` y `analyzeFileImpact` clasifica el cambio como riesgo `low`, el archivo se aplica directamente sin el diálogo modal de confirmación (queda igual de auditado vía `appendAudit` con `action: 'auto_apply_low_risk'`). Los archivos nuevos (sin impacto calculado) y los de riesgo medio/alto siguen pidiendo confirmación siempre.
+- **Pruebas**: `npx tsc --noEmit -p extensions/editcore-claude` → sin errores; `npm run compile` → sin errores.
+- **Validación**: pendiente de confirmación del usuario probando en el IDE real tras recompilar/reinstalar la extensión.
+
 ## Cómo se actualiza este archivo a futuro
 
 Cada sprint ejecutado desde `EDITCORE_MASTER_ROADMAP.md` agrega una entrada nueva siguiendo el mismo formato (fecha, tipo, archivos, pruebas, hallazgos, próximos pasos), inmediatamente después de la última entrada — no se reescriben entradas anteriores.

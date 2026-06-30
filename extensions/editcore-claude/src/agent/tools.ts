@@ -580,10 +580,25 @@ async function showDiffAndConfirm(
   fileExists: boolean,
   impact?: Awaited<ReturnType<typeof analyzeFileImpact>>
 ): Promise<boolean> {
+  const relativeLabel = vscode.workspace.asRelativePath(absPath);
+
+  const autoApplyLowRisk = vscode.workspace
+    .getConfiguration('editcore')
+    .get<boolean>('agent.autoApplyLowRisk', false);
+  if (autoApplyLowRisk && impact?.risk === 'low') {
+    const { appendAudit } = await import('../enterprise/orgConfig');
+    await appendAudit({
+      type: 'decision',
+      kind: 'file_write',
+      action: 'auto_apply_low_risk',
+      path: relativeLabel,
+    });
+    return true;
+  }
+
   const tmpPath = path.join(os.tmpdir(), `editcore-agent-${Date.now()}-${path.basename(absPath)}`);
   await fs.promises.writeFile(tmpPath, newContent, 'utf-8');
   const tmpUri = vscode.Uri.file(tmpPath);
-  const relativeLabel = vscode.workspace.asRelativePath(absPath);
 
   if (fileExists) {
     await vscode.commands.executeCommand(
