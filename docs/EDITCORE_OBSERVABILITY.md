@@ -21,12 +21,21 @@ si el proyecto tiene Analytics o Speed Insights activado.
 
 1. En el dashboard de Vercel del proyecto `editcore`: **Analytics** (pestaña
    del proyecto) → activar. Lo mismo para **Speed Insights**.
-2. Opcional, para errores del backend (`api/*.ts`), no solo de páginas:
-   crear cuenta en Sentry, copiar el `SENTRY_DSN` y cargarlo como variable
-   de entorno en Vercel (nunca en el repo). Esto no está implementado
-   todavía — es un paso aparte si se decide agregar Sentry.
 
-## 3. Qué mide cada uno
+## 3. Decisión: sin Sentry ni herramientas externas nuevas
+
+Se evaluó agregar Sentry para errores de backend (`api/*.ts`), pero el
+usuario decidió explícitamente **no** darse de alta en herramientas nuevas
+que generen costo adicional — la prioridad es no gastar más de lo que el
+proyecto factura todavía. Por eso la observabilidad de EditCore se queda
+en lo que ya está activo y sin costo extra: **Vercel Analytics + Speed
+Insights** (gratis en el plan actual) y los **logs nativos de Vercel**
+(`vercel logs` / pestaña "Logs" del proyecto, ya disponibles sin
+configuración) para ver errores de las funciones `api/*.ts`. Si en el
+futuro el negocio justifica el gasto, Sentry queda como opción documentada
+acá, no como pendiente activo.
+
+## 4. Qué mide cada uno
 
 - **Web Analytics**: vistas de página, visitantes únicos, por página/ruta.
 - **Speed Insights**: Core Web Vitals reales (LCP, FID/INP, CLS) medidos en
