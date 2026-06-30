@@ -65,11 +65,13 @@ Roadmap derivado directamente de `EDITCORE_GAP_ANALYSIS.md`. Cada tarea es ejecu
 - **Complejidad**: media.
 - **Riesgo**: bajo.
 
-### P4.2 — Optimization Engine alimentado por datos reales
+### P4.2 — Optimization Engine alimentado por datos reales ✅ COMPLETADO (2026-06-30)
 - **Objetivo**: que el Evolution Engine (`evolution_proposals`) reciba propuestas automáticas basadas en datos reales de costo/latencia.
-- **Dependencias**: P4.1 (sin observabilidad no hay datos que analizar).
+- **Hecho**: `lib/optimizationEngine.ts` (`analyzeCostOptimization`) analiza el gasto real por modelo agregado de `usage_events` (sin datos simulados). `api/evolution/audit.ts`, en auditorías `kind=weekly`, agrega el costo de los últimos 7 días por modelo y, si un modelo premium concentra ≥50% del gasto total (con gasto total ≥ $1), registra una propuesta Nivel 2 ("proponer", nunca autoejecuta) en `evolution_proposals` con `source='audit'`. Dedupe por título contra propuestas `proposed` existentes para no spamear la tabla cada semana corrida del cron.
+- **Archivos afectados**: `lib/optimizationEngine.ts` (nuevo), `api/evolution/audit.ts`, `lib/__tests__/optimizationEngine.test.js` (5 tests).
+- **Dependencias**: P4.1 — usa `usage_events`, que ya existía desde el sistema de billing, no Vercel Analytics; no quedó bloqueada por la decisión de no usar Sentry.
 - **Complejidad**: alta.
-- **Riesgo**: medio.
+- **Riesgo**: medio — mitigado: la propuesta es solo de lectura/análisis, nunca cambia el `modelRouter` ni el comportamiento de producción por sí sola; requiere que un humano la apruebe vía `evolution_proposals.status`.
 
 ### P4.3 — Interfaz conversacional unificada
 - **Objetivo**: un punto de entrada de chat que use el Orquestador Universal para enrutar a cualquier módulo.
