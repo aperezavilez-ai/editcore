@@ -168,6 +168,7 @@ async function handleAgentRequest(
     vscode.workspace.getConfiguration("editcore").get<boolean>("orchestrator.enabled", false);
 
   try {
+    stream.progress("Analizando…");
     const run = useMultiAgent
       ? runMultiAgentPipeline(apiKey, task, (event: MultiAgentEvent) => {
           if (token.isCancellationRequested) return;
@@ -284,6 +285,7 @@ function streamAgentEvent(
   stream: vscode.ChatResponseStream,
   onAssistantText?: (text: string) => void
 ): void {
+  const verbose = shouldShowToolProgressInChat();
   switch (event.type) {
     case "assistant_text": {
       const clean = sanitizeAssistantText(event.text);
@@ -295,13 +297,15 @@ function streamAgentEvent(
       break;
     }
     case "tool_call_start":
-      stream.progress(describeToolProgress(event.name, event.input));
-      if (shouldShowToolProgressInChat()) {
-        stream.markdown(`\n🔧 **${event.name}**\n`);
+      // En modo verbose muestra cada paso; en modo normal solo actualiza el spinner sin texto visible
+      if (verbose) {
+        stream.progress(describeToolProgress(event.name, event.input));
       }
       break;
     case "tool_call_result":
-      if (event.isError) {
+      // Los errores de herramienta son ruido — el agente los maneja internamente
+      // Solo mostramos en verbose para depuración
+      if (event.isError && verbose) {
         stream.markdown(`\n❌ ${event.output.slice(0, 500)}\n`);
       }
       break;
