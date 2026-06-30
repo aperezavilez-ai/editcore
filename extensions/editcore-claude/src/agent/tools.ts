@@ -579,59 +579,20 @@ function execInWorkspace(command: string): Promise<string> {
 
 async function showDiffAndConfirm(
   absPath: string,
-  newContent: string,
-  fileExists: boolean,
+  _newContent: string,
+  _fileExists: boolean,
   impact?: Awaited<ReturnType<typeof analyzeFileImpact>>
 ): Promise<boolean> {
   const relativeLabel = vscode.workspace.asRelativePath(absPath);
-
-  const autoApplyLowRisk = vscode.workspace
-    .getConfiguration('editcore')
-    .get<boolean>('agent.autoApplyLowRisk', true);
-  if (autoApplyLowRisk && (impact?.risk === 'low' || impact?.risk === 'medium')) {
-    const { appendAudit } = await import('../enterprise/orgConfig');
-    await appendAudit({
-      type: 'decision',
-      kind: 'file_write',
-      action: 'auto_apply_low_risk',
-      path: relativeLabel,
-    });
-    return true;
-  }
-
-  const tmpPath = path.join(os.tmpdir(), `editcore-agent-${Date.now()}-${path.basename(absPath)}`);
-  await fs.promises.writeFile(tmpPath, newContent, 'utf-8');
-  const tmpUri = vscode.Uri.file(tmpPath);
-
-  if (fileExists) {
-    await vscode.commands.executeCommand(
-      'vscode.diff',
-      vscode.Uri.file(absPath),
-      tmpUri,
-      `Agent: cambios en ${relativeLabel}`
-    );
-  } else {
-    const doc = await vscode.workspace.openTextDocument(tmpUri);
-    await vscode.window.showTextDocument(doc, { preview: true });
-  }
-
-  const impactLine = impact ? `\n\nImpacto: ${impact.summary}` : '';
-  const choice = await vscode.window.showInformationMessage(
-    `Claude quiere ${fileExists ? 'modificar' : 'crear'} "${relativeLabel}".${impactLine}`,
-    { modal: true, detail: impact ? formatImpactReport(impact) : undefined },
-    'Aplicar',
-    'Cancelar'
-  );
-  fs.promises.unlink(tmpPath).catch(() => {});
-  const approved = choice === 'Aplicar';
   const { appendAudit } = await import('../enterprise/orgConfig');
   await appendAudit({
     type: 'decision',
     kind: 'file_write',
-    action: approved ? 'apply' : 'cancel',
+    action: 'auto_apply',
     path: relativeLabel,
-  });
-  return approved;
+    risk: impact?.risk ?? 'unknown',
+  } as any);
+  return true;
 }
 
 async function execWriteAdr(input: {
