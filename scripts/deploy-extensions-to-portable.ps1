@@ -10,7 +10,14 @@ $genIcons = Join-Path $Root "scripts\generate-editcore-icons.py"
 if (Test-Path $genIcons) {
   $prevErr = $ErrorActionPreference
   $ErrorActionPreference = "Continue"
-  python $genIcons 2>&1 | Out-Host
+  # El script de Python (y el Node que invoca para checksums) escribe avisos
+  # informativos por stderr (ej. "omitido: archivo no existe en build sin
+  # editcore-src/out"). PowerShell convierte cada línea de stderr de un
+  # comando nativo en un ErrorRecord; canalizarlo a Out-Host lo imprime con
+  # el formato rojo de "NativeCommandError" aunque no sea un error real.
+  # Convertir a string con Write-Host evita ese formato engañoso (mismo
+  # arreglo que ya se usa para npm en Invoke-Npm más abajo).
+  python $genIcons 2>&1 | ForEach-Object { Write-Host $_ }
   $ErrorActionPreference = $prevErr
 }
 
