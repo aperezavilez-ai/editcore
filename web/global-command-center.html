@@ -44,9 +44,13 @@
 
   <div class="links" id="moduleLinks"></div>
 </main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="/assets/supabase-config.js"></script>
 <script>
   const API='';
-  function getToken(){return localStorage.getItem('editcore_token')}
+  const supabase = window.supabase.createClient(window.EDITCORE_SUPABASE_URL, window.EDITCORE_SUPABASE_ANON_KEY);
+  let token = '';
+  function getToken(){return token}
   function apiFetch(path){return fetch(API+path,{headers:{'Authorization':`Bearer ${getToken()}`}})}
   function fmt(cents){return'$'+((cents||0)/100).toFixed(2)}
 
@@ -55,10 +59,12 @@
   }
 
   async function load(){
-    if(!getToken()){
+    const { data } = await supabase.auth.getSession();
+    if(!data.session){
       document.getElementById('content').innerHTML='<div class="loading">Inicia sesión para ver el Command Center. <a href="/login.html" style="color:#ffd600">Ir a login →</a></div>';
       return;
     }
+    token = data.session.access_token;
     const r = await apiFetch('/api/v1/global/command-center');
     if(!r.ok){
       document.getElementById('content').innerHTML='<div class="loading">No se pudieron cargar las métricas.</div>';
@@ -125,5 +131,7 @@
 
   load();
 </script>
+  <script defer src="/_vercel/insights/script.js"></script>
+  <script defer src="/_vercel/speed-insights/script.js"></script>
 </body>
 </html>

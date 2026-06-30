@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from "../../../lib/supabaseAdmin";
 import { resolveUserFromBearerToken } from "../../../lib/userAuth";
 import { decomposeGoal } from "../../../lib/taskReasoning";
 import { checkGovernance } from "../../../lib/aiGovernance";
+import { generateReasoning, isLlmConfigured } from "../../../lib/llmClient";
 
 /**
  * POST /api/v1/aios/orchestrate
@@ -33,6 +34,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const plan = decomposeGoal(goal.trim());
+
+  // Si el usuario configuró ANTHROPIC_API_KEY en Vercel, se usa razonamiento
+  // real de un LLM para enriquecer la estrategia del plan. Si no hay key
+  // configurada o la llamada falla, se usa la estrategia de reglas fijas
+  // de decomposeGoal sin que el endpoint falle.
+  let strategy = plan.strategy;
+  let llm_reasoning_used = false;
+  if (isLlmConfigured()) {
+    const subtaskSummary = plan.subtasks.map(s => `- ${s.title}: ${s.description}`).join("\n");
+    const reasoning = await generateReasoning(
+      `Objetivo: "${goal.trim()}"\n\nPlan de subtareas generado por reglas fijas:\n${subtaskSummary}\n\n` +
+        `Redacta en 2-3 frases una estrategia de ejecución concreta para este plan, en español. No agregues subtareas nuevas.`,
+      { maxTokens: 256 }
+    );
+    if (reasoning) {
+      strategy = reasoning.text.trim();
+      llm_reasoning_used = true;
+    }
+  }
+
   const supabase = getSupabaseAdmin();
 
   // Crear el run de orquestación
@@ -57,7 +78,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     orchestration_run_id: run.id,
     user_id: user.id,
     goal: goal.trim(),
-    strategy: plan.strategy,
+    strategy,
     subtasks: plan.subtasks,
     priority_order: plan.priority_order,
     status: "pending",
@@ -66,7 +87,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   return res.status(201).json({
     run,
     plan: {
-      strategy: plan.strategy,
+      strategy,
+      llm_reasoning_used,
       complexity_score: plan.complexity_score,
       subtasks: plan.subtasks,
       priority_order: plan.priority_order,

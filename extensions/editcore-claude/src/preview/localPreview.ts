@@ -129,7 +129,7 @@ export async function findActiveDevPort(root: string): Promise<number | undefine
   return findActivePort(candidateDevPorts(dev));
 }
 
-async function findActivePort(ports: number[]): Promise<number | undefined> {
+export async function findActivePort(ports: number[]): Promise<number | undefined> {
   for (const port of ports) {
     if (await isPortReady(port)) {
       return port;
