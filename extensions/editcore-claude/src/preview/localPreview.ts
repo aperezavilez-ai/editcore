@@ -121,17 +121,6 @@ export async function startLocalPreview(): Promise<void> {
   }
 }
 
-export async function findActiveDevPortFromList(
-  ports: number[],
-  timeoutMs: number
-): Promise<number | undefined> {
-  const immediate = await findActivePort(ports);
-  if (immediate !== undefined) {
-    return immediate;
-  }
-  return waitForAnyPort(ports, timeoutMs, new vscode.CancellationTokenSource().token);
-}
-
 export async function findActiveDevPort(root: string): Promise<number | undefined> {
   const dev = detectDevServerSync(root);
   if (!dev) {
