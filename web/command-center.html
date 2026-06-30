@@ -342,11 +342,14 @@
     </div>
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="/assets/supabase-config.js"></script>
   <script>
-    const TOKEN_KEY = 'editcore_token';
     const API = '';
+    const supabase = window.supabase.createClient(window.EDITCORE_SUPABASE_URL, window.EDITCORE_SUPABASE_ANON_KEY);
+    let session = null;
 
-    function getToken() { return localStorage.getItem(TOKEN_KEY); }
+    function getToken() { return session?.access_token; }
     function apiFetch(path, opts = {}) {
       return fetch(API + path, {
         ...opts,
@@ -471,9 +474,18 @@
       </div>`;
     }
 
-    loadMetrics();
-    loadRuns();
-    setInterval(loadMetrics, 30000);
+    async function init() {
+      const { data } = await supabase.auth.getSession();
+      session = data.session;
+      if (!session) {
+        document.getElementById('statusLabel').textContent = 'No has iniciado sesión';
+        return;
+      }
+      loadMetrics();
+      loadRuns();
+      setInterval(loadMetrics, 30000);
+    }
+    init();
   </script>
   <script defer src="/_vercel/insights/script.js"></script>
   <script defer src="/_vercel/speed-insights/script.js"></script>
