@@ -75,6 +75,18 @@ Registro de cambios reales, derivado del historial real de `git log` (no reconst
 - **Pruebas**: `npx tsc --noEmit -p extensions/editcore-claude` → sin errores; `npm run compile` → sin errores.
 - **Validación**: pendiente de confirmación del usuario probando en el IDE real tras recompilar/reinstalar la extensión.
 
+### 2026-06-30 — Auto-abrir el browser cuando se corre el dev server manualmente en terminal
+
+- **Tipo de cambio**: feature nueva real en `extensions/editcore-claude`, sin nuevas dependencias.
+- **Síntoma reportado por el usuario**: al escribir `npm run dev` directamente en la terminal integrada (sin usar ningún botón de EditCore), el browser embebido no se abre/recarga solo cuando el servidor queda listo, a diferencia de Cursor.
+- **Causa raíz encontrada**: toda la lógica de espera de puerto real (`localPreview.ts`: `findActivePort`, `waitForAnyPort`, `isPortReady` con sondeo HTTP real) solo se disparaba desde los comandos `editcore.openBrowser` / `editcore.previewLocal` (botón "Browser" de la barra inferior, registrados en `hub/quickActionsBar.ts`). No existía ningún listener sobre las terminales para detectar que el usuario corrió un comando de servidor de desarrollo por su cuenta.
+- **Archivos modificados**:
+  - `extensions/editcore-claude/src/preview/devServerWatcher.ts` (nuevo): usa `vscode.window.onDidStartTerminalShellExecution` (API de shell integration de VS Code) para detectar comandos que matchean `npm/pnpm/yarn/bun run dev|start`, `next dev` o `vite` en **cualquier** terminal; al detectarlo, sondea los puertos candidatos del proyecto (`candidateDevPorts`) hasta 60s y abre el browser integrado en cuanto responde.
+  - `extensions/editcore-claude/src/preview/localPreview.ts`: se exportó `findActiveDevPortFromList(ports, timeoutMs)`, reutilizando el sondeo HTTP real ya existente (`findActivePort`/`waitForAnyPort`), para que el watcher no duplique lógica.
+  - `extensions/editcore-claude/src/extension.ts`: se registra `registerDevServerWatcher(context)` en `activate()`.
+- **Pruebas**: `npx tsc --noEmit -p extensions/editcore-claude` → sin errores; `npm run compile` → sin errores.
+- **Validación**: pendiente de confirmación del usuario probando en el IDE real (requiere que `terminal.integrated.shellIntegration.enabled` esté activo, que es el valor por defecto de VS Code/Code-OSS).
+
 ## Cómo se actualiza este archivo a futuro
 
 Cada sprint ejecutado desde `EDITCORE_MASTER_ROADMAP.md` agrega una entrada nueva siguiendo el mismo formato (fecha, tipo, archivos, pruebas, hallazgos, próximos pasos), inmediatamente después de la última entrada — no se reescriben entradas anteriores.
