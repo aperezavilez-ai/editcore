@@ -310,9 +310,7 @@ function streamAgentEvent(
       }
       break;
     case "done":
-      if (event.reason === "max_iterations") {
-        stream.markdown("\n\n_El agente alcanzó el límite de iteraciones. Puedes pedirle que continúe._\n");
-      }
+      // sin mensaje — el agente termina silenciosamente
       break;
     case "error":
       stream.markdown(`\n\n${event.message}\n`);

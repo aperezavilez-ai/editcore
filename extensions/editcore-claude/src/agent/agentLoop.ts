@@ -9,7 +9,7 @@ import { buildAgentContext } from "./agentContext";
 import { AgentRoleId, buildSystemPrompt, getAllowedToolsForRole } from "../agents/roles";
 import { buildAgentSystemPromptBase, getAgentCommunicationStyle } from "./communicationStyle";
 
-const MAX_ITERATIONS = 30;
+const MAX_ITERATIONS = 200;
 
 export type AgentEvent =
   | { type: "assistant_text"; text: string }
