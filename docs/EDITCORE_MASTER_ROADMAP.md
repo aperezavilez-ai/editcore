@@ -55,10 +55,12 @@ Roadmap derivado directamente de `EDITCORE_GAP_ANALYSIS.md`. Cada tarea es ejecu
 
 ## Prioridad 4 — Innovación futura
 
-### P4.1 — Observabilidad real
+### P4.1 — Observabilidad real ⏳ PARCIAL (2026-06-30) — ver `docs/EDITCORE_OBSERVABILITY.md`
 - **Objetivo**: conectar Vercel Analytics o Sentry para medir errores y latencia reales.
-- **Archivos afectados**: configuración de proyecto en Vercel (fuera del repo), posible `lib/telemetry.ts`.
-- **Dependencias**: cuenta del usuario en el proveedor elegido.
+- **Hecho**: las 15 páginas de `web/*.html` ya cargan los scripts oficiales de Vercel Web Analytics y Speed Insights (`/_vercel/insights/script.js`, `/_vercel/speed-insights/script.js`). No requieren ninguna clave — Vercel los activa solos en cuanto el usuario prende el toggle "Analytics" / "Speed Insights" del proyecto en su dashboard.
+- **Falta (responsabilidad del usuario)**: activar esos dos toggles en Vercel (Project → Analytics / Speed Insights), y, si se quiere tracking de errores de backend (no solo de páginas), crear una cuenta en Sentry y pasar `SENTRY_DSN` para cargarla en Vercel — nunca en el repo.
+- **Archivos afectados**: `web/*.html` (script tags agregados), configuración de proyecto en Vercel (fuera del repo, pendiente).
+- **Dependencias**: cuenta del usuario en Vercel (ya existe) y, opcionalmente, en Sentry.
 - **Complejidad**: media.
 - **Riesgo**: bajo.
 
