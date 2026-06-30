@@ -334,14 +334,11 @@
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="/assets/supabase-config.js"></script>
 <script>
-const TOKEN_KEY = 'editcore_token';
-let token = localStorage.getItem(TOKEN_KEY) || '';
-
-if (!token) {
-  token = prompt('Token de acceso (Bearer):', '') || '';
-  if (token) localStorage.setItem(TOKEN_KEY, token);
-}
+const supabase = window.supabase.createClient(window.EDITCORE_SUPABASE_URL, window.EDITCORE_SUPABASE_ANON_KEY);
+let token = '';
 
 const api = async (path, opts = {}) => {
   const r = await fetch(path, { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, ...opts });
@@ -557,7 +554,16 @@ async function createMemory() {
   else { el.className = 'msg msg-err'; el.textContent = d.error || 'Error'; }
 }
 
-loadMetrics();
+async function init() {
+  const { data } = await supabase.auth.getSession();
+  if (!data.session) {
+    document.querySelector('.content')?.insertAdjacentHTML('afterbegin', '<div class="card">No has iniciado sesión. <a href="/login.html">Ir a iniciar sesión</a></div>');
+    return;
+  }
+  token = data.session.access_token;
+  loadMetrics();
+}
+init();
 </script>
   <script defer src="/_vercel/insights/script.js"></script>
   <script defer src="/_vercel/speed-insights/script.js"></script>

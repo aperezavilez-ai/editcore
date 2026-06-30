@@ -266,10 +266,11 @@
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="/assets/supabase-config.js"></script>
 <script>
-const TOKEN_KEY = 'editcore_token';
-let token = localStorage.getItem(TOKEN_KEY) || '';
-if (!token) { token = prompt('Token Bearer:', '') || ''; if (token) localStorage.setItem(TOKEN_KEY, token); }
+const supabase = window.supabase.createClient(window.EDITCORE_SUPABASE_URL, window.EDITCORE_SUPABASE_ANON_KEY);
+let token = '';
 
 const api = async (path, opts = {}) => {
   const r = await fetch(path, { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, ...opts });
@@ -449,8 +450,17 @@ async function createGovernance() {
   else { el.className = 'msg merr'; el.textContent = d.error || 'Error'; }
 }
 
-loadMetrics();
-loadLatestSnapshot();
+async function init() {
+  const { data } = await supabase.auth.getSession();
+  if (!data.session) {
+    document.querySelector('.content').innerHTML = '<div class="card">No has iniciado sesión. <a href="/login.html" style="color:#60a5fa">Ir a iniciar sesión</a></div>';
+    return;
+  }
+  token = data.session.access_token;
+  loadMetrics();
+  loadLatestSnapshot();
+}
+init();
 </script>
   <script defer src="/_vercel/insights/script.js"></script>
   <script defer src="/_vercel/speed-insights/script.js"></script>
