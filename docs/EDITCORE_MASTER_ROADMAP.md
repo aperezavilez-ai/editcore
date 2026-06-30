@@ -29,7 +29,7 @@ Roadmap derivado directamente de `EDITCORE_GAP_ANALYSIS.md`. Cada tarea es ejecu
 - **Complejidad**: baja.
 - **Riesgo**: ninguno (solo documentación).
 
-### P2.2 — Consolidar documentación de arquitectura de IA solapada
+### P2.2 — Consolidar documentación de arquitectura de IA solapada ✅ COMPLETADO (2026-06-30)
 - **Objetivo**: revisar (no borrar automáticamente) `EDITCORE_CORE_INTELLIGENCE.md` / `EDITCORE_INTELLIGENCE_CORE.md` y el cluster de 4 docs de arquitectura de IA, y fusionar lo que sea redundante.
 - **Archivos afectados**: los docs mencionados en `EDITCORE_CURRENT_STATE_REPORT.md`.
 - **Dependencias**: ninguna, pero requiere confirmación explícita del usuario antes de borrar cualquier archivo.
