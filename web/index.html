@@ -81,9 +81,27 @@
       margin-left: -240px;
       background: radial-gradient(circle, rgba(0, 229, 255, 0.08) 0%, transparent 65%);
       filter: blur(40px);
-      opacity: 0.8;
+      animation: pulse-glow 4s ease-in-out infinite;
     }
-    .sparkle { display: none; }
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 0.6; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.08); }
+    }
+    .sparkle {
+      position: fixed;
+      z-index: 0;
+      pointer-events: none;
+      color: var(--cyan);
+      font-size: 1.25rem;
+      text-shadow: 0 0 12px var(--cyan), 0 0 24px var(--neon);
+      animation: twinkle 3s ease-in-out infinite;
+    }
+    .sparkle-1 { right: 12%; top: 38%; animation-delay: 0s; }
+    .sparkle-2 { right: 18%; top: 52%; font-size: 0.9rem; animation-delay: 1.2s; opacity: 0.7; }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.35; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.1); }
+    }
 
     .wrap { position: relative; z-index: 1; max-width: 1120px; margin: 0 auto; padding: 0 1.5rem; }
 
@@ -133,6 +151,28 @@
       transition: color 0.15s, background 0.15s;
     }
     nav a:hover, .nav-btn:hover { color: var(--cyan); background: rgba(0, 229, 255, 0.06); }
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid var(--border-neon);
+      background:
+        radial-gradient(circle at 35% 30%, #6a7a8f 0%, #3d4a5c 35%, #1e2633 70%),
+        linear-gradient(160deg, #4a5568, #1a2030);
+      margin-left: 0.5rem;
+      box-shadow: 0 0 14px var(--neon-soft);
+      flex-shrink: 0;
+      overflow: hidden;
+      text-decoration: none;
+      display: block;
+    }
+    .avatar::after {
+      content: "";
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(ellipse 60% 45% at 50% 38%, rgba(180,195,210,0.35), transparent 55%);
+    }
 
     /* Hero */
     .hero {
@@ -148,16 +188,62 @@
       height: 240px;
       margin-bottom: 2rem;
     }
-    .plasma-wisp { display: none; }
+    .plasma-wisp {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(22px);
+      opacity: 0.7;
+    }
+    .wisp-l {
+      width: 120px; height: 40px;
+      left: -20%; top: 30%;
+      background: linear-gradient(90deg, transparent, rgba(0,229,255,0.45), transparent);
+      transform: rotate(-25deg);
+      animation: wisp-flow 4s ease-in-out infinite alternate;
+    }
+    .wisp-r {
+      width: 100px; height: 36px;
+      right: -18%; top: 45%;
+      background: linear-gradient(90deg, transparent, rgba(0,180,255,0.4), transparent);
+      transform: rotate(20deg);
+      animation: wisp-flow 3.5s ease-in-out infinite alternate-reverse;
+    }
+    @keyframes wisp-flow {
+      from { opacity: 0.45; transform: rotate(-25deg) translateX(-4px); }
+      to { opacity: 0.9; transform: rotate(-25deg) translateX(6px); }
+    }
     .plasma {
       position: absolute;
-      inset: -20%;
+      inset: -30%;
       border-radius: 50%;
-      background: radial-gradient(circle at 50% 45%, rgba(0, 229, 255, 0.22), transparent 65%);
+      background:
+        conic-gradient(from 200deg at 50% 50%,
+          transparent 0deg,
+          rgba(0, 229, 255, 0.35) 40deg,
+          transparent 80deg,
+          rgba(0, 136, 209, 0.25) 140deg,
+          transparent 200deg,
+          rgba(0, 229, 255, 0.3) 280deg,
+          transparent 360deg);
       filter: blur(28px);
+      animation: plasma-spin 10s linear infinite;
       opacity: 0.85;
     }
-    .plasma-2 { display: none; }
+    .plasma-2 {
+      position: absolute;
+      inset: -15%;
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 35%, rgba(0, 229, 255, 0.2), transparent 55%);
+      filter: blur(18px);
+      animation: plasma-pulse 3s ease-in-out infinite alternate;
+    }
+    @keyframes plasma-spin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes plasma-pulse {
+      from { opacity: 0.5; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1.05); }
+    }
     .logo-stage img {
       position: relative;
       z-index: 2;
@@ -214,7 +300,22 @@
         0 14px 40px rgba(0, 136, 209, 0.35),
         inset 0 1px 0 rgba(255, 255, 255, 0.25);
     }
-    .cta-cursor { display: none; }
+    .cta-cursor {
+      position: absolute;
+      right: -8px;
+      bottom: -12px;
+      width: 28px;
+      height: 28px;
+      z-index: 3;
+      pointer-events: none;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+      animation: cursor-tap 2.2s ease-in-out infinite;
+    }
+    @keyframes cursor-tap {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      45% { transform: translate(-4px, -4px) scale(0.92); }
+      55% { transform: translate(-2px, -2px) scale(0.96); }
+    }
     .cta-link {
       display: none;
     }
@@ -375,6 +476,8 @@
 </head>
 <body>
   <div class="scene" aria-hidden="true"></div>
+  <div class="sparkle sparkle-1" aria-hidden="true">✦</div>
+  <div class="sparkle sparkle-2" aria-hidden="true">✦</div>
 
   <div class="wrap">
     <header>
@@ -386,7 +489,9 @@
         <nav>
           <a href="#descargar">Descargar</a>
           <button type="button" class="nav-btn" data-info-open="guia">Guía</button>
+          <a href="https://github.com/aperezavilez-ai/editcore" target="_blank" rel="noopener noreferrer">GitHub</a>
         </nav>
+        <a class="avatar" href="account.html" title="Cuenta" aria-label="Cuenta"></a>
       </div>
     </header>
 
@@ -394,6 +499,9 @@
       <section class="hero" id="descargar">
         <div class="logo-stage">
           <div class="plasma" aria-hidden="true"></div>
+          <div class="plasma-2" aria-hidden="true"></div>
+          <div class="plasma-wisp wisp-l" aria-hidden="true"></div>
+          <div class="plasma-wisp wisp-r" aria-hidden="true"></div>
           <img src="assets/editcore-logo-web.png?v=4" alt="EditCore" width="180" height="180">
         </div>
         <h1>EDITCORE</h1>
@@ -404,6 +512,9 @@
           <a class="cta" href="https://github.com/aperezavilez-ai/editcore/releases/latest" id="downloadBtn">
             Descargar EditCore
           </a>
+          <svg class="cta-cursor" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="#fff" stroke="#111" stroke-width="1.2" d="M5 3l12 8.5-5 .5 2.5 6.5-2.5 1.2-2.5-6.5-5 1.3z"/>
+          </svg>
         </div>
         <p class="version" id="versionLine">Versión 1.0.1 - Windows 10/11 - 64 bits</p>
       </section>
