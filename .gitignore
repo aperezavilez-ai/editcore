@@ -6,6 +6,7 @@ VSCode-win32-x64/
 dist/
 
 # Dependencias
+node_modules/
 extensions/*/node_modules/
 extensions/*/out/
 scripts/node_modules/

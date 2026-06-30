@@ -315,7 +315,7 @@ async function handleAgentRequest(
 
   const onTool = (toolName: string) => {
     toolCalls += 1;
-    apiKeyService.recordToolCall(toolName);
+    apiKeyService.recordToolCall(toolName, role);
   };
   const onUsage = (input: number, output: number) => {
     totalInput += input;
@@ -424,6 +424,26 @@ async function handleAgentRequest(
   }
 }
 
+function describeToolProgress(name: string, input: any): string {
+  const path = typeof input?.path === "string" ? input.path : undefined;
+  switch (name) {
+    case "read_file":
+      return path ? `Leyendo ${path}…` : "Leyendo archivo…";
+    case "write_file":
+      return path ? `Escribiendo ${path}…` : "Escribiendo archivo…";
+    case "apply_patch":
+      return path ? `Editando ${path}…` : "Editando archivo…";
+    case "list_directory":
+      return path ? `Explorando ${path}…` : "Explorando carpeta…";
+    case "search_codebase":
+      return "Buscando en el código…";
+    case "run_command":
+      return typeof input?.command === "string" ? `Ejecutando: ${input.command}` : "Ejecutando comando…";
+    default:
+      return `Usando herramienta ${name}…`;
+  }
+}
+
 function streamAgentEvent(
   event: AgentEvent,
   stream: vscode.ChatResponseStream,
@@ -440,6 +460,7 @@ function streamAgentEvent(
       break;
     }
     case "tool_call_start":
+      stream.progress(describeToolProgress(event.name, event.input));
       if (shouldShowToolProgressInChat()) {
         stream.markdown(`\n🔧 **${event.name}**\n`);
       }

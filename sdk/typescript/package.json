@@ -1,0 +1,14 @@
+{
+  "name": "@editcore/sdk",
+  "version": "0.1.0",
+  "description": "SDK oficial de TypeScript para la API pública de EditCore (editcore.mx).",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p ."
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}

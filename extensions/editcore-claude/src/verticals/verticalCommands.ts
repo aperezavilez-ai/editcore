@@ -154,6 +154,77 @@ export async function ctoMode(): Promise<void> {
   });
 }
 
+export async function generateFromIdea(): Promise<void> {
+  const idea = await vscode.window.showInputBox({
+    prompt: 'Describe tu idea de app/producto en una línea',
+    placeHolder: 'ej: App de turnos para peluquerías con recordatorios por WhatsApp',
+  });
+  if (!idea?.trim()) return;
+
+  const config = vscode.workspace.getConfiguration('editcore');
+  const enabled = config.get<boolean>('multiAgent.enabled', false);
+  if (!enabled) {
+    const choice = await vscode.window.showInformationMessage(
+      'Este generador usa el pipeline multi-agente (Arquitecto → Programador → QA → DevOps → Documentador), real pero más lento y con más consumo de tokens que está desactivado por defecto. ¿Activarlo para esta sesión?',
+      { modal: true },
+      'Activar'
+    );
+    if (choice !== 'Activar') return;
+    await config.update('multiAgent.enabled', true, vscode.ConfigurationTarget.Global);
+  }
+
+  await vscode.commands.executeCommand('workbench.action.chat.open', {
+    query: `@claude ${idea.trim()}`,
+  });
+}
+
+export async function createCustomAgent(): Promise<void> {
+  const { saveCustomAgent } = await import('../agents/roles');
+  const { AGENT_TOOLS } = await import('../agent/tools');
+
+  const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  if (!root) {
+    vscode.window.showWarningMessage('Abre un workspace primero.');
+    return;
+  }
+
+  const name = await vscode.window.showInputBox({
+    prompt: 'Nombre del agente (se usará como @nombre en el chat)',
+    placeHolder: 'ej: redactor-legal',
+    validateInput: (v) => (/^[a-z0-9-]+$/i.test(v.trim()) ? undefined : 'Solo letras, números y guiones.'),
+  });
+  if (!name?.trim()) return;
+
+  const objective = await vscode.window.showInputBox({
+    prompt: 'Objetivo / instrucciones del agente (esto se usa como su system prompt)',
+    placeHolder: 'ej: Redactá contratos y términos legales en español claro, citando riesgos.',
+  });
+  if (!objective?.trim()) return;
+
+  const toolPicks = await vscode.window.showQuickPick(
+    AGENT_TOOLS.map((t) => ({ label: t.name, description: t.description, picked: true })),
+    {
+      canPickMany: true,
+      placeHolder: 'Tools permitidas para este agente (todas marcadas = sin restricción)',
+    }
+  );
+  const allowedTools =
+    toolPicks && toolPicks.length > 0 && toolPicks.length < AGENT_TOOLS.length
+      ? toolPicks.map((p) => p.label)
+      : undefined;
+
+  await saveCustomAgent({
+    id: name.trim().toLowerCase(),
+    label: name.trim(),
+    systemPrompt: objective.trim(),
+    allowedTools,
+  });
+  const restriction = allowedTools ? ` (limitado a: ${allowedTools.join(', ')})` : ' (sin restricción de tools)';
+  vscode.window.showInformationMessage(
+    `Agente @${name.trim().toLowerCase()} guardado en .editcore/agents.json${restriction}. Usalo en el chat con @${name.trim().toLowerCase()}.`
+  );
+}
+
 export async function showAuditLog(): Promise<void> {
   const { readRecentAudit } = await import('../enterprise/orgConfig');
   const lines = await readRecentAudit(30);

@@ -3,7 +3,8 @@
 
 param(
   [switch]$SkipPortableZip,
-  [switch]$SkipDeployExtensions
+  [switch]$SkipDeployExtensions,
+  [switch]$SkipInstaller
 )
 
 $ErrorActionPreference = "Stop"
@@ -25,15 +26,20 @@ $setupSrcRoot = Join-Path $ROOT "EditCoreUserSetup-x64.exe"
 $setupBuilt = Join-Path $ROOT "editcore-src\.build\win32-x64\user-setup\EditCoreUserSetup.exe"
 $buildInstaller = Join-Path $ROOT "scripts\build-win-installer.ps1"
 $repoIco = Join-Path $ROOT "editcore-src\resources\win32\code.ico"
-if ((Test-Path $buildInstaller) -and (Test-Path (Join-Path $ROOT "editcore-src"))) {
+if (-not $SkipInstaller -and (Test-Path $buildInstaller) -and (Test-Path (Join-Path $ROOT "editcore-src"))) {
   $needRebuild = $false
   if (-not (Test-Path $setupBuilt)) { $needRebuild = $true }
   elseif ((Test-Path $iconIco) -and (Get-Item $iconIco).LastWriteTime -gt (Get-Item $setupBuilt).LastWriteTime) { $needRebuild = $true }
   elseif ((Test-Path $repoIco) -and (Test-Path $iconIco) -and ((Get-FileHash $repoIco).Hash -ne (Get-FileHash $iconIco).Hash)) { $needRebuild = $true }
   if ($needRebuild) {
     Write-Host "Recompilando instalador Inno (logo actualizado)..." -ForegroundColor Cyan
-    & $buildInstaller -SetupOnly
-    if ($LASTEXITCODE -ne 0) { throw "build-win-installer.ps1 fallo con codigo $LASTEXITCODE" }
+    $prevErr = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    & $buildInstaller -SetupOnly 2>&1 | Out-Host
+    $ErrorActionPreference = $prevErr
+    if ($LASTEXITCODE -ne 0) {
+      Write-Host "AVISO: build-win-installer.ps1 fallo - se omite el instalador .exe." -ForegroundColor Yellow
+    }
   }
 }
 if ((Test-Path $setupBuilt) -and ((Test-Path $setupSrcRoot) -eq $false -or (Get-Item $setupBuilt).Length -gt (Get-Item $setupSrcRoot).Length)) {

@@ -22,22 +22,22 @@ import {
   gpsBuilder,
   scaffoldVertical,
   showAuditLog,
+  generateFromIdea,
+  createCustomAgent,
 } from "./verticals/verticalCommands";
+import { loadCustomAgents } from "./agents/roles";
+import { registerAutomationEngine, openAutomationsConfig } from "./automation/automationEngine";
 import { showSessionsPicker, exportSessionsReport, resumeSession } from "./sessions/agentSessionStore";
 import { initOrgConfig } from "./enterprise/orgConfig";
+import { UserAccountAuthService } from "./enterprise/userAccountAuth";
 import { showInitWorkspaceResult } from "./workspace/workspaceBootstrap";
 import { showCommandHub } from "./hub/commandHub";
 import { createStatusBarItem, showAbout } from "./hub/statusBar";
 import { initVoyageService } from "./rag/voyageService";
 import { registerDiagnosticCommands } from "./diagnostics/diagnosticCommands";
 import { registerIntelligenceCommands } from "./intelligence/intelligenceCommands";
-import { registerAutonomyCommands } from "./autonomy/autonomyCommands";
-import { registerEvolutionCommands, scheduleContinuousEvolution } from "./evolution/evolutionCommands";
-import { registerAosCommands } from "./aos/aosCommands";
-import { registerAutonomousCommands } from "./autonomous/autonomousCommands";
-import { registerKnowledgeCommands } from "./knowledge/knowledgeCommands";
-import { registerEcosystemCommands } from "./ecosystem/ecosystemCommands";
 import { registerQuickActionsBar } from "./hub/quickActionsBar";
+import { registerDevServerWatcher } from "./preview/devServerWatcher";
 import { registerWelcomePanel, showWelcomeIfNeeded } from "./welcome/welcomePanel";
 import { runFirstRunWizardIfNeeded } from "./welcome/firstRunWizard";
 import { registerProductCommands } from "./product/productCommands";
@@ -50,8 +50,6 @@ import { registerGlobalCommands } from "./global/globalCommands";
 import { migrateLegacyApiKeysFile } from "./platform/legacyApiKeysMigration";
 import { registerApiKeyBridgeCommands } from "./platform/apiKeyBridgeCommands";
 import { migrateDeprecatedModelSettings } from "./platform/modelMigration";
-import { registerVectorEngineCommands } from "./rag/vectorEngine";
-import { startIncrementalWatcher, runIncrementalIndex } from "./knowledge/incrementalIndexer";
 
 export async function activate(context: vscode.ExtensionContext) {
   const apiKeyService = new ApiKeyService(context);
@@ -70,6 +68,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   void writeActivationProbe(context);
   registerQuickActionsBar(context);
+  registerDevServerWatcher(context);
   registerWelcomePanel(context);
   registerProductCommands(context, apiKeyService);
   registerPlatformCommands(context);
@@ -89,8 +88,13 @@ export async function activate(context: vscode.ExtensionContext) {
   };
   warmWorkspaceIndex();
   context.subscriptions.push(
-    vscode.workspace.onDidChangeWorkspaceFolders(() => warmWorkspaceIndex())
+    vscode.workspace.onDidChangeWorkspaceFolders(() => {
+      warmWorkspaceIndex();
+      void loadCustomAgents();
+    })
   );
+  void loadCustomAgents();
+  registerAutomationEngine(context);
 
   if (vscode.workspace.workspaceFolders?.length) {
     context.subscriptions.push(
@@ -103,7 +107,6 @@ export async function activate(context: vscode.ExtensionContext) {
       })
     );
     void maybePromptWorkspaceInit(context);
-    void import("./memory/multiProjectMemory").then((m) => m.registerActiveProject());
   }
 
   context.subscriptions.push(
@@ -193,9 +196,16 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const marketplaceService = new MarketplaceService(context.extensionUri);
   const marketplaceProvider = new MarketplaceViewProvider(context, marketplaceService);
-  const aiHubProvider = registerEcosystemCommands(context, marketplaceService, marketplaceProvider);
 
   context.subscriptions.push(
+    vscode.commands.registerCommand("editcore.openMarketplace", async () => {
+      vscode.window.showInformationMessage(
+        "Las habilidades de EditCore (Arquitecto, GPS, SaaS, Security…) están integradas en el agente. Usá @architect, @gps, @saas, etc. en el chat."
+      );
+    }),
+    vscode.commands.registerCommand("editcore.generateFromIdea", () => generateFromIdea()),
+    vscode.commands.registerCommand("editcore.createCustomAgent", () => createCustomAgent()),
+    vscode.commands.registerCommand("editcore.manageAutomations", () => openAutomationsConfig()),
     vscode.commands.registerCommand("editcore.founderMode", () => founderMode()),
     vscode.commands.registerCommand("editcore.ctoMode", () => ctoMode()),
     vscode.commands.registerCommand("editcore.saasBuilder", () => saasBuilder()),
@@ -212,7 +222,6 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("editcore.initWorkspace", () => showInitWorkspaceResult()),
     vscode.commands.registerCommand("editcore.exportSessions", () => exportSessionsReport()),
     vscode.commands.registerCommand("editcore.refreshMarketplace", () => marketplaceProvider.refresh()),
-    vscode.commands.registerCommand("editcore.ecosystem.refreshAiHub", () => aiHubProvider.refresh()),
     vscode.commands.registerCommand("editcore.commandHub", () => showCommandHub()),
     vscode.commands.registerCommand("editcore.resumeSession", () => resumeSession()),
     vscode.commands.registerCommand("editcore.about", () => showAbout())
@@ -221,19 +230,6 @@ export async function activate(context: vscode.ExtensionContext) {
   createStatusBarItem(context);
   registerDiagnosticCommands(context, apiKeyService);
   registerIntelligenceCommands(context, apiKeyService);
-  registerAutonomyCommands(context, apiKeyService);
-  registerEvolutionCommands(context, apiKeyService);
-  registerAosCommands(context, apiKeyService);
-  registerAutonomousCommands(context, apiKeyService);
-  registerKnowledgeCommands(context, apiKeyService);
-  registerVectorEngineCommands(context);
-  startIncrementalWatcher(context);
-  scheduleContinuousEvolution(context, apiKeyService);
-
-  // Indexado incremental en background al activar
-  setTimeout(() => {
-    void runIncrementalIndex().catch(() => {/* no crítico */});
-  }, 8000);
 
   const configProvider = new ClaudeConfigViewProvider(context, apiKeyService);
   const homeProvider = new EditCoreHomeViewProvider(apiKeyService);
@@ -246,6 +242,51 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand("editcore.setApiKey", async () => {
       await vscode.commands.executeCommand("editcore.openAccountPanel");
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("editcore.setOrgApiKey", async () => {
+      await apiKeyService.orgBackend.promptForOrgApiKey();
+    }),
+    vscode.commands.registerCommand("editcore.clearOrgApiKey", async () => {
+      await apiKeyService.orgBackend.clearOrgApiKey();
+      vscode.window.showInformationMessage("EditCore: clave de organización eliminada.");
+    }),
+    vscode.commands.registerCommand("editcore.showOrgPlan", async () => {
+      const [plan, summary] = await Promise.all([
+        apiKeyService.orgBackend.fetchPlan(),
+        apiKeyService.orgBackend.fetchUsageSummary(),
+      ]);
+      if (!plan || !summary) {
+        const setup = await vscode.window.showWarningMessage(
+          "EditCore: no hay clave de organización configurada o el backend no respondió.",
+          "Configurar clave"
+        );
+        if (setup === "Configurar clave") {
+          await vscode.commands.executeCommand("editcore.setOrgApiKey");
+        }
+        return;
+      }
+      vscode.window.showInformationMessage(
+        `${plan.organization.name} · plan ${summary.plan} · ` +
+          `${summary.tokensUsedThisMonth.toLocaleString()} / ${summary.monthlyTokenLimit.toLocaleString()} tokens este mes` +
+          (summary.overLimit ? " · LÍMITE SUPERADO" : "")
+      );
+    })
+  );
+
+  const userAccountAuth = new UserAccountAuthService(context);
+  context.subscriptions.push(
+    vscode.commands.registerCommand("editcore.loginWithAccount", async () => {
+      await userAccountAuth.promptLogin();
+    }),
+    vscode.commands.registerCommand("editcore.logoutAccount", async () => {
+      await userAccountAuth.logout();
+      vscode.window.showInformationMessage("EditCore: sesión cerrada.");
+    }),
+    vscode.commands.registerCommand("editcore.showAccount", async () => {
+      await userAccountAuth.showAccount();
     })
   );
 

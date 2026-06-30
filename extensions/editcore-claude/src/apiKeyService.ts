@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { createClaudeClient, mapClaudeApiError } from "./anthropicClient";
 import { LLM_CONFIG } from "./llmConfig";
 import { resolveClaudeModelId } from "./models";
+import { OrgBackendService } from "./enterprise/orgBackend";
 
 const SECRET_KEY = "anthropicApiKey";
 const OPENAI_SECRET_KEY = "openaiApiKey";
@@ -47,6 +48,7 @@ export interface UsageTotals {
   requestCount: number;
   estimatedCostUsd: number;
   toolCalls: Record<string, number>;
+  toolCallsByRole: Record<string, number>;
 }
 
 export interface UsageSnapshot extends UsageTotals {
@@ -55,6 +57,7 @@ export interface UsageSnapshot extends UsageTotals {
   sessionRequestCount: number;
   sessionEstimatedCostUsd: number;
   sessionToolCalls: Record<string, number>;
+  sessionToolCallsByRole: Record<string, number>;
   hasApiKey: boolean;
   apiKeyHint: string;
   hasOpenAiKey: boolean;
@@ -70,11 +73,16 @@ export class ApiKeyService {
   private sessionRequests = 0;
   private sessionCost = 0;
   private sessionToolCalls: Record<string, number> = {};
+  private sessionToolCallsByRole: Record<string, number> = {};
 
   private readonly _onDidChange = new vscode.EventEmitter<void>();
   readonly onDidChange = this._onDidChange.event;
 
-  constructor(private readonly context: vscode.ExtensionContext) {}
+  readonly orgBackend: OrgBackendService;
+
+  constructor(private readonly context: vscode.ExtensionContext) {
+    this.orgBackend = new OrgBackendService(context);
+  }
 
   async hasApiKey(): Promise<boolean> {
     return Boolean(await this.getApiKey());
@@ -234,26 +242,41 @@ export class ApiKeyService {
     totals.estimatedCostUsd += cost;
     void this.context.globalState.update(USAGE_KEY, totals);
     this._onDidChange.fire();
+
+    void this.orgBackend.trackUsage({
+      provider: "anthropic",
+      model,
+      inputTokens,
+      outputTokens,
+      estimatedCostUsd: cost,
+    });
   }
 
-  recordToolCall(toolName: string): void {
+  recordToolCall(toolName: string, roleId?: string): void {
     this.sessionToolCalls[toolName] = (this.sessionToolCalls[toolName] ?? 0) + 1;
     const totals = this.getTotals();
     totals.toolCalls[toolName] = (totals.toolCalls[toolName] ?? 0) + 1;
+    if (roleId) {
+      this.sessionToolCallsByRole[roleId] = (this.sessionToolCallsByRole[roleId] ?? 0) + 1;
+      totals.toolCallsByRole[roleId] = (totals.toolCallsByRole[roleId] ?? 0) + 1;
+    }
     void this.context.globalState.update(USAGE_KEY, totals);
     this._onDidChange.fire();
   }
 
   getTotals(): UsageTotals {
-    return (
-      this.context.globalState.get<UsageTotals>(USAGE_KEY) ?? {
+    const stored = this.context.globalState.get<UsageTotals>(USAGE_KEY);
+    if (!stored) {
+      return {
         inputTokens: 0,
         outputTokens: 0,
         requestCount: 0,
         estimatedCostUsd: 0,
         toolCalls: {},
-      }
-    );
+        toolCallsByRole: {},
+      };
+    }
+    return { ...stored, toolCallsByRole: stored.toolCallsByRole ?? {} };
   }
 
   resetSessionUsage(): void {
@@ -262,6 +285,7 @@ export class ApiKeyService {
     this.sessionRequests = 0;
     this.sessionCost = 0;
     this.sessionToolCalls = {};
+    this.sessionToolCallsByRole = {};
     this._onDidChange.fire();
   }
 
@@ -275,6 +299,7 @@ export class ApiKeyService {
       sessionRequestCount: this.sessionRequests,
       sessionEstimatedCostUsd: this.sessionCost,
       sessionToolCalls: { ...this.sessionToolCalls },
+      sessionToolCallsByRole: { ...this.sessionToolCallsByRole },
       hasApiKey: await this.hasApiKey(),
       apiKeyHint: await this.getApiKeyHint(),
       hasOpenAiKey: await this.hasOpenAiKey(),

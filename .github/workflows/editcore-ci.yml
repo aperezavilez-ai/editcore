@@ -8,7 +8,7 @@ on:
 
 jobs:
   extensions:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -23,11 +23,19 @@ jobs:
           npm run compile
           npm test
 
+      - name: Audit dependencies (editcore-claude)
+        working-directory: extensions/editcore-claude
+        run: npm audit --audit-level=high
+
       - name: Compile editcore-connect
         working-directory: extensions/editcore-connect
         run: |
           npm install
           npm run compile
+
+      - name: Audit dependencies (editcore-connect)
+        working-directory: extensions/editcore-connect
+        run: npm audit --audit-level=high
 
       - name: Validate patch script
         run: node scripts/apply-editcore-patches.js editcore-src
@@ -36,3 +44,21 @@ jobs:
       - name: RAG utils tests
         working-directory: extensions/editcore-claude
         run: node --test test/rag-utils.test.js
+
+  web-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Typecheck (api/ + lib/)
+        run: npm run typecheck
+
+      - name: Unit tests (lib/)
+        run: npm test

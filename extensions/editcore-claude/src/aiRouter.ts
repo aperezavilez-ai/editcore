@@ -245,32 +245,3 @@ export async function streamWithFallback(
 
   throw new Error("Configura al menos una API Key: Anthropic (Claude) u OpenAI.");
 }
-
-/** Respaldo texto simple para modo Agent cuando falla Anthropic. */
-export async function agentFallbackResponse(
-  apiKeyService: ApiKeyService,
-  userTask: string
-): Promise<{ text: string; usage: LlmUsage } | undefined> {
-  if (!isFallbackEnabled()) {
-    return undefined;
-  }
-  const openaiKey = await apiKeyService.getOpenAiKey();
-  if (!openaiKey) {
-    return undefined;
-  }
-  try {
-    const result = await callOpenAI(openaiKey, [
-      {
-        role: "user",
-        content:
-          `El agente Claude no está disponible. Responde como asistente de código (sin herramientas):\n\n${userTask}`,
-      },
-    ]);
-    return {
-      text: result.text,
-      usage: { ...result.usage, usedFallback: true },
-    };
-  } catch {
-    return undefined;
-  }
-}

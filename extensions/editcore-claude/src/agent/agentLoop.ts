@@ -1,15 +1,13 @@
 import * as vscode from "vscode";
 import Anthropic from "@anthropic-ai/sdk";
 import { ApiKeyService } from "../apiKeyService";
-import { agentFallbackResponse } from "../aiRouter";
 import { createClaudeClient, mapClaudeApiError } from "../anthropicClient";
 import { LLM_CONFIG } from "../llmConfig";
 import { resolveClaudeModelId } from "../models";
 import { getAllAgentTools, executeAgentTool, setToolCallRecorder } from "./tools";
 import { buildAgentContext } from "./agentContext";
-import { AgentRoleId, buildSystemPrompt } from "../agents/roles";
+import { AgentRoleId, buildSystemPrompt, getAllowedToolsForRole } from "../agents/roles";
 import { buildAgentSystemPromptBase, getAgentCommunicationStyle } from "./communicationStyle";
-import { runOpenAiAgentTask, shouldUseOpenAiForRole } from "./openaiAgentLoop";
 
 const MAX_ITERATIONS = 30;
 
@@ -29,58 +27,34 @@ export async function runAgentTask(
   onToolCall?: (name: string) => void,
   roleId: AgentRoleId = "default",
   apiKeyService?: ApiKeyService,
-  customAgentId?: string
+  conversation: Anthropic.Messages.MessageParam[] = []
 ): Promise<void> {
-  if (shouldUseOpenAiForRole(roleId) && apiKeyService) {
-    const openAiKey = await apiKeyService.getOpenAiKey();
-    if (openAiKey?.trim()) {
-      return runOpenAiAgentTask(
-        openAiKey,
-        userTask,
-        onEvent,
-        abortSignal,
-        onUsage,
-        onToolCall,
-        roleId,
-        apiKeyService,
-        customAgentId
-      );
-    }
-  }
-
   const config = vscode.workspace.getConfiguration("editcore");
   const model = resolveClaudeModelId(config.get<string>("model", LLM_CONFIG.claude.defaultModel));
-  const maxTokens = config.get<number>("maxTokens", 16384);
+  const maxTokens = config.get<number>("maxTokens", 8096);
 
   if (!apiKey?.trim()) {
-    if (apiKeyService) {
-      const fallback = await agentFallbackResponse(apiKeyService, userTask);
-      if (fallback) {
-        onEvent({
-          type: "assistant_text",
-          text: `_Sin clave Claude; respuesta con OpenAI sin herramientas._\n\n${fallback.text}`,
-        });
-        onUsage?.(fallback.usage.inputTokens, fallback.usage.outputTokens);
-        onEvent({ type: "done", reason: "finished" });
-        return;
-      }
-    }
     onEvent({
       type: "error",
-      message: "Configura una API Key de Claude o OpenAI en el panel de APIs.",
+      message:
+        "El modo Agent necesita una API Key de Claude (Anthropic) para poder leer, crear y editar archivos del proyecto: " +
+        "es la única que tiene las herramientas (read_file, write_file, apply_patch, run_command, etc.) conectadas. " +
+        "Configúrala en el panel de APIs (Ctrl+Alt+K). Si solo tenés una key de OpenAI, podés usarla en el chat normal, " +
+        "pero ahí EditCore responde solo texto, sin tocar ningún archivo.",
     });
     return;
   }
 
   const client = createClaudeClient(apiKey);
-  const systemPrompt = await buildSystemPrompt(buildAgentSystemPromptBase(), roleId, customAgentId);
-  const tools = await getAllAgentTools();
+  const systemPrompt = await buildSystemPrompt(buildAgentSystemPromptBase(), roleId);
+  const tools = await getAllAgentTools(getAllowedToolsForRole(roleId));
 
   setToolCallRecorder(onToolCall);
 
   try {
     const enrichedTask = await buildAgentContext(userTask);
-    const messages: Anthropic.Messages.MessageParam[] = [{ role: "user", content: enrichedTask }];
+    const messages = conversation;
+    messages.push({ role: "user", content: enrichedTask });
 
     for (let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
       if (abortSignal?.aborted) {
@@ -101,23 +75,14 @@ export async function runAgentTask(
           { signal: abortSignal }
         );
       } catch (err: unknown) {
-        if (apiKeyService) {
-          try {
-            const fallback = await agentFallbackResponse(apiKeyService, userTask);
-            if (fallback) {
-              onEvent({
-                type: "assistant_text",
-                text: `_Claude no disponible; respuesta con OpenAI sin herramientas._\n\n${fallback.text}`,
-              });
-              onUsage?.(fallback.usage.inputTokens, fallback.usage.outputTokens);
-              onEvent({ type: "done", reason: "finished" });
-              return;
-            }
-          } catch {
-            // Keep the original Claude error below.
-          }
-        }
-        onEvent({ type: "error", message: mapClaudeApiError(err).message });
+        const claudeError = mapClaudeApiError(err);
+        onEvent({
+          type: "error",
+          message:
+            `${claudeError.message} El modo Agent no puede continuar sin Claude porque es el único proveedor con ` +
+            "las herramientas de archivos conectadas; no se usa un respaldo sin herramientas para evitar respuestas " +
+            "que digan poder editar código sin poder hacerlo de verdad.",
+        });
         return;
       }
 

@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { useCommunityEdition } from '../product/licenseService';
 import { DOWNLOAD_PAGE_URL } from '../product/productVersion';
+import { UserAccountAuthService } from '../enterprise/userAccountAuth';
 
 const FIRST_RUN_KEY = 'editcore.firstRun.v1';
 
@@ -9,8 +10,20 @@ export async function runFirstRunWizardIfNeeded(context: vscode.ExtensionContext
     return;
   }
 
+  const userAccountAuth = new UserAccountAuthService(context);
+  if (!(await userAccountAuth.isLoggedIn())) {
+    const login = await vscode.window.showInformationMessage(
+      'Bienvenido a EditCore IDE. Inicia sesión con la cuenta que registraste en editcore.mx.',
+      'Iniciar sesión',
+      'Más tarde'
+    );
+    if (login === 'Iniciar sesión') {
+      await userAccountAuth.promptLogin();
+    }
+  }
+
   const start = await vscode.window.showInformationMessage(
-    'Bienvenido a EditCore IDE. ¿Quieres el tour rápido de configuración?',
+    '¿Quieres el tour rápido de configuración?',
     'Sí, empezar',
     'Saltar'
   );
@@ -21,6 +34,13 @@ export async function runFirstRunWizardIfNeeded(context: vscode.ExtensionContext
   }
 
   const steps = [
+    {
+      label: '$(account) Iniciar sesión con mi cuenta EditCore',
+      description: 'Correo y contraseña de editcore.mx',
+      action: async () => {
+        await userAccountAuth.promptLogin();
+      },
+    },
     {
       label: '$(key) Configurar API de Claude/OpenAI',
       description: 'Necesaria para chat y agentes',
