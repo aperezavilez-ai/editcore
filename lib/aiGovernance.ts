@@ -70,7 +70,7 @@ export function checkGovernance(
     };
   }
 
-  if (autonomyLevel >= rule.min_autonomy_level && !rule.requires_approval) {
+  if (rule.allowed && autonomyLevel >= rule.min_autonomy_level && !rule.requires_approval) {
     return {
       allowed: true,
       requires_human_approval: false,

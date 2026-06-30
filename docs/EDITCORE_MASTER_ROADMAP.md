@@ -4,7 +4,7 @@ Roadmap derivado directamente de `EDITCORE_GAP_ANALYSIS.md`. Cada tarea es ejecu
 
 ## Prioridad 1 — Funciones esenciales
 
-### P1.1 — Suite mínima de tests para `lib/`
+### P1.1 — Suite mínima de tests para `lib/` ✅ COMPLETADO (2026-06-30)
 - **Objetivo**: proteger la lógica compartida más crítica (`aiGovernance.ts`, `modelRouter.ts`, `taskReasoning.ts`) con pruebas unitarias.
 - **Archivos afectados**: nuevo `lib/__tests__/*.test.ts` (o similar), `package.json` (agregar script `test`).
 - **Dependencias**: ninguna; estas funciones son puras (sin I/O), ideales para empezar.
@@ -12,7 +12,7 @@ Roadmap derivado directamente de `EDITCORE_GAP_ANALYSIS.md`. Cada tarea es ejecu
 - **Riesgo**: bajo — solo agrega archivos, no modifica lógica existente.
 - **Resultado esperado**: `npm test` corre y valida `checkGovernance`, `routeModel`, `routeByComplexity`, `decomposeGoal` con casos reales.
 
-### P1.2 — Extender CI para cubrir backend web
+### P1.2 — Extender CI para cubrir backend web ✅ COMPLETADO (2026-06-30)
 - **Objetivo**: que cada push valide `api/`/`lib/` automáticamente, no solo las extensiones del IDE.
 - **Archivos afectados**: `.github/workflows/editcore-ci.yml` (nuevo job) o un workflow nuevo, ej. `editcore-web-ci.yml`.
 - **Dependencias**: P1.1 (para que haya algo que correr además de `tsc`).
@@ -22,7 +22,7 @@ Roadmap derivado directamente de `EDITCORE_GAP_ANALYSIS.md`. Cada tarea es ejecu
 
 ## Prioridad 2 — Mejoras de arquitectura
 
-### P2.1 — Documentar y congelar la convención de rutas `/v1`
+### P2.1 — Documentar y congelar la convención de rutas `/v1` ✅ COMPLETADO (2026-06-30)
 - **Objetivo**: dejar explícito que toda ruta nueva va en `api/v1/<módulo>/`, y que las rutas legacy (`api/{auth,community,developer,evolution,org,usage}`) se mantienen pero no se expanden.
 - **Archivos afectados**: `README.md` o un nuevo `docs/EDITCORE_API_CONVENTIONS.md`.
 - **Dependencias**: ninguna.
@@ -38,7 +38,7 @@ Roadmap derivado directamente de `EDITCORE_GAP_ANALYSIS.md`. Cada tarea es ejecu
 
 ## Prioridad 3 — Funciones avanzadas
 
-### P3.1 — Integración real de un modelo de lenguaje
+### P3.1 — Integración real de un modelo de lenguaje ✅ COMPLETADO (2026-06-30, requiere que el usuario configure ANTHROPIC_API_KEY en Vercel)
 - **Objetivo**: que `aios/orchestrate.ts` y el Model Router puedan, opcionalmente, invocar un modelo real (Claude API u OpenAI API) usando una clave que el propio usuario configure en Vercel — nunca en el repositorio.
 - **Archivos afectados**: nuevo `lib/llmClient.ts`, modificación de `api/v1/aios/orchestrate.ts`.
 - **Dependencias**: el usuario debe tener su propia API key de modelo, configurada en variables de entorno de Vercel.
@@ -46,7 +46,7 @@ Roadmap derivado directamente de `EDITCORE_GAP_ANALYSIS.md`. Cada tarea es ejecu
 - **Riesgo**: medio — manejar costos y fallos de la API externa requiere límites y manejo de errores cuidadoso.
 - **Resultado esperado**: el orquestador puede generar planes con razonamiento real de un LLM en vez de reglas fijas, sin romper el modo actual (reglas fijas) como fallback.
 
-### P3.2 — Ejecución automática de planes de orquestación
+### P3.2 — Ejecución automática de planes de orquestación ✅ COMPLETADO (2026-06-30) — ver `api/v1/aios/execute.ts`
 - **Objetivo**: que un run en `ai_orchestration_runs` pueda avanzar de `planning` a `running`/`completed` automáticamente.
 - **Archivos afectados**: `api/v1/aios/runs.ts`, posible nuevo endpoint `api/v1/aios/execute.ts`.
 - **Dependencias**: P3.1 (sin LLM real, "ejecutar" una subtarea no tiene con qué razonar).
