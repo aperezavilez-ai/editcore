@@ -73,11 +73,15 @@ Roadmap derivado directamente de `EDITCORE_GAP_ANALYSIS.md`. Cada tarea es ejecu
 - **Complejidad**: alta.
 - **Riesgo**: medio — mitigado: la propuesta es solo de lectura/análisis, nunca cambia el `modelRouter` ni el comportamiento de producción por sí sola; requiere que un humano la apruebe vía `evolution_proposals.status`.
 
-### P4.3 — Interfaz conversacional unificada
+### P4.3 — Interfaz conversacional unificada ✅ COMPLETADO con alcance reducido (2026-06-30) — ver `web/assistant.html`
 - **Objetivo**: un punto de entrada de chat que use el Orquestador Universal para enrutar a cualquier módulo.
-- **Dependencias**: P3.1 y P3.2.
+- **Hecho**: `web/assistant.html` — chat real con autenticación de sesión Supabase (mismo patrón que `account.html`), que llama a `POST /api/v1/aios/orchestrate` y muestra la conversación: el objetivo del usuario y, como respuesta, la estrategia generada + la lista de subtareas con el agente asignado a cada una (id de run, complejidad, si usó razonamiento LLM real o reglas fijas). Enlazado desde `account.html`.
+- **Honestidad sobre el alcance**: NO enruta a "cualquier módulo" todavía — solo invoca `/api/v1/aios/orchestrate` (que sí decide qué agente le corresponde a cada subtarea vía `lib/taskReasoning.ts`). No ejecuta los pasos del plan automáticamente (eso ya existe por separado en `/api/v1/aios/execute.ts`, sin UI de chat conectada) ni permite continuar la conversación sobre un run existente. Es un punto de entrada conversacional real para crear planes, no un orquestador conversacional completo.
+- **Hallazgo durante la implementación**: las páginas `command-center.html`, `browser-agent.html`, `enterprise-command.html`, `global-command-center.html`, `innovation-center.html`, `network-center.html`, `operations-center.html` leen un token de `localStorage.getItem('editcore_token')` que ningún flujo de login del repo escribe — su autenticación está rota/huérfana. `assistant.html` se construyó con el patrón de auth real (sesión Supabase) para evitar heredar ese problema; las demás páginas quedan con ese gap documentado, no se tocaron (fuera de alcance de este ítem).
+- **Archivos afectados**: `web/assistant.html` (nuevo), `web/account.html` (link agregado).
+- **Dependencias**: P3.1 y P3.2 (ya completados).
 - **Complejidad**: alta.
-- **Riesgo**: alto (UX completamente nueva, requiere validación con usuarios reales).
+- **Riesgo**: medio — mitigado al no agregar autonomía nueva: el chat solo crea planes (autonomy_level 1-3 limitado en el selector), no ejecuta nada por sí solo.
 
 ## Regla de ejecución
 
