@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 import { guessDevPort } from "../preview/projectDevServer";
+import { findActiveDevPort } from "../preview/localPreview";
 import { isReadableFileSync } from "../fs/workspaceFs";
 
 const SKIP_DIRS = new Set([
@@ -159,8 +160,20 @@ export async function getWorkspaceSnapshot(): Promise<WorkspaceSnapshot | undefi
     lines.push("Stack: Next.js.");
   }
 
-  const devPort = guessDevPort(root);
-  lines.push(`Dev server habitual: http://localhost:${devPort}`);
+  const activePort = await findActiveDevPort(root);
+  if (activePort !== undefined) {
+    lines.push(
+      `Dev server CORRIENDO AHORA en: http://localhost:${activePort} (puerto detectado activo en este momento — ` +
+        `usa SIEMPRE este puerto al decirle al usuario dónde recargar, puede no ser el puerto por defecto si ese ` +
+        `ya estaba ocupado).`
+    );
+  } else {
+    const devPort = guessDevPort(root);
+    lines.push(
+      `Dev server no detectado activo ahora mismo. Puerto habitual según package.json: http://localhost:${devPort} ` +
+        `(esto es solo una suposición; si el usuario menciona un puerto distinto en su terminal, usa ese).`
+    );
+  }
 
   return { name, root, summary: lines.join("\n") };
 }
