@@ -1,5 +1,13 @@
 # EditCore Global AI Architecture
 
+> **Fuente de verdad** sobre la arquitectura del backend de IA de EditCore
+> (capa web/Vercel). `EDITCORE_CORE_INTELLIGENCE.md` y
+> `EDITCORE_AI_OS_ARCHITECTURE.md` describen el mismo núcleo (Capa 2 de este
+> documento) desde ángulos más detallados/históricos — se conservan como
+> contexto adicional, pero ante cualquier discrepancia, este documento manda.
+> (Nota agregada 2026-06-30 al consolidar docs solapados; ningún archivo se
+> borró.)
+
 Estado: **ecosistema completo implementado** a traves de los Prompts 11-16.
 Este documento muestra la arquitectura global real de EditCore hoy.
 
