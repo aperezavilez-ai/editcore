@@ -58,18 +58,67 @@
           msg.textContent = data.error || "No se pudo cargar la cuenta.";
           return;
         }
-        const planLabel = { free: "Community (gratis)", starter: "Starter", professional: "Professional", team: "Team", enterprise: "Enterprise" }[data.organization?.plan] ?? data.organization?.plan ?? "—";
+        const planLabel = { free: "Community (gratis)", pro: "Pro" }[data.organization?.plan] ?? data.organization?.plan ?? "—";
+        const isPro = data.organization?.plan === "pro";
         content.innerHTML = `
           <div class="row"><span>Correo</span><span>${data.user.email ?? "—"}</span></div>
           <div class="row"><span>Organización</span><span>${data.organization?.name ?? "Sin organización asignada"}</span></div>
           <div class="row"><span>Plan</span><span>${planLabel}</span></div>
           <div class="row"><span>Rol</span><span>${data.profile?.role ?? "—"}</span></div>
+          ${
+            isPro
+              ? ""
+              : `<div style="margin-top:18px; display:flex; gap:10px;">
+                  <button id="upgradeMonthlyBtn" style="flex:1; margin-top:0; background:#5865f2;">Pro mensual — $19/mes</button>
+                  <button id="upgradeAnnualBtn" style="flex:1; margin-top:0; background:#5865f2;">Pro anual — $182.40/año</button>
+                </div>
+                <div id="upgradeMsg" class="msg"></div>`
+          }
           <a id="downloadBtn" href="https://github.com/aperezavilez-ai/editcore/releases/latest" style="display:block; margin-top:18px; padding:12px; border-radius:8px; background:#2b3040; color:#e8eaf0; text-align:center; font-weight:600; text-decoration:none;">Descargar EditCore IDE</a>
           <div id="downloadVersion" style="font-size:12px; color:#8b909e; margin-top:6px; text-align:center;"></div>
           <a href="/developers.html" style="display:block; margin-top:20px; color:#5865f2; font-size:14px;">Panel de desarrolladores (API keys) →</a>
           <a href="/community.html" style="display:block; margin-top:8px; color:#5865f2; font-size:14px;">Comunidad EditCore →</a>
         `;
         logoutBtn.style.display = "block";
+
+        if (!isPro) {
+          const upgradeMsg = document.getElementById("upgradeMsg");
+          async function startCheckout(interval) {
+            upgradeMsg.style.color = "#8b909e";
+            upgradeMsg.textContent = "Redirigiendo a Stripe...";
+            try {
+              const checkoutRes = await fetch("/api/billing/checkout", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: "Bearer " + session.access_token,
+                },
+                body: JSON.stringify({
+                  interval,
+                  successUrl: window.location.origin + "/account.html?upgraded=true",
+                  cancelUrl: window.location.origin + "/account.html",
+                }),
+              });
+              const checkoutData = await checkoutRes.json();
+              if (!checkoutRes.ok || !checkoutData.url) {
+                upgradeMsg.style.color = "#f87171";
+                upgradeMsg.textContent = checkoutData.error || "No se pudo iniciar el pago.";
+                return;
+              }
+              window.location.href = checkoutData.url;
+            } catch (err) {
+              upgradeMsg.style.color = "#f87171";
+              upgradeMsg.textContent = "Error de red al iniciar el pago.";
+            }
+          }
+          document.getElementById("upgradeMonthlyBtn").addEventListener("click", () => startCheckout("monthly"));
+          document.getElementById("upgradeAnnualBtn").addEventListener("click", () => startCheckout("annual"));
+        }
+
+        if (new URLSearchParams(window.location.search).get("upgraded") === "true") {
+          msg.style.color = "#34d399";
+          msg.textContent = "¡Pago recibido! Tu plan se actualizará en unos segundos (recargá si no ves el cambio).";
+        }
 
         fetch("https://raw.githubusercontent.com/aperezavilez-ai/editcore/main/releases/latest.json")
           .then((r) => (r.ok ? r.json() : null))
