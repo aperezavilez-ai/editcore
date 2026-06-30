@@ -87,6 +87,17 @@ Registro de cambios reales, derivado del historial real de `git log` (no reconst
 - **Pruebas**: `npx tsc --noEmit -p extensions/editcore-claude` → sin errores; `npm run compile` → sin errores.
 - **Validación**: pendiente de confirmación del usuario probando en el IDE real (requiere que `terminal.integrated.shellIntegration.enabled` esté activo, que es el valor por defecto de VS Code/Code-OSS).
 
+### 2026-06-30 — Fix de raíz: el auto-abrir browser dependía de shell integration que no funcionaba en PowerShell del usuario
+
+- **Tipo de cambio**: fix de comportamiento real en `extensions/editcore-claude`, sin nuevas dependencias.
+- **Síntoma reportado por el usuario**: tras instalar el watcher basado en `vscode.window.onDidStartTerminalShellExecution` (cambio anterior, commit `6bc6774`), corriendo `npm run dev` en una terminal nueva de Windows PowerShell, el browser seguía sin abrirse solo — el usuario tenía que seguir haciendo clic manual en el botón "Browser".
+- **Causa raíz encontrada**: `onDidStartTerminalShellExecution` depende por completo de que el shell integration de VS Code esté realmente activo en esa terminal. En Windows PowerShell (`powershell.exe`, no PowerShell 7/`pwsh`), esa integración requiere el módulo `PSReadLine` en una versión reciente (2.2.2+); Windows suele traer una versión más vieja preinstalada, y cuando eso pasa el script de integración de VS Code se inyecta pero no llega a emitir los eventos de inicio/fin de comando — silenciosamente, sin ningún error visible. El mecanismo anterior dependía 100% de ese evento, así que en ese entorno nunca se disparaba.
+- **Archivos modificados**:
+  - `extensions/editcore-claude/src/preview/devServerWatcher.ts`: reescrito por completo. Ya no escucha eventos de terminal; ahora hace un sondeo HTTP real en segundo plano cada 3 segundos sobre los puertos candidatos del dev server del proyecto (reutilizando `findActivePort`, que ya hacía sondeo HTTP real), y abre el browser integrado en cuanto detecta una transición de "puerto caído" a "puerto respondiendo" — funciona sin importar qué shell use el usuario (PowerShell, cmd, bash, etc.), porque no depende de detectar comandos de terminal en absoluto. Tiene un cooldown de 5 minutos entre auto-aperturas para no pelear con cierres manuales del usuario.
+  - `extensions/editcore-claude/src/preview/localPreview.ts`: se exportó la función interna `findActivePort` (antes privada) para que el watcher la reutilice sin duplicar la lógica de sondeo HTTP.
+- **Pruebas**: `npx tsc --noEmit -p extensions/editcore-claude` → sin errores; `npm run compile` → sin errores.
+- **Validación**: pendiente de confirmación del usuario probando en su IDE real tras `git pull` + `scripts\deploy-extensions-to-portable.ps1`.
+
 ## Cómo se actualiza este archivo a futuro
 
 Cada sprint ejecutado desde `EDITCORE_MASTER_ROADMAP.md` agrega una entrada nueva siguiendo el mismo formato (fecha, tipo, archivos, pruebas, hallazgos, próximos pasos), inmediatamente después de la última entrada — no se reescriben entradas anteriores.
