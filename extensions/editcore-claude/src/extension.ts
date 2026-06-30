@@ -37,6 +37,7 @@ import { initVoyageService } from "./rag/voyageService";
 import { registerDiagnosticCommands } from "./diagnostics/diagnosticCommands";
 import { registerIntelligenceCommands } from "./intelligence/intelligenceCommands";
 import { registerQuickActionsBar } from "./hub/quickActionsBar";
+import { registerDevServerWatcher } from "./preview/devServerWatcher";
 import { registerWelcomePanel, showWelcomeIfNeeded } from "./welcome/welcomePanel";
 import { runFirstRunWizardIfNeeded } from "./welcome/firstRunWizard";
 import { registerProductCommands } from "./product/productCommands";
@@ -67,6 +68,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   void writeActivationProbe(context);
   registerQuickActionsBar(context);
+  registerDevServerWatcher(context);
   registerWelcomePanel(context);
   registerProductCommands(context, apiKeyService);
   registerPlatformCommands(context);
