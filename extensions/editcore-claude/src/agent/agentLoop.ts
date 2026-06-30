@@ -1,7 +1,6 @@
 import * as vscode from "vscode";
 import Anthropic from "@anthropic-ai/sdk";
 import { ApiKeyService } from "../apiKeyService";
-import { agentFallbackResponse } from "../aiRouter";
 import { createClaudeClient, mapClaudeApiError } from "../anthropicClient";
 import { LLM_CONFIG } from "../llmConfig";
 import { resolveClaudeModelId } from "../models";
@@ -35,21 +34,13 @@ export async function runAgentTask(
   const maxTokens = config.get<number>("maxTokens", 8096);
 
   if (!apiKey?.trim()) {
-    if (apiKeyService) {
-      const fallback = await agentFallbackResponse(apiKeyService, userTask);
-      if (fallback) {
-        onEvent({
-          type: "assistant_text",
-          text: `_Sin clave Claude; respuesta con OpenAI sin herramientas._\n\n${fallback.text}`,
-        });
-        onUsage?.(fallback.usage.inputTokens, fallback.usage.outputTokens);
-        onEvent({ type: "done", reason: "finished" });
-        return;
-      }
-    }
     onEvent({
       type: "error",
-      message: "Configura una API Key de Claude o OpenAI en el panel de APIs.",
+      message:
+        "El modo Agent necesita una API Key de Claude (Anthropic) para poder leer, crear y editar archivos del proyecto: " +
+        "es la única que tiene las herramientas (read_file, write_file, apply_patch, run_command, etc.) conectadas. " +
+        "Configúrala en el panel de APIs (Ctrl+Alt+K). Si solo tenés una key de OpenAI, podés usarla en el chat normal, " +
+        "pero ahí EditCore responde solo texto, sin tocar ningún archivo.",
     });
     return;
   }
@@ -84,23 +75,14 @@ export async function runAgentTask(
           { signal: abortSignal }
         );
       } catch (err: unknown) {
-        if (apiKeyService) {
-          try {
-            const fallback = await agentFallbackResponse(apiKeyService, userTask);
-            if (fallback) {
-              onEvent({
-                type: "assistant_text",
-                text: `_Claude no disponible; respuesta con OpenAI sin herramientas._\n\n${fallback.text}`,
-              });
-              onUsage?.(fallback.usage.inputTokens, fallback.usage.outputTokens);
-              onEvent({ type: "done", reason: "finished" });
-              return;
-            }
-          } catch {
-            // Keep the original Claude error below.
-          }
-        }
-        onEvent({ type: "error", message: mapClaudeApiError(err).message });
+        const claudeError = mapClaudeApiError(err);
+        onEvent({
+          type: "error",
+          message:
+            `${claudeError.message} El modo Agent no puede continuar sin Claude porque es el único proveedor con ` +
+            "las herramientas de archivos conectadas; no se usa un respaldo sin herramientas para evitar respuestas " +
+            "que digan poder editar código sin poder hacerlo de verdad.",
+        });
         return;
       }
 
