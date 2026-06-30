@@ -377,10 +377,13 @@ async function execListDirectory(input: { path: string }): Promise<string> {
 async function execReadFile(input: { path: string; offset?: number; limit?: number }): Promise<string> {
   const abs = resolveSafePath(input.path);
   if (!(await isReadableFile(abs))) {
-    const hint = (await fs.promises.stat(abs).catch(() => undefined))?.isDirectory()
-      ? " Es una carpeta — usa list_directory o glob_files."
-      : "";
-    throw new Error(`No es un archivo legible: ${input.path}.${hint}`);
+    const stat = await fs.promises.stat(abs).catch(() => undefined);
+    if (stat?.isDirectory()) {
+      // Auto-redirect: devuelve el listado de la carpeta en vez de error
+      const listing = await execListDirectory({ path: input.path });
+      return `[${input.path} es una carpeta — contenido listado automáticamente]\n${listing}`;
+    }
+    throw new Error(`No es un archivo legible: ${input.path}.`);
   }
   const content = await fs.promises.readFile(abs, 'utf-8');
   const lines = content.split('\n');
