@@ -509,14 +509,14 @@
           IDE con Claude y OpenAI integrados. Agentes, GitHub, Vercel y Supabase en un solo editor.
         </p>
         <div class="cta-wrap">
-          <a class="cta" href="https://github.com/aperezavilez-ai/editcore/releases/latest" id="downloadBtn">
-            Descargar EditCore
+          <a class="cta" href="/login.html" id="registerBtn">
+            Registrarse
           </a>
           <svg class="cta-cursor" viewBox="0 0 24 24" aria-hidden="true">
             <path fill="#fff" stroke="#111" stroke-width="1.2" d="M5 3l12 8.5-5 .5 2.5 6.5-2.5 1.2-2.5-6.5-5 1.3z"/>
           </svg>
         </div>
-        <p class="version" id="versionLine">Versión 1.0.1 - Windows 10/11 - 64 bits</p>
+        <p class="version">Crea tu cuenta gratis (plan Community) para descargar EditCore.</p>
       </section>
 
       <section class="features" aria-label="Características">
@@ -581,8 +581,8 @@
     <h2>Pasos</h2>
     <ol>
       <li>Entra a <strong>editcore.mx</strong> en tu navegador.</li>
-      <li>Pulsa el botón <strong>Descargar EditCore</strong> en esta página.</li>
-      <li>Guarda el archivo <strong>EditCore-x.x.x-win32-x64-setup.exe</strong> (aprox. 192 MB) en Descargas.</li>
+      <li>Pulsa <strong>Registrarse</strong>, crea tu cuenta gratis (plan Community) y entra a <strong>Mi cuenta</strong>.</li>
+      <li>Desde ahí pulsa <strong>Descargar EditCore IDE</strong> y guarda el archivo <strong>EditCore-x.x.x-win32-x64-setup.exe</strong> (aprox. 192 MB) en Descargas.</li>
       <li>Ejecuta el instalador con doble clic.</li>
       <li>Si Windows muestra «publicador desconocido»: <strong>Más información</strong> → <strong>Ejecutar de todas formas</strong>.</li>
       <li>Sigue el asistente hasta finalizar.</li>
@@ -690,17 +690,6 @@
         if (e.key === 'Escape' && modal.classList.contains('open')) closeInfo();
       });
 
-      var manifestUrl = 'https://raw.githubusercontent.com/aperezavilez-ai/editcore/main/releases/latest.json';
-      fetch(manifestUrl)
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (data) {
-          if (!data || !data.version) return;
-          var line = document.getElementById('versionLine');
-          if (line) line.textContent = 'Versión ' + data.version + ' - Windows 10/11 - 64 bits';
-          var btn = document.getElementById('downloadBtn');
-          if (btn && data.setup && data.setup.url) btn.href = data.setup.url;
-        })
-        .catch(function () {});
     })();
   </script>
 </body>
