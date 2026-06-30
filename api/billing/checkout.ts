@@ -1,21 +1,29 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getSupabaseAdmin } from "../../lib/supabaseAdmin";
 import { resolveOrganizationFromKey } from "../../lib/orgAuth";
+import { resolveUserFromBearerToken, getProfile } from "../../lib/userAuth";
 import { getStripe, priceIdForInterval, type BillingInterval } from "../../lib/stripeClient";
 
 /**
  * POST /api/billing/checkout { interval, successUrl, cancelUrl }
  * Crea una sesión de Stripe Checkout para que la organización autenticada
  * suscriba el plan "pro" (único plan pago), mensual o anual. Devuelve { url }.
+ * Acepta dos formas de autenticación: `x-editcore-org-key` (extensión/server-to-server)
+ * o `Authorization: Bearer <token>` de sesión de Supabase Auth (dashboard web).
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const orgId = await resolveOrganizationFromKey(req.headers["x-editcore-org-key"] as string | undefined);
+  let orgId = await resolveOrganizationFromKey(req.headers["x-editcore-org-key"] as string | undefined);
   if (!orgId) {
-    return res.status(401).json({ error: "Organization key inválida o revocada." });
+    const user = await resolveUserFromBearerToken(req.headers.authorization);
+    const profile = user ? await getProfile(user.id) : undefined;
+    orgId = profile?.organization_id ?? undefined;
+  }
+  if (!orgId) {
+    return res.status(401).json({ error: "No se pudo identificar la organización (key u sesión inválida)." });
   }
 
   const { interval, successUrl, cancelUrl } = req.body ?? {};
