@@ -146,6 +146,19 @@ Registro de cambios reales, derivado del historial real de `git log` (no reconst
 - **Pendiente, no fabricado**: P2.2 (consolidar docs de arquitectura de IA solapados) requiere fusionar/borrar archivos — acción destructiva que requiere confirmación explícita del usuario antes de tocarse, no se hizo en este cambio. P4.1-P4.3 (observabilidad real, optimization engine con datos reales, interfaz conversacional unificada) dependen de cuentas externas del usuario (Sentry/Vercel Analytics) o de validación de UX con usuarios reales — no se pueden completar sin esa información/credenciales del usuario, quedan documentados como pendientes en `EDITCORE_MASTER_ROADMAP.md`.
 - **Pruebas**: `npx tsc --noEmit` (raíz) → sin errores; `npm test` (raíz) → 24/24 tests pasan.
 
+### 2026-06-30 — P2.2: aclarar (sin borrar) los docs de arquitectura de IA solapados
+
+- **Tipo de cambio**: documentación, no destructivo — ningún archivo se borró ni se fusionó.
+- **Auditoría real de los 6 docs candidatos** (`EDITCORE_CORE_INTELLIGENCE.md`, `EDITCORE_INTELLIGENCE_CORE.md`, `EDITCORE_AI_ARCHITECTURE.md`, `EDITCORE_AI_OS_ARCHITECTURE.md`, `EDITCORE_GLOBAL_AI_ARCHITECTURE.md`, `EDITCORE_ECOSYSTEM_ARCHITECTURE.md`), leídos completos:
+  - `EDITCORE_CORE_INTELLIGENCE.md` (backend web/Vercel) y `EDITCORE_INTELLIGENCE_CORE.md` (motor local del IDE) **no eran redundantes** — describen sistemas distintos, solo el nombre confundía.
+  - `EDITCORE_AI_ARCHITECTURE.md` (guía de selección de modelos para el agente `@ai-architect`) y `EDITCORE_ECOSYSTEM_ARCHITECTURE.md` (capa de negocio/marketplace) tampoco eran redundantes — temas distintos.
+  - Redundancia real confirmada solo entre `EDITCORE_CORE_INTELLIGENCE.md`, `EDITCORE_AI_OS_ARCHITECTURE.md` y `EDITCORE_GLOBAL_AI_ARCHITECTURE.md`: los 3 describen el mismo núcleo backend (`lib/modelRouter.ts` + `taskReasoning.ts` + `aiGovernance.ts`) desde ángulos distintos, generados en sesiones diferentes.
+- **Decisión (con el usuario, opción elegida explícitamente sobre fusionar-y-borrar)**: en vez de fusionar y borrar contenido (irreversible salvo por git history), se agregó una nota de encabezado en cada uno de los 4 docs involucrados aclarando relación y fuente de verdad:
+  - `EDITCORE_GLOBAL_AI_ARCHITECTURE.md` queda marcado como fuente de verdad consolidada (mapa más completo: 6 capas, tablas, endpoints).
+  - `EDITCORE_CORE_INTELLIGENCE.md` y `EDITCORE_AI_OS_ARCHITECTURE.md` apuntan a `GLOBAL_AI_ARCHITECTURE.md` como versión consolidada, y se conservan como detalle adicional.
+  - `EDITCORE_CORE_INTELLIGENCE.md` y `EDITCORE_INTELLIGENCE_CORE.md` ahora se aclaran mutuamente cuál es backend web y cuál es el motor local del IDE.
+- **Resultado**: cero pérdida de contenido, ambigüedad de cuál doc es la fuente de verdad resuelta.
+
 ## Cómo se actualiza este archivo a futuro
 
 Cada sprint ejecutado desde `EDITCORE_MASTER_ROADMAP.md` agrega una entrada nueva siguiendo el mismo formato (fecha, tipo, archivos, pruebas, hallazgos, próximos pasos), inmediatamente después de la última entrada — no se reescriben entradas anteriores.

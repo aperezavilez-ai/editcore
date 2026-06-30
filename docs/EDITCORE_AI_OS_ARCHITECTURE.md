@@ -1,5 +1,10 @@
 # EditCore AI Operating System — Arquitectura
 
+> Para el mapa completo y consolidado del backend de IA (todas las capas,
+> tablas y endpoints), ver `EDITCORE_GLOBAL_AI_ARCHITECTURE.md` — fuente de
+> verdad. Este documento se conserva como detalle adicional sobre la Capa 2
+> (orquestación/gobernanza/model routing). (Nota agregada 2026-06-30.)
+
 Estado: **núcleo real implementado**. Las capas de coordinación, gobernanza
 y enrutamiento de modelos existen como código en producción. La ejecución
 autónoma de nivel 4-5 (commits, deploys sin humano) está bloqueada por

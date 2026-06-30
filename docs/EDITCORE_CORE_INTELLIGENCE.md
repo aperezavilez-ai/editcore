@@ -1,5 +1,13 @@
 # EditCore Core Intelligence
 
+> **Esto describe el backend web/Vercel** (`lib/`, APIs `/api/v1/aios/*`,
+> tablas Supabase). Para el motor de inteligencia *local* dentro de la
+> extensión del IDE (sin backend, corre en la máquina del usuario), ver
+> `EDITCORE_INTELLIGENCE_CORE.md` — son sistemas distintos a pesar del
+> nombre parecido. Para el mapa completo y consolidado de esta capa backend,
+> ver `EDITCORE_GLOBAL_AI_ARCHITECTURE.md` (Capa 2); este documento se
+> conserva como detalle adicional. (Nota agregada 2026-06-30.)
+
 Estado: **módulos centrales reales**. El cerebro de la plataforma está
 implementado como una capa de bibliotecas TypeScript más APIs serverless
 en Vercel. El nivel de autonomía máximo hoy es nivel 2 (análisis + lectura)
