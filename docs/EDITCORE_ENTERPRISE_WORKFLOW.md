@@ -1,8 +1,6 @@
-# EditCore Enterprise Workflow
+# EditCore — Enterprise Workflow (Prompt 17)
 
-Estado: **flujo completo disponible via agentes del IDE**. Documenta cómo
-un usuario pasa de una idea de negocio a una arquitectura lista para
-desarrollar usando los agentes de EditCore.
+Estado: **modelo operativo empresarial con APIs reales**. Documenta el flujo de OKRs, procesos, clientes, finanzas y reportes ejecutivos del Operating Model.
 
 ## 1. Flujo completo de arquitectura empresarial
 

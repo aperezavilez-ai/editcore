@@ -151,6 +151,28 @@
       transition: color 0.15s, background 0.15s;
     }
     nav a:hover, .nav-btn:hover { color: var(--cyan); background: rgba(0, 229, 255, 0.06); }
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid var(--border-neon);
+      background:
+        radial-gradient(circle at 35% 30%, #6a7a8f 0%, #3d4a5c 35%, #1e2633 70%),
+        linear-gradient(160deg, #4a5568, #1a2030);
+      margin-left: 0.5rem;
+      box-shadow: 0 0 14px var(--neon-soft);
+      flex-shrink: 0;
+      overflow: hidden;
+      text-decoration: none;
+      display: block;
+    }
+    .avatar::after {
+      content: "";
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(ellipse 60% 45% at 50% 38%, rgba(180,195,210,0.35), transparent 55%);
+    }
 
     /* Hero */
     .hero {
@@ -467,7 +489,9 @@
         <nav>
           <a href="#descargar">Descargar</a>
           <button type="button" class="nav-btn" data-info-open="guia">Guía</button>
+          <a href="https://github.com/aperezavilez-ai/editcore" target="_blank" rel="noopener noreferrer">GitHub</a>
         </nav>
+        <a class="avatar" href="account.html" title="Cuenta" aria-label="Cuenta"></a>
       </div>
     </header>
 
@@ -485,14 +509,14 @@
           IDE con Claude y OpenAI integrados. Agentes, GitHub, Vercel y Supabase en un solo editor.
         </p>
         <div class="cta-wrap">
-          <a class="cta" href="https://github.com/aperezavilez-ai/editcore/releases/latest" id="downloadBtn">
-            Descargar EditCore
+          <a class="cta" href="/login.html" id="registerBtn">
+            Registrarse
           </a>
           <svg class="cta-cursor" viewBox="0 0 24 24" aria-hidden="true">
             <path fill="#fff" stroke="#111" stroke-width="1.2" d="M5 3l12 8.5-5 .5 2.5 6.5-2.5 1.2-2.5-6.5-5 1.3z"/>
           </svg>
         </div>
-        <p class="version" id="versionLine">Versión 1.0.1 - Windows 10/11 - 64 bits</p>
+        <p class="version">Crea tu cuenta gratis (plan Community) para descargar EditCore.</p>
       </section>
 
       <section class="features" aria-label="Características">
@@ -501,7 +525,7 @@
             <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/>
           </svg>
           <h3>Chat y agentes IA</h3>
-          <p>Chat con Clauders y openi IMI integrados. Agentes, GitHub, en solo editor.</p>
+          <p>Chat integrado con Claude y OpenAI. Agentes que leen, editan y ejecutan código directamente en el editor.</p>
         </article>
         <article class="card">
           <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
@@ -509,14 +533,14 @@
             <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
           </svg>
           <h3>EditCore Connect</h3>
-          <p>Editcore connect adten with control. Agentes, GitHub, Vercel Supabase en un editor.</p>
+          <p>Conecta GitHub, Vercel y Supabase con tus propios tokens, sin salir del editor.</p>
         </article>
         <article class="card">
           <svg class="card-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M17.5 2.5l-1 4.5h-3l-1.2-4.5h-2.3L9 7H6l-1-4.5H2.5L4 12l-1.5 4.5H6l1-4.5h3l1.2 4.5h2.3l1-4.5h3l1 4.5h2.5L20 12l1.5-4.5h-4z"/>
           </svg>
           <h3>Basado en VS Code</h3>
-          <p>EditCore is VS Code eco AI for basidror embusen and any anl al development.</p>
+          <p>Fork de Code-OSS con todas las extensiones y atajos que ya conocés, más capacidades de IA nativas.</p>
         </article>
         <article class="card">
           <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
@@ -524,7 +548,7 @@
             <rect x="9" y="10" width="6" height="5" rx="1" fill="currentColor" stroke="none"/>
           </svg>
           <h3>Privacidad</h3>
-          <p>Privacidad AI sivelcer protection ai from nistlice to trollect or prvsuication.</p>
+          <p>IDE local, sin telemetría. Tus API keys y tokens se guardan cifrados en tu propio equipo.</p>
         </article>
       </section>
     </main>
@@ -557,8 +581,8 @@
     <h2>Pasos</h2>
     <ol>
       <li>Entra a <strong>editcore.mx</strong> en tu navegador.</li>
-      <li>Pulsa el botón <strong>Descargar EditCore</strong> en esta página.</li>
-      <li>Guarda el archivo <strong>EditCore-x.x.x-win32-x64-setup.exe</strong> (aprox. 192 MB) en Descargas.</li>
+      <li>Pulsa <strong>Registrarse</strong>, crea tu cuenta gratis (plan Community) y entra a <strong>Mi cuenta</strong>.</li>
+      <li>Desde ahí pulsa <strong>Descargar EditCore IDE</strong> y guarda el archivo <strong>EditCore-x.x.x-win32-x64-setup.exe</strong> (aprox. 192 MB) en Descargas.</li>
       <li>Ejecuta el instalador con doble clic.</li>
       <li>Si Windows muestra «publicador desconocido»: <strong>Más información</strong> → <strong>Ejecutar de todas formas</strong>.</li>
       <li>Sigue el asistente hasta finalizar.</li>
@@ -666,17 +690,6 @@
         if (e.key === 'Escape' && modal.classList.contains('open')) closeInfo();
       });
 
-      var manifestUrl = 'https://raw.githubusercontent.com/aperezavilez-ai/editcore/main/releases/latest.json';
-      fetch(manifestUrl)
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (data) {
-          if (!data || !data.version) return;
-          var line = document.getElementById('versionLine');
-          if (line) line.textContent = 'Versión ' + data.version + ' - Windows 10/11 - 64 bits';
-          var btn = document.getElementById('downloadBtn');
-          if (btn && data.setup && data.setup.url) btn.href = data.setup.url;
-        })
-        .catch(function () {});
     })();
   </script>
 </body>
