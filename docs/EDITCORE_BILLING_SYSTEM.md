@@ -1,31 +1,28 @@
 # EditCore Billing System
 
-Estado: **no implementado todavía**. Este documento es honesto sobre lo que
-existe (el modelo de datos) y lo que falta (todo el flujo de cobro real).
+Estado: **flujo de cobro implementado en código**. Falta únicamente la
+configuración del lado del usuario en el dashboard de Stripe (productos,
+precios y el webhook) — ningún secreto se guarda en este repositorio.
 
-## 1. Lo que sí existe
+## 1. Lo que existe
 
-- Tabla `subscriptions` en Supabase (`stripe_customer_id`, `stripe_subscription_id`, `plan`, `status`, `current_period_end`) — lista para recibir datos de Stripe, pero **vacía**, nada la llena hoy.
-- Tabla `plan_limits` con los 5 planes (`free`, `pro`, `team`, `business`, `enterprise`) y sus límites de tokens/asientos/almacenamiento, precargada con valores reales en la migración inicial.
-- Endpoint `/api/usage/summary` que ya calcula si una organización superó su límite mensual de tokens (`overLimit: true/false`), comparando `usage_events` contra `plan_limits`.
-- `STRIPE_SECRET_KEY` y `STRIPE_WEBHOOK_SECRET` están declaradas como variables de entorno esperadas (`.env.example`), pero no se usan en ningún código todavía — son placeholders para cuando se implemente.
+- Tabla `subscriptions` en Supabase (`stripe_customer_id`, `stripe_subscription_id`, `plan`, `status`, `current_period_end`).
+- Tabla `plan_limits` con los planes (`free`, `starter`, `professional`, `team`, `enterprise`) y sus límites de tokens/asientos/almacenamiento.
+- `GET /api/usage/summary` — calcula `overLimit` comparando `usage_events` del mes contra `plan_limits`.
+- `POST /api/billing/checkout` (`api/billing/checkout.ts`) — crea una sesión de Stripe Checkout (`mode: subscription`) para la organización autenticada, reusando el `stripe_customer_id` si ya existe uno.
+- `POST /api/billing/webhook` (`api/billing/webhook.ts`) — verifica la firma de Stripe (`STRIPE_WEBHOOK_SECRET`) y procesa `checkout.session.completed`, `customer.subscription.created/updated/deleted`, actualizando `subscriptions` y `organizations.plan`.
+- `POST /api/usage/track` ahora **bloquea con HTTP 402** si la organización superó `monthly_token_limit` del plan actual — ya no es solo informativo.
+- `lib/stripeClient.ts` — cliente de Stripe + mapeo plan↔Price ID vía variables de entorno.
 
-## 2. Lo que falta (todo el sistema de cobro)
+## 2. Lo que falta (responsabilidad del usuario, no de código)
 
-- No hay integración con el SDK de Stripe en el backend (la dependencia `stripe` está en `package.json` pero no se importa en ningún archivo).
-- No hay endpoint de Stripe Checkout para iniciar un pago.
-- No hay webhook (`/api/stripe/webhook`) para recibir eventos de Stripe (pago exitoso, cancelación, etc.) y actualizar `subscriptions`.
-- No hay lógica de upgrade/downgrade de plan.
-- No hay enforcement real: aunque `/api/usage/summary` calcula `overLimit`, **ningún endpoint bloquea el uso** cuando se supera el límite. Es solo informativo hoy.
-- No hay facturación, recibos, ni período de prueba.
+Estos pasos requieren acceso al dashboard de Stripe del usuario y **nunca se
+hacen escribiendo claves en el repo**:
 
-## 3. Plan honesto para implementarlo (no construido aún)
+1. Crear los 4 productos/precios recurrentes en Stripe (Starter, Professional, Team, Enterprise).
+2. Copiar cada Price ID al entorno de Vercel: `STRIPE_PRICE_STARTER`, `STRIPE_PRICE_PROFESSIONAL`, `STRIPE_PRICE_TEAM`, `STRIPE_PRICE_ENTERPRISE`.
+3. Configurar el endpoint de webhook en Stripe apuntando a `https://<dominio>/api/billing/webhook`, suscrito a `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`.
+4. Copiar `STRIPE_SECRET_KEY` (modo test o live) y el `STRIPE_WEBHOOK_SECRET` que genera ese endpoint a las variables de entorno de Vercel.
+5. Botón en la extensión/dashboard que llame a `POST /api/billing/checkout` y redirija a la `url` devuelta — todavía no construido en la UI (solo el backend).
 
-1. Crear productos/precios en el dashboard de Stripe para cada plan.
-2. Endpoint `/api/billing/checkout` que cree una sesión de Stripe Checkout para la organización autenticada.
-3. Endpoint `/api/billing/webhook` que verifique la firma de Stripe y actualice `subscriptions.plan` / `status` según el evento.
-4. Modificar `/api/usage/track` para rechazar (HTTP 402) nuevos eventos si `overLimit` es verdadero y el plan no permite excederse.
-5. Botón en la extensión ("Actualizar plan") que abra la URL de Checkout en el navegador.
-
-Ninguno de estos 5 pasos está implementado — se documentan aquí como la ruta
-real a seguir, sin fingir que ya existen.
+Variables esperadas (nombres, sin valores) listadas en `.env.example`.
