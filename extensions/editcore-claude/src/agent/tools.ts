@@ -477,14 +477,33 @@ async function execApplyPatch(input: {
     throw new Error(`Archivo no existe: ${input.path}`);
   }
   const original = await fs.promises.readFile(abs, 'utf8');
-  const count = original.split(input.old_string).length - 1;
+  const usesCrlf = original.includes('\r\n');
+
+  let oldString = input.old_string;
+  let newString = input.new_string;
+  let count = original.split(oldString).length - 1;
+
+  if (count === 0 && usesCrlf && !oldString.includes('\r\n') && oldString.includes('\n')) {
+    const crlfOld = oldString.replace(/\n/g, '\r\n');
+    const crlfCount = original.split(crlfOld).length - 1;
+    if (crlfCount > 0) {
+      oldString = crlfOld;
+      newString = newString.replace(/\n/g, '\r\n');
+      count = crlfCount;
+    }
+  }
+
   if (count === 0) {
-    throw new Error('old_string no encontrado en el archivo.');
+    throw new Error(
+      'old_string no encontrado en el archivo. Probablemente no coincide exactamente (espacios, indentación o ' +
+        'saltos de línea distintos). Usá read_file para releer el contenido actual y copiá old_string textual ' +
+        'desde ahí antes de reintentar.'
+    );
   }
   if (count > 1) {
     throw new Error('old_string no es único — proporciona más contexto.');
   }
-  const updated = original.replace(input.old_string, input.new_string);
+  const updated = original.replace(oldString, newString);
   const impact = await analyzeFileImpact(input.path);
   const approved = await showDiffAndConfirm(abs, updated, true, impact);
   if (!approved) {

@@ -446,6 +446,11 @@
           "default": true,
           "description": "Pedir aprobación del plan antes de ejecutar en modo Agent"
         },
+        "editcore.agent.autoApplyLowRisk": {
+          "type": "boolean",
+          "default": false,
+          "description": "Aplicar automáticamente, sin diálogo de confirmación, los cambios de archivo que el análisis de impacto marca como riesgo bajo (sin referencias detectadas en el proyecto). Los de riesgo medio/alto siempre piden confirmación."
+        },
         "editcore.validation.afterAgent": {
           "type": "boolean",
           "default": true,
