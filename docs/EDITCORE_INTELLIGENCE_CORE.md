@@ -1,5 +1,12 @@
 # EditCore — Intelligence Core: estado real
 
+> **Esto describe el motor de inteligencia LOCAL dentro de la extensión del
+> IDE** (sin backend, corre en la máquina del usuario sobre el workspace
+> abierto). Para el "Core Intelligence" del backend web/Vercel
+> (`lib/modelRouter.ts`, `taskReasoning.ts`, `aiGovernance.ts`, Supabase),
+> ver `EDITCORE_CORE_INTELLIGENCE.md` — son sistemas distintos a pesar del
+> nombre parecido. (Nota agregada 2026-06-30.)
+
 _Última actualización: 2026-06-29. Mismo criterio que el resto de `docs/EDITCORE_*.md`:
 solo se describe lo que existe y se puede verificar en este repositorio._
 
