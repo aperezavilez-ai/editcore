@@ -98,7 +98,7 @@
       },
       {
         "command": "editcore.openDownloadPage",
-        "title": "EditCore: Página de descarga"
+        "title": "EditCore: P├ígina de descarga"
       },
       {
         "command": "editcore.activateLicense",
@@ -123,7 +123,7 @@
       },
       {
         "command": "editcore.newChat",
-        "title": "EditCore: Nuevo chat (vacío)"
+        "title": "EditCore: Nuevo chat (vac├¡o)"
       },
       {
         "command": "editcore.focusChatInput",
@@ -143,23 +143,23 @@
       },
       {
         "command": "editcore.setOrgApiKey",
-        "title": "EditCore: Conectar con organización (backend)"
+        "title": "EditCore: Conectar con organizaci├│n (backend)"
       },
       {
         "command": "editcore.clearOrgApiKey",
-        "title": "EditCore: Desconectar organización (backend)"
+        "title": "EditCore: Desconectar organizaci├│n (backend)"
       },
       {
         "command": "editcore.showOrgPlan",
-        "title": "EditCore: Ver plan y consumo de la organización"
+        "title": "EditCore: Ver plan y consumo de la organizaci├│n"
       },
       {
         "command": "editcore.loginWithAccount",
-        "title": "EditCore: Iniciar sesión con mi cuenta (correo y contraseña)"
+        "title": "EditCore: Iniciar sesi├│n con mi cuenta (correo y contrase├▒a)"
       },
       {
         "command": "editcore.logoutAccount",
-        "title": "EditCore: Cerrar sesión de mi cuenta"
+        "title": "EditCore: Cerrar sesi├│n de mi cuenta"
       },
       {
         "command": "editcore.showAccount",
@@ -263,7 +263,7 @@
       },
       {
         "command": "editcore.audit",
-        "title": "EditCore: Auditoría completa del proyecto"
+        "title": "EditCore: Auditor├¡a completa del proyecto"
       },
       {
         "command": "editcore.validateProject",
@@ -271,7 +271,7 @@
       },
       {
         "command": "editcore.showLastAudit",
-        "title": "EditCore: Ver última auditoría"
+        "title": "EditCore: Ver ├║ltima auditor├¡a"
       },
       {
         "command": "editcore.globalMemory",
@@ -283,7 +283,7 @@
       },
       {
         "command": "editcore.addGlobalMemory",
-        "title": "EditCore: Añadir memoria global"
+        "title": "EditCore: A├▒adir memoria global"
       },
       {
         "command": "editcore.searchGlobalMemory",
@@ -338,6 +338,50 @@
         "command": "editcore.intelligence.commandCenter",
         "title": "EditCore: Command Center (uso, costos, decisiones, recomendaciones)",
         "shortTitle": "Command Center"
+      },
+      {
+        "command": "editcoreConnect.signInGithub",
+        "title": "EditCore: Conectar con GitHub"
+      },
+      {
+        "command": "editcoreConnect.publishGithub",
+        "title": "EditCore: Publicar proyecto en GitHub"
+      },
+      {
+        "command": "editcoreConnect.cloneRepo",
+        "title": "EditCore: Clonar repositorio"
+      },
+      {
+        "command": "editcoreConnect.listIssues",
+        "title": "EditCore: Listar issues de GitHub"
+      },
+      {
+        "command": "editcoreConnect.createIssue",
+        "title": "EditCore: Crear issue en GitHub"
+      },
+      {
+        "command": "editcoreConnect.setVercelToken",
+        "title": "EditCore: Configurar token de Vercel"
+      },
+      {
+        "command": "editcoreConnect.deployVercel",
+        "title": "EditCore: Desplegar en Vercel"
+      },
+      {
+        "command": "editcoreConnect.setSupabaseToken",
+        "title": "EditCore: Configurar token de Supabase"
+      },
+      {
+        "command": "editcoreConnect.linkSupabase",
+        "title": "EditCore: Vincular proyecto Supabase"
+      },
+      {
+        "command": "editcoreConnect.initSupabase",
+        "title": "EditCore: Inicializar Supabase"
+      },
+      {
+        "command": "editcoreConnect.showConnections",
+        "title": "EditCore: Ver conexiones (GitHub/Vercel/Supabase)"
       }
     ],
     "menus": {
@@ -382,9 +426,9 @@
             "claude-haiku-4-5"
           ],
           "enumDescriptions": [
-            "Claude Sonnet 4.6 — equilibrado (recomendado)",
-            "Claude Opus 4.6 — mas potente",
-            "Claude Haiku 4.5 — rapido y economico"
+            "Claude Sonnet 4.6 ÔÇö equilibrado (recomendado)",
+            "Claude Opus 4.6 ÔÇö mas potente",
+            "Claude Haiku 4.5 ÔÇö rapido y economico"
           ],
           "default": "claude-sonnet-4-6",
           "description": "Modelo Claude (Anthropic) usado por chat, agente y @claude"
@@ -398,10 +442,10 @@
             "gpt-4.1-mini"
           ],
           "enumDescriptions": [
-            "GPT-4o — OpenAI por defecto",
-            "GPT-4o mini — ligero y economico",
-            "GPT-4.1 — mas reciente",
-            "GPT-4.1 mini — compacto"
+            "GPT-4o ÔÇö OpenAI por defecto",
+            "GPT-4o mini ÔÇö ligero y economico",
+            "GPT-4.1 ÔÇö mas reciente",
+            "GPT-4.1 mini ÔÇö compacto"
           ],
           "default": "gpt-4o",
           "description": "Modelo OpenAI usado como respaldo o proveedor principal"
@@ -444,22 +488,22 @@
         "editcore.plan.requireApproval": {
           "type": "boolean",
           "default": true,
-          "description": "Pedir aprobación del plan antes de ejecutar en modo Agent"
+          "description": "Pedir aprobaci├│n del plan antes de ejecutar en modo Agent"
         },
         "editcore.agent.autoApplyLowRisk": {
           "type": "boolean",
           "default": false,
-          "description": "Aplicar automáticamente, sin diálogo de confirmación, los cambios de archivo que el análisis de impacto marca como riesgo bajo (sin referencias detectadas en el proyecto). Los de riesgo medio/alto siempre piden confirmación."
+          "description": "Aplicar autom├íticamente, sin di├ílogo de confirmaci├│n, los cambios de archivo que el an├ílisis de impacto marca como riesgo bajo (sin referencias detectadas en el proyecto). Los de riesgo medio/alto siempre piden confirmaci├│n."
         },
         "editcore.validation.afterAgent": {
           "type": "boolean",
           "default": true,
-          "description": "Tras el agente, ejecutar build/test automáticamente"
+          "description": "Tras el agente, ejecutar build/test autom├íticamente"
         },
         "editcore.validation.commands": {
           "type": "array",
           "default": [],
-          "description": "Comandos custom de validación (vacío = detectar npm run build/test)",
+          "description": "Comandos custom de validaci├│n (vac├¡o = detectar npm run build/test)",
           "items": {
             "type": "string"
           }
@@ -472,7 +516,7 @@
         "editcore.router.autoSelect": {
           "type": "boolean",
           "default": false,
-          "description": "Selección automática de proveedor/modelo según tipo de tarea (chat ask)"
+          "description": "Selecci├│n autom├ítica de proveedor/modelo seg├║n tipo de tarea (chat ask)"
         },
         "editcore.ollama.enabled": {
           "type": "boolean",

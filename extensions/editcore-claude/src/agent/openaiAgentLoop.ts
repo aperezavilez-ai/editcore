@@ -7,6 +7,7 @@ import { buildAgentContext } from "./agentContext";
 import { AgentEvent } from "./agentLoop";
 import { buildAgentSystemPromptBase } from "./communicationStyle";
 import { getAllAgentTools, executeAgentTool, setToolCallRecorder } from "./tools";
+import { resetTaskTrust } from "./agentTrust";
 import { buildSystemPrompt, AgentRoleId } from "../agents/roles";
 import { LLM_CONFIG } from "../llmConfig";
 import { mapOpenAiError } from "../openaiClient";
@@ -62,6 +63,7 @@ export async function runOpenAiAgentTask(
   const config = vscode.workspace.getConfiguration("editcore");
   const model = getOpenAiCoderModel();
   const maxTokens = config.get<number>("maxTokens", 16384);
+  resetTaskTrust();
   const systemPrompt = await buildSystemPrompt(buildAgentSystemPromptBase(), roleId, customAgentId);
   const tools = await getAllAgentTools();
   const openAiTools = anthropicToolsToOpenAi(tools);

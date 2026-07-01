@@ -150,9 +150,10 @@ export async function runIncrementalIndex(root?: string): Promise<IncrementalInd
   // Guardar entrada en tech-memory
   try {
     await appendTechMemoryEntry({
-      category: "rag",
+      type: "rag",
+      title: `Índice incremental (${mode})`,
       summary: `Índice incremental: ${changedFiles.length} archivo(s) actualizados · ${ragStats.chunks} chunks · modo ${mode}`,
-      details: {
+      metadata: {
         changedFiles: changedFiles.length,
         totalFiles: newMeta.totalFiles,
         mode,

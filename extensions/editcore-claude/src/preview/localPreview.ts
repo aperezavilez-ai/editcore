@@ -91,7 +91,7 @@ export async function startLocalPreview(): Promise<void> {
   if (!hasRunningDev) {
     const terminal = vscode.window.createTerminal({
       name: DEV_TERMINAL_NAME,
-      cwd: folder.uri.fsPath,
+      cwd: dev.cwd,
     });
     terminal.show(true);
     terminal.sendText(dev.command);

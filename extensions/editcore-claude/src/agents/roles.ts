@@ -567,7 +567,7 @@ export function getAllowedToolsForRole(roleId: AgentRoleId): string[] | undefine
 
 const BUILTIN_ROLE_IDS = 'architect|fullstack|devops|qa|gps|founder|cto|saas|security|ui-design|billing|enterprise-architect|ai-architect|cost-analyst|risk-analyst|enterprise-consultant|product-manager|sprint-planner|saas-builder|test-factory|release-manager|maintenance-agent';
 
-export function detectRoleFromPrompt(prompt: string): { role: AgentRoleId; cleanPrompt: string } {
+export function detectRoleFromPrompt(prompt: string): { role: AgentRoleId; cleanPrompt: string; customAgentId?: string } {
   const customIds = Object.keys(customAgentsCache).map((id) => id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
   const pattern = [BUILTIN_ROLE_IDS, ...customIds].join('|');
   const mention = new RegExp(`^@(${pattern})\\b\\s*`, 'i');
@@ -575,12 +575,20 @@ export function detectRoleFromPrompt(prompt: string): { role: AgentRoleId; clean
   if (!match) {
     return { role: 'default', cleanPrompt: prompt };
   }
-  const role = match[1].toLowerCase();
-  return { role, cleanPrompt: prompt.slice(match[0].length).trim() };
+  const matchedId = match[1].toLowerCase();
+  const cleanPrompt = prompt.slice(match[0].length).trim();
+  if (customAgentsCache[matchedId]) {
+    return { role: matchedId, cleanPrompt, customAgentId: matchedId };
+  }
+  return { role: matchedId, cleanPrompt };
 }
 
-export async function buildSystemPrompt(base: string, roleId: AgentRoleId): Promise<string> {
-  const role = resolveRole(roleId) ?? AGENT_ROLES.default;
+export async function buildSystemPrompt(
+  base: string,
+  roleId: AgentRoleId,
+  customAgentId?: string
+): Promise<string> {
+  const role = (customAgentId ? resolveRole(customAgentId) : undefined) ?? resolveRole(roleId) ?? AGENT_ROLES.default;
   if (!role.systemPrompt) {
     return base;
   }

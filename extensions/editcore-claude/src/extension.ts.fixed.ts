@@ -1,4 +1,4 @@
-﻿import * as vscode from "vscode";
+import * as vscode from "vscode";
 import { ClaudeConfigViewProvider } from "./configViewProvider";
 import { EditCoreHomeViewProvider } from "./homeViewProvider";
 import { callWithFallback } from "./aiRouter";
@@ -60,13 +60,13 @@ export async function activate(context: vscode.ExtensionContext) {
 
   await migrateLegacyApiKeysFile(context);
 
-  // SOLO PARA DESARROLLO/PRUEBAS: resetea la flag de migraciÃ³n de api-keys.json
-  // para poder probar el flujo completo de nuevo sin reinstalar la extensiÃ³n.
+  // SOLO PARA DESARROLLO/PRUEBAS: resetea la flag de migración de api-keys.json
+  // para poder probar el flujo completo de nuevo sin reinstalar la extensión.
   // Ejecutar desde la paleta de comandos: "EditCore: Reset Api Keys Migration"
   context.subscriptions.push(
     vscode.commands.registerCommand("editcore.debug.resetApiKeysMigration", async () => {
       await resetLegacyApiKeysMigrationFlag(context);
-      vscode.window.showInformationMessage("EditCore: flag de migraciÃ³n reseteada.");
+      vscode.window.showInformationMessage("EditCore: flag de migración reseteada.");
     })
   );
 
@@ -135,7 +135,7 @@ export async function activate(context: vscode.ExtensionContext) {
           await rag.forceRebuild();
         }
       );
-      vscode.window.showInformationMessage("EditCore: Ã­ndice keyword + RAG actualizado.");
+      vscode.window.showInformationMessage("EditCore: índice keyword + RAG actualizado.");
     })
   );
 
@@ -153,7 +153,7 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand("editcore.buildRagIndex", async () => {
       await vscode.window.withProgress(
-        { location: vscode.ProgressLocation.Notification, title: "Construyendo Ã­ndice RAG..." },
+        { location: vscode.ProgressLocation.Notification, title: "Construyendo índice RAG..." },
         async () => {
           await getRagIndex().forceRebuild();
         }
@@ -188,8 +188,8 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand("editcore.warRoom", async () => {
       const desc = await vscode.window.showInputBox({
-        prompt: "Describe el error o incidente de producciÃ³n",
-        placeHolder: "ej: 500 en /api/users tras el Ãºltimo deploy",
+        prompt: "Describe el error o incidente de producción",
+        placeHolder: "ej: 500 en /api/users tras el último deploy",
       });
       if (!desc?.trim()) {
         return;
@@ -215,7 +215,7 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand("editcore.openMarketplace", async () => {
       vscode.window.showInformationMessage(
-        "Las habilidades de EditCore (Arquitecto, GPS, SaaS, Securityâ€¦) estÃ¡n integradas en el agente. UsÃ¡ @architect, @gps, @saas, etc. en el chat."
+        "Las habilidades de EditCore (Arquitecto, GPS, SaaS, Security…) están integradas en el agente. Usá @architect, @gps, @saas, etc. en el chat."
       );
     }),
     vscode.commands.registerCommand("editcore.generateFromIdea", () => generateFromIdea()),
@@ -227,7 +227,7 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("editcore.gpsBuilder", () => gpsBuilder()),
     vscode.commands.registerCommand("editcore.scaffoldVertical", (templateId?: string) => {
       if (!templateId) {
-        return vscode.window.showWarningMessage("SeleccionÃ¡ una plantilla desde el Marketplace.");
+        return vscode.window.showWarningMessage("Seleccioná una plantilla desde el Marketplace.");
       }
       return scaffoldVertical(templateId);
     }),
@@ -266,7 +266,7 @@ export async function activate(context: vscode.ExtensionContext) {
     }),
     vscode.commands.registerCommand("editcore.clearOrgApiKey", async () => {
       await apiKeyService.orgBackend.clearOrgApiKey();
-      vscode.window.showInformationMessage("EditCore: clave de organizaciÃ³n eliminada.");
+      vscode.window.showInformationMessage("EditCore: clave de organización eliminada.");
     }),
     vscode.commands.registerCommand("editcore.showOrgPlan", async () => {
       const [plan, summary] = await Promise.all([
@@ -275,7 +275,7 @@ export async function activate(context: vscode.ExtensionContext) {
       ]);
       if (!plan || !summary) {
         const setup = await vscode.window.showWarningMessage(
-          "EditCore: no hay clave de organizaciÃ³n configurada o el backend no respondiÃ³.",
+          "EditCore: no hay clave de organización configurada o el backend no respondió.",
           "Configurar clave"
         );
         if (setup === "Configurar clave") {
@@ -284,9 +284,9 @@ export async function activate(context: vscode.ExtensionContext) {
         return;
       }
       vscode.window.showInformationMessage(
-        `${plan.organization.name} Â· plan ${summary.plan} Â· ` +
+        `${plan.organization.name} · plan ${summary.plan} · ` +
           `${summary.tokensUsedThisMonth.toLocaleString()} / ${summary.monthlyTokenLimit.toLocaleString()} tokens este mes` +
-          (summary.overLimit ? " Â· LÃMITE SUPERADO" : "")
+          (summary.overLimit ? " · LÍMITE SUPERADO" : "")
       );
     })
   );
@@ -298,7 +298,7 @@ export async function activate(context: vscode.ExtensionContext) {
     }),
     vscode.commands.registerCommand("editcore.logoutAccount", async () => {
       await userAccountAuth.logout();
-      vscode.window.showInformationMessage("EditCore: sesiÃ³n cerrada.");
+      vscode.window.showInformationMessage("EditCore: sesión cerrada.");
     }),
     vscode.commands.registerCommand("editcore.showAccount", async () => {
       await userAccountAuth.showAccount();
@@ -324,7 +324,7 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("editcore.newChat", () => openFreshClaudeChat())
   );
 
-  // Ctrl+Alt+I: siempre sesiÃ³n nueva vacÃ­a (no restaurar la anterior).
+  // Ctrl+Alt+I: siempre sesión nueva vacía (no restaurar la anterior).
   context.subscriptions.push(
     vscode.commands.registerCommand("editcore.focusChatInput", () => openFreshClaudeChat())
   );
@@ -341,11 +341,11 @@ export async function activate(context: vscode.ExtensionContext) {
       if (!editor) return;
       const selection = editor.document.getText(editor.selection);
       if (!selection.trim()) {
-        vscode.window.showWarningMessage("Selecciona cÃ³digo primero.");
+        vscode.window.showWarningMessage("Selecciona código primero.");
         return;
       }
       await vscode.commands.executeCommand("workbench.action.chat.open", {
-        query: `@claude Explica este cÃ³digo de forma clara y concisa:\n\n\`\`\`\n${selection}\n\`\`\``,
+        query: `@claude Explica este código de forma clara y concisa:\n\n\`\`\`\n${selection}\n\`\`\``,
       });
     })
   );
@@ -357,14 +357,14 @@ export async function activate(context: vscode.ExtensionContext) {
       const selection = editor.selection;
       const code = editor.document.getText(selection);
       if (!code.trim()) {
-        vscode.window.showWarningMessage("Selecciona cÃ³digo primero.");
+        vscode.window.showWarningMessage("Selecciona código primero.");
         return;
       }
-      await runWithProgress(apiKeyService, "Corrigiendo cÃ³digo...", async () => {
+      await runWithProgress(apiKeyService, "Corrigiendo código...", async () => {
         const { text, usage } = await callWithFallback(apiKeyService, [
           {
             role: "user",
-            content: `Corrige errores en este cÃ³digo. Responde ÃšNICAMENTE con el cÃ³digo corregido, sin explicaciones ni markdown:\n\n${code}`,
+            content: `Corrige errores en este código. Responde ÚNICAMENTE con el código corregido, sin explicaciones ni markdown:\n\n${code}`,
           },
         ]);
         apiKeyService.recordUsage(usage.inputTokens, usage.outputTokens);
@@ -372,7 +372,7 @@ export async function activate(context: vscode.ExtensionContext) {
         await editor.edit((editBuilder) => {
           editBuilder.replace(selection, cleaned);
         });
-        vscode.window.showInformationMessage("EditCore: cÃ³digo corregido.");
+        vscode.window.showInformationMessage("EditCore: código corregido.");
       });
     })
   );
@@ -446,9 +446,9 @@ async function maybePromptWorkspaceInit(context: vscode.ExtensionContext): Promi
   }
 
   const choice = await vscode.window.showInformationMessage(
-    "EditCore: Â¿inicializar carpeta .editcore/ para este proyecto?",
+    "EditCore: ¿inicializar carpeta .editcore/ para este proyecto?",
     "Inicializar",
-    "DespuÃ©s"
+    "Después"
   );
   await context.globalState.update(flagKey, true);
   if (choice === "Inicializar") {
@@ -457,4 +457,3 @@ async function maybePromptWorkspaceInit(context: vscode.ExtensionContext): Promi
 }
 
 export function deactivate() {}
-

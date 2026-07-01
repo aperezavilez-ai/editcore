@@ -56,6 +56,7 @@ function mapTechType(type: TechMemoryEntry["type"]): MemoryRecordType {
     diagnostic: "error",
     evolution: "version",
     autonomy_cycle: "agent_action",
+    rag: "agent_action",
   };
   return map[type] ?? "agent_action";
 }

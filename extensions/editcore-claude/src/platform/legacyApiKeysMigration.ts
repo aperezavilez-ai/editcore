@@ -14,6 +14,7 @@ export interface LegacyApiKeysMigrationResult {
   importedAnthropic: boolean;
   importedOpenAi: boolean;
   deletedLegacyFile: boolean;
+  skippedAlreadyMigrated: boolean;
 }
 
 interface LegacyApiKeysPayload {
@@ -53,7 +54,14 @@ function readLegacyPayload(keysFile: string): LegacyApiKeysPayload | undefined {
 
 /**
  * Importa api-keys.json (texto plano) a SecretStorage de editcore-claude.
- * Idempotente: no sobrescribe keys ya presentes en SecretStorage.
+ *
+ * FIX: antes, la flag "alreadyMigrated" se leía pero nunca se usaba para
+ * frenar el proceso. Esto causaba que, incluso después de haber migrado
+ * una vez, cualquier archivo api-keys.json que apareciera de nuevo (por
+ * ejemplo, recreado manualmente durante pruebas) se leyera y se borrara
+ * otra vez, sin volver a importar nada porque las keys ya existían en
+ * SecretStorage. Ahora, si ya se migró, la función retorna de inmediato
+ * y NO toca el archivo en absoluto.
  */
 export async function migrateLegacyApiKeysFile(
   context: vscode.ExtensionContext
@@ -62,12 +70,19 @@ export async function migrateLegacyApiKeysFile(
     importedAnthropic: false,
     importedOpenAi: false,
     deletedLegacyFile: false,
+    skippedAlreadyMigrated: false,
   };
+
+  const alreadyMigrated = Boolean(context.globalState.get<string>(MIGRATION_FLAG));
+
+  if (alreadyMigrated) {
+    result.skippedAlreadyMigrated = true;
+    return result;
+  }
 
   const keysFile = getLegacyApiKeysFilePath();
   await purgeLegacyBackupArtifacts(keysFile);
 
-  const alreadyMigrated = Boolean(context.globalState.get<string>(MIGRATION_FLAG));
   const legacy = readLegacyPayload(keysFile);
 
   if (legacy?.anthropic?.trim()) {
@@ -87,18 +102,25 @@ export async function migrateLegacyApiKeysFile(
   }
 
   if (legacy !== undefined) {
-    const hadKeys = Boolean(legacy.anthropic?.trim() || legacy.openai?.trim());
-    const importedSomething = result.importedAnthropic || result.importedOpenAi;
-    if (!hadKeys || importedSomething) {
-      await secureDeleteLegacyFile(keysFile);
-      await purgeLegacyBackupArtifacts(keysFile);
-      result.deletedLegacyFile = true;
-    }
+    await secureDeleteLegacyFile(keysFile);
+    await purgeLegacyBackupArtifacts(keysFile);
+    result.deletedLegacyFile = true;
   }
 
-  if (!alreadyMigrated || result.importedAnthropic || result.importedOpenAi) {
-    await context.globalState.update(MIGRATION_FLAG, new Date().toISOString());
-  }
+  await context.globalState.update(MIGRATION_FLAG, new Date().toISOString());
 
   return result;
+}
+
+/**
+ * SOLO PARA DESARROLLO / PRUEBAS.
+ * Resetea la flag de migración para poder volver a probar el flujo completo
+ * (crear api-keys.json de prueba, reiniciar EditCore, ver que se importe y
+ * se borre correctamente) sin tener que reinstalar la extensión ni tocar
+ * el código cada vez.
+ */
+export async function resetLegacyApiKeysMigrationFlag(
+  context: vscode.ExtensionContext
+): Promise<void> {
+  await context.globalState.update(MIGRATION_FLAG, undefined);
 }

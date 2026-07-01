@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import type Anthropic from "@anthropic-ai/sdk";
 import { ApiKeyService } from "./apiKeyService";
 import { streamForSelectedModel } from "./aiRouter";
 import { LLM_CONFIG } from "./llmConfig";
@@ -23,6 +24,7 @@ import {
 import {
   shouldShowAgentPhasesInChat,
   shouldShowToolProgressInChat,
+  getAgentCommunicationStyle,
 } from "./agent/communicationStyle";
 import { sanitizeAssistantText, isSubstantiveAssistantText } from "./agent/responseSanitizer";
 import {
@@ -256,6 +258,46 @@ export function registerClaudeChatParticipant(
   context.subscriptions.push(participant);
 }
 
+/**
+ * Memoria real de conversación entre mensajes del Agent, por workspace.
+ *
+ * Antes: cada mensaje nuevo empezaba con una conversación vacía y solo un
+ * resumen en texto plano del historial — el modelo perdía el detalle real
+ * de lo que ya había leído/escrito y tenía que re-explorar todo de nuevo
+ * en cada mensaje, gastando iteraciones y tiempo.
+ *
+ * Ahora: se guarda el array real de mensajes (incluyendo las llamadas a
+ * herramientas y sus resultados) mientras el usuario siga en la misma
+ * sesión de chat de ese workspace. Se resetea automáticamente cuando
+ * chatContext.history está vacío (chat nuevo / primer mensaje).
+ */
+const agentConversationStore = new Map<string, Anthropic.Messages.MessageParam[]>();
+const MAX_CONVERSATION_MESSAGES = 40;
+
+function getConversationKey(): string {
+  return vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? "no-workspace";
+}
+
+function getOrResetConversation(isNewSession: boolean): Anthropic.Messages.MessageParam[] {
+  const key = getConversationKey();
+  if (isNewSession) {
+    agentConversationStore.delete(key);
+  }
+  const existing = agentConversationStore.get(key);
+  if (existing) {
+    return existing;
+  }
+  const fresh: Anthropic.Messages.MessageParam[] = [];
+  agentConversationStore.set(key, fresh);
+  return fresh;
+}
+
+function trimConversation(conversation: Anthropic.Messages.MessageParam[]): void {
+  if (conversation.length > MAX_CONVERSATION_MESSAGES) {
+    conversation.splice(0, conversation.length - MAX_CONVERSATION_MESSAGES);
+  }
+}
+
 async function handleAgentRequest(
   apiKey: string,
   request: vscode.ChatRequest,
@@ -270,6 +312,7 @@ async function handleAgentRequest(
   const cancelListener = token.onCancellationRequested(() => abortController.abort());
   let totalInput = 0;
   let totalOutput = 0;
+  const conversation = getOrResetConversation(chatContext.history.length === 0);
 
   const { role, cleanPrompt, customAgentId } = detectRoleFromPrompt(request.prompt);
   let taskPrompt = cleanPrompt || request.prompt;
@@ -331,6 +374,10 @@ async function handleAgentRequest(
     !shouldSkipOrchestratorPlan(cleanPrompt || request.prompt) &&
     vscode.workspace.getConfiguration("editcore").get<boolean>("orchestrator.enabled", false);
 
+  const emitAgentEvent = createAgentEventStreamer(stream, (text) => {
+    assistantSummary += text;
+  });
+
   try {
     const run = useMultiAgent
       ? runMultiAgentPipeline(apiKey, task, (event: MultiAgentEvent) => {
@@ -341,9 +388,7 @@ async function handleAgentRequest(
             }
             return;
           }
-          streamAgentEvent(event, stream, (text) => {
-            assistantSummary += text;
-          });
+          emitAgentEvent(event);
         }, abortController.signal, onUsage, onTool, apiKeyService)
       : useOrchestrator
       ? runOrchestratedTask(apiKey, task, (event: OrchestratorEvent) => {
@@ -354,28 +399,26 @@ async function handleAgentRequest(
             }
             return;
           }
-          streamAgentEvent(event, stream, (text) => {
-            assistantSummary += text;
-          });
+          emitAgentEvent(event);
         }, abortController.signal, onUsage, onTool, role)
       : runAgentTask(
           apiKey,
           task,
           (event: AgentEvent) => {
             if (token.isCancellationRequested) return;
-            streamAgentEvent(event, stream, (text) => {
-              assistantSummary += text;
-            });
+            emitAgentEvent(event);
           },
           abortController.signal,
           onUsage,
           onTool,
           role,
           apiKeyService,
+          conversation,
           customAgentId
         );
 
     await run;
+    trimConversation(conversation);
 
     const status = token.isCancellationRequested ? "cancelled" : "completed";
     const summary =
@@ -444,41 +487,86 @@ function describeToolProgress(name: string, input: any): string {
   }
 }
 
-function streamAgentEvent(
-  event: AgentEvent,
+const CURSOR_REASSURANCE_PHRASES = [
+  "Pensando…",
+  "Trabajando en la tarea…",
+  "Sigue en proceso…",
+  "Un momento más…",
+  "Avanzando…",
+];
+
+function createAgentEventStreamer(
   stream: vscode.ChatResponseStream,
   onAssistantText?: (text: string) => void
-): void {
-  switch (event.type) {
-    case "assistant_text": {
-      const clean = sanitizeAssistantText(event.text);
-      if (!isSubstantiveAssistantText(clean)) {
+): (event: AgentEvent) => void {
+  const cursorMode = getAgentCommunicationStyle() === "cursor";
+  let pendingFinalText = "";
+  let shownThinkingLine = false;
+  let phraseIndex = 0;
+  let toolCallsSincePing = 0;
+  const PING_EVERY_N_TOOLS = 3;
+
+  const pingProgress = () => {
+    stream.progress(CURSOR_REASSURANCE_PHRASES[phraseIndex % CURSOR_REASSURANCE_PHRASES.length]);
+    phraseIndex++;
+    shownThinkingLine = true;
+    toolCallsSincePing = 0;
+  };
+
+  return (event: AgentEvent) => {
+    switch (event.type) {
+      case "assistant_text": {
+        const clean = sanitizeAssistantText(event.text);
+        if (!isSubstantiveAssistantText(clean)) {
+          break;
+        }
+        onAssistantText?.(clean);
+        if (cursorMode) {
+          pendingFinalText = clean;
+          if (!shownThinkingLine) {
+            pingProgress();
+          }
+        } else {
+          stream.markdown(clean);
+        }
         break;
       }
-      onAssistantText?.(clean);
-      stream.markdown(clean);
-      break;
+      case "tool_call_start":
+        if (cursorMode) {
+          if (!shownThinkingLine) {
+            pingProgress();
+          } else {
+            toolCallsSincePing++;
+            if (toolCallsSincePing >= PING_EVERY_N_TOOLS) {
+              pingProgress();
+            }
+          }
+        } else {
+          stream.progress(describeToolProgress(event.name, event.input));
+        }
+        if (shouldShowToolProgressInChat()) {
+          stream.markdown(`\n🔧 **${event.name}**\n`);
+        }
+        break;
+      case "tool_call_result":
+        if (event.isError) {
+          stream.markdown(`\n❌ ${event.output.slice(0, 500)}\n`);
+        }
+        break;
+      case "done":
+        if (cursorMode && pendingFinalText) {
+          stream.markdown(pendingFinalText);
+          pendingFinalText = "";
+        }
+        if (event.reason === "max_iterations") {
+          stream.markdown("\n\n_El agente alcanzó el límite de iteraciones. Puedes pedirle que continúe._\n");
+        }
+        break;
+      case "error":
+        stream.markdown(`\n\n${event.message}\n`);
+        break;
     }
-    case "tool_call_start":
-      stream.progress(describeToolProgress(event.name, event.input));
-      if (shouldShowToolProgressInChat()) {
-        stream.markdown(`\n🔧 **${event.name}**\n`);
-      }
-      break;
-    case "tool_call_result":
-      if (event.isError) {
-        stream.markdown(`\n❌ ${event.output.slice(0, 500)}\n`);
-      }
-      break;
-    case "done":
-      if (event.reason === "max_iterations") {
-        stream.markdown("\n\n_El agente alcanzó el límite de iteraciones. Puedes pedirle que continúe._\n");
-      }
-      break;
-    case "error":
-      stream.markdown(`\n\n${event.message}\n`);
-      break;
-  }
+  };
 }
 
 function buildAgentTask(

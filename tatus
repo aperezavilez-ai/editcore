@@ -1,0 +1,701 @@
+[1mdiff --git a/extensions/editcore-claude/package.json b/extensions/editcore-claude/package.json[m
+[1mindex 4c0b3b2..13f62f4 100644[m
+[1m--- a/extensions/editcore-claude/package.json[m
+[1m+++ b/extensions/editcore-claude/package.json[m
+[36m@@ -1,681 +1,19 @@[m
+ {[m
+[31m-  "name": "editcore-claude",[m
+[31m-  "displayName": "EditCore - Claude Assistant",[m
+[31m-  "description": "Chat con Claude (Anthropic) y OpenAI integrado nativamente en EditCore IDE.",[m
+[31m-  "version": "1.0.7",[m
+[31m-  "publisher": "editcore",[m
+[31m-  "engines": {[m
+[31m-    "vscode": "^1.85.0"[m
+[31m-  },[m
+[31m-  "capabilities": {[m
+[31m-    "untrustedWorkspaces": {[m
+[31m-      "supported": true[m
+[31m-    },[m
+[31m-    "virtualWorkspaces": true[m
+[31m-  },[m
+[31m-  "extensionKind": [[m
+[31m-    "ui"[m
+[31m-  ],[m
+[31m-  "categories": [[m
+[31m-    "Other",[m
+[31m-    "Machine Learning"[m
+[31m-  ],[m
+[31m-  "enabledApiProposals": [[m
+[31m-    "defaultChatParticipant",[m
+[31m-    "chatParticipantAdditions",[m
+[31m-    "chatParticipantPrivate",[m
+[31m-    "chatProvider",[m
+[31m-    "chatContextProvider",[m
+[31m-    "chatReferenceBinaryData"[m
+[31m-  ],[m
+[31m-  "activationEvents": [[m
+[31m-    "onStartupFinished",[m
+[31m-    "*",[m
+[31m-    "onLanguageModelChatProvider:editcore",[m
+[31m-    "onChatParticipant:editcore.claude",[m
+[31m-    "onView:editcore.homeView",[m
+[31m-    "onView:editcore.accountView"[m
+[31m-  ],[m
+[31m-  "main": "./out/extension.js",[m
+   "contributes": {[m
+[31m-    "chatParticipants": [[m
+[31m-      {[m
+[31m-        "id": "editcore.claude",[m
+[31m-        "name": "claude",[m
+[31m-        "fullName": "Asistente",[m
+[31m-        "description": "Asistente de codigo de EditCore (Anthropic y OpenAI)",[m
+[31m-        "isDefault": true,[m
+[31m-        "modes": [[m
+[31m-          "ask",[m
+[31m-          "agent"[m
+[31m-        ][m
+[31m-      }[m
+[31m-    ],[m
+[31m-    "viewsContainers": {[m
+[31m-      "activitybar": [[m
+[31m-        {[m
+[31m-          "id": "editcore-sidebar",[m
+[31m-          "title": "EditCore",[m
+[31m-          "icon": "media/editcore-activity.svg"[m
+[31m-        }[m
+[31m-      ][m
+[31m-    },[m
+[31m-    "views": {[m
+[31m-      "editcore-sidebar": [[m
+[31m-        {[m
+[31m-          "type": "webview",[m
+[31m-          "id": "editcore.homeView",[m
+[31m-          "name": "Inicio"[m
+[31m-        },[m
+[31m-        {[m
+[31m-          "type": "webview",[m
+[31m-          "id": "editcore.accountView",[m
+[31m-          "name": "Cuenta & API"[m
+[31m-        }[m
+[31m-      ][m
+[31m-    },[m
+     "commands": [[m
+[31m-      {[m
+[31m-        "command": "editcore.openBrowser",[m
+[31m-        "title": "EditCore: Abrir browser",[m
+[31m-        "shortTitle": "Browser",[m
+[31m-        "icon": "$(globe)"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.previewLocal",[m
+[31m-        "title": "EditCore: Preview local (dev + browser)",[m
+[31m-        "shortTitle": "Preview local",[m
+[31m-        "icon": "$(globe)"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.showWelcome",[m
+[31m-        "title": "EditCore: Pantalla de inicio",[m
+[31m-        "shortTitle": "Inicio"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.checkForUpdates",[m
+[31m-        "title": "EditCore: Buscar actualizaciones"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.openDownloadPage",[m
+[31m-        "title": "EditCore: Página de descarga"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.activateLicense",[m
+[31m-        "title": "EditCore: Activar licencia"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.productHealth",[m
+[31m-        "title": "EditCore: Estado del producto"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.repairChat",[m
+[31m-        "title": "EditCore: Reparar chat"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.openAccountPanel",[m
+[31m-        "title": "EditCore: Configurar APIs",[m
+[31m-        "shortTitle": "Configurar APIs"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.openChat",[m
+[31m-        "title": "EditCore: Nuevo chat @claude"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.newChat",[m
+[31m-        "title": "EditCore: Nuevo chat (vacío)"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.focusChatInput",[m
+[31m-        "title": "EditCore: Nuevo chat @claude (atajo)"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.explainSelection",[m
+[31m-        "title": "EditCore: Explicar seleccion"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.fixSelection",[m
+[31m-        "title": "EditCore: Corregir seleccion"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.setApiKey",[m
+[31m-        "title": "EditCore: Configurar API Key de Claude"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.setOrgApiKey",[m
+[31m-        "title": "EditCore: Conectar con organización (backend)"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.clearOrgApiKey",[m
+[31m-        "title": "EditCore: Desconectar organización (backend)"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.showOrgPlan",[m
+[31m-        "title": "EditCore: Ver plan y consumo de la organización"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.loginWithAccount",[m
+[31m-        "title": "EditCore: Iniciar sesión con mi cuenta (correo y contraseña)"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.logoutAccount",[m
+[31m-        "title": "EditCore: Cerrar sesión de mi cuenta"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.showAccount",[m
+[31m-        "title": "EditCore: Ver mi cuenta"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.openAgent",[m
+[31m-        "title": "EditCore: Abrir Agente"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.reindexWorkspace",[m
+[31m-        "title": "EditCore: Reindexar workspace (keyword + RAG)"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.buildRagIndex",[m
+[31m-        "title": "EditCore: Construir indice RAG"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.refreshMcp",[m
+[31m-        "title": "EditCore: Reconectar servidores MCP"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.updateDigitalTwin",[m
+[31m-        "title": "EditCore: Actualizar gemelo digital"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.warRoom",[m
+[31m-        "title": "EditCore: Sala de guerra (incidente produccion)"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.deployAutonomous",[m
+[31m-        "title": "EditCore: Deploy autonomo (test + build + Vercel)"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.openMarketplace",[m
+[31m-        "title": "EditCore: Abrir Marketplace"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.generateFromIdea",[m
+[31m-        "title": "EditCore: Generar proyecto desde una idea"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.createCustomAgent",[m
+[31m-        "title": "EditCore: Crear agente personalizado"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.manageAutomations",[m
+[31m-        "title": "EditCore: Gestionar automatizaciones"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.founderMode",[m
+[31m-        "title": "EditCore: Modo Fundador"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.ctoMode",[m
+[31m-        "title": "EditCore: Modo CTO"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.saasBuilder",[m
+[31m-        "title": "EditCore: SaaS Builder"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.gpsBuilder",[m
+[31m-        "title": "EditCore: GPS Builder"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.scaffoldVertical",[m
+[31m-        "title": "EditCore: Abrir plantilla vertical"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.showAuditLog",[m
+[31m-        "title": "EditCore: Ver audit log"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.showSessions",[m
+[31m-        "title": "EditCore: Sesiones de agente"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.initOrg",[m
+[31m-        "title": "EditCore: Inicializar org.json"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.initWorkspace",[m
+[31m-        "title": "EditCore: Inicializar workspace (.editcore)"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.exportSessions",[m
+[31m-        "title": "EditCore: Exportar sesiones a Markdown"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.refreshMarketplace",[m
+[31m-        "title": "EditCore: Actualizar catalogo Marketplace"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.commandHub",[m
+[31m-        "title": "EditCore: Command Hub"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.resumeSession",[m
+[31m-        "title": "EditCore: Reanudar sesion de agente"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.audit",[m
+[31m-        "title": "EditCore: Auditoría completa del proyecto"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.validateProject",[m
+[31m-        "title": "EditCore: Validar build y tests"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.showLastAudit",[m
+[31m-        "title": "EditCore: Ver última auditoría"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.globalMemory",[m
+[31m-        "title": "EditCore: Memoria global"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.syncGlobalMemory",[m
+[31m-        "title": "EditCore: Sincronizar memoria a global"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.addGlobalMemory",[m
+[31m-        "title": "EditCore: Añadir memoria global"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.searchGlobalMemory",[m
+[31m-        "title": "EditCore: Buscar memoria global"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.projectIntelligence",[m
+[31m-        "title": "EditCore: Project Intelligence (cross-proyecto)"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.observability",[m
+[31m-        "title": "EditCore: Ver observabilidad"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.about",[m
+[31m-        "title": "EditCore: Acerca de / estado plataforma"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.selfDiagnostic",[m
+[31m-        "title": "EditCore: Autodiagnostico"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.selfDiagnostic.quick",[m
+[31m-        "title": "EditCore: Autodiagnostico rapido (sin Claude)"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.selfDiagnostic.export",[m
+[31m-        "title": "EditCore: Exportar ultimo autodiagnostico"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.reloadWindow",[m
+[31m-        "title": "EditCore: Recargar cambios",[m
+[31m-        "shortTitle": "Recargar cambios",[m
+[31m-        "icon": "$(refresh)"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.diagnoseNativeModels",[m
+[31m-        "title": "EditCore: Diagnosticar modelos nativos",[m
+[31m-        "shortTitle": "Diagnosticar modelos"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.intelligence.snapshot",[m
+[31m-        "title": "EditCore: Snapshot del sistema (SIL)",[m
+[31m-        "shortTitle": "System Snapshot"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.intelligence.health",[m
+[31m-        "title": "EditCore: Health Monitor (SIL)",[m
+[31m-        "shortTitle": "Health Monitor"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.intelligence.commandCenter",[m
+[31m-        "title": "EditCore: Command Center (uso, costos, decisiones, recomendaciones)",[m
+[31m-        "shortTitle": "Command Center"[m
+[31m-      }[m
+[31m-    ],[m
+[31m-    "menus": {[m
+[31m-      "menubar/help": [[m
+[31m-        {[m
+[31m-          "command": "editcore.openAccountPanel",[m
+[31m-          "group": "9_editcore@1"[m
+[31m-        },[m
+[31m-        {[m
+[31m-          "command": "editcore.reloadWindow",[m
+[31m-          "group": "9_editcore@2"[m
+[31m-        }[m
+[31m-      ],[m
+[31m-      "view/title": [[m
+[31m-        {[m
+[31m-          "command": "editcore.reloadWindow",[m
+[31m-          "when": "view =~ /^editcore\\./",[m
+[31m-          "group": "navigation@0"[m
+[31m-        }[m
+[31m-      ],[m
+[31m-      "editor/context": [[m
+[31m-        {[m
+[31m-          "command": "editcore.explainSelection",[m
+[31m-          "when": "editorHasSelection",[m
+[31m-          "group": "editcore@1"[m
+[31m-        },[m
+[31m-        {[m
+[31m-          "command": "editcore.fixSelection",[m
+[31m-          "when": "editorHasSelection",[m
+[31m-          "group": "editcore@2"[m
+[31m-        }[m
+[31m-      ][m
+[31m-    },[m
+[31m-    "configuration": {[m
+[31m-      "title": "EditCore Claude",[m
+[31m-      "properties": {[m
+[31m-        "editcore.model": {[m
+[31m-          "type": "string",[m
+[31m-          "enum": [[m
+[31m-            "claude-sonnet-4-6",[m
+[31m-            "claude-opus-4-6",[m
+[31m-            "claude-haiku-4-5"[m
+[31m-          ],[m
+[31m-          "enumDescriptions": [[m
+[31m-            "Claude Sonnet 4.6 — equilibrado (recomendado)",[m
+[31m-            "Claude Opus 4.6 — mas potente",[m
+[31m-            "Claude Haiku 4.5 — rapido y economico"[m
+[31m-          ],[m
+[31m-          "default": "claude-sonnet-4-6",[m
+[31m-          "description": "Modelo Claude (Anthropic) usado por chat, agente y @claude"[m
+[31m-        },[m
+[31m-        "editcore.openai.model": {[m
+[31m-          "type": "string",[m
+[31m-          "enum": [[m
+[31m-            "gpt-4o",[m
+[31m-            "gpt-4o-mini",[m
+[31m-            "gpt-4.1",[m
+[31m-            "gpt-4.1-mini"[m
+[31m-          ],[m
+[31m-          "enumDescriptions": [[m
+[31m-            "GPT-4o — OpenAI por defecto",[m
+[31m-            "GPT-4o mini — ligero y economico",[m
+[31m-            "GPT-4.1 — mas reciente",[m
+[31m-            "GPT-4.1 mini — compacto"[m
+[31m-          ],[m
+[31m-          "default": "gpt-4o",[m
+[31m-          "description": "Modelo OpenAI usado como respaldo o proveedor principal"[m
+[31m-        },[m
+[31m-        "editcore.fallback.enabled": {[m
+[31m-          "type": "boolean",[m
+[31m-          "default": true,[m
+[31m-          "description": "Si Claude falla y hay key OpenAI, cambiar automaticamente a OpenAI"[m
+[31m-        },[m
+[31m-        "editcore.maxTokens": {[m
+[31m-          "type": "number",[m
+[31m-          "default": 8096,[m
+[31m-          "minimum": 256,[m
+[31m-          "maximum": 64000,[m
+[31m-          "description": "Maximo de tokens por respuesta"[m
+[31m-        },[m
+[31m-        "editcore.agent.alwaysWhenWorkspaceOpen": {[m
+[31m-          "type": "boolean",[m
+[31m-          "default": true,[m
+[31m-          "description": "Con carpeta abierta, usar agente con herramientas reales aunque el modo no llegue del chat"[m
+[31m-        },[m
+[31m-        "editcore.agent.style": {[m
+[31m-          "type": "string",[m
+[31m-          "enum": [[m
+[31m-            "cursor",[m
+[31m-            "verbose"[m
+[31m-          ],[m
+[31m-          "enumDescriptions": [[m
+[31m-            "Conciso: actua sin narrar; herramientas ocultas en el chat (recomendado)",[m
+[31m-            "Detallado: muestra cada herramienta y fases del orquestador"[m
+[31m-          ],[m
+[31m-          "default": "cursor",[m
+[31m-          "description": "Estilo de comunicacion del agente en modo Agent"[m
+[31m-        },[m
+[31m-        "editcore.orchestrator.enabled": {[m
+[31m-          "type": "boolean",[m
+[31m-          "default": false,[m
+[31m-          "description": "En modo Agent: plan y aprobacion antes de ejecutar (desactivado = directo como Cursor)"[m
+[31m-        },[m
+[31m-        "editcore.plan.requireApproval": {[m
+[31m-          "type": "boolean",[m
+[31m-          "default": true,[m
+[31m-          "description": "Pedir aprobación del plan antes de ejecutar en modo Agent"[m
+[31m-        },[m
+[31m-        "editcore.agent.autoApplyLowRisk": {[m
+[31m-          "type": "boolean",[m
+[31m-          "default": false,[m
+[31m-          "description": "Aplicar automáticamente, sin diálogo de confirmación, los cambios de archivo que el análisis de impacto marca como riesgo bajo (sin referencias detectadas en el proyecto). Los de riesgo medio/alto siempre piden confirmación."[m
+[31m-        },[m
+[31m-        "editcore.validation.afterAgent": {[m
+[31m-          "type": "boolean",[m
+[31m-          "default": true,[m
+[31m-          "description": "Tras el agente, ejecutar build/test automáticamente"[m
+[31m-        },[m
+[31m-        "editcore.validation.commands": {[m
+[31m-          "type": "array",[m
+[31m-          "default": [],[m
+[31m-          "description": "Comandos custom de validación (vacío = detectar npm run build/test)",[m
+[31m-          "items": {[m
+[31m-            "type": "string"[m
+[31m-          }[m
+[31m-        },[m
+[31m-        "editcore.multiAgent.enabled": {[m
+[31m-          "type": "boolean",[m
+[31m-          "default": false,[m
+[31m-          "description": "Pipeline multiagente: Arquitecto -> Programador -> QA -> DevOps"[m
+[31m-        },[m
+[31m-        "editcore.router.autoSelect": {[m
+[31m-          "type": "boolean",[m
+[31m-          "default": false,[m
+[31m-          "description": "Selección automática de proveedor/modelo según tipo de tarea (chat ask)"[m
+[31m-        },[m
+[31m-        "editcore.ollama.enabled": {[m
+[31m-          "type": "boolean",[m
+[31m-          "default": false,[m
+[31m-          "description": "Habilitar Ollama como proveedor local"[m
+[31m-        },[m
+[31m-        "editcore.ollama.baseUrl": {[m
+[31m-          "type": "string",[m
+[31m-          "default": "http://127.0.0.1:11434",[m
+[31m-          "description": "URL base de Ollama"[m
+[31m-        },[m
+[31m-        "editcore.openrouter.model": {[m
+[31m-          "type": "string",[m
+[31m-          "default": "deepseek/deepseek-chat",[m
+[31m-          "description": "Modelo por defecto en OpenRouter"[m
+[31m-        },[m
+[31m-        "editcore.plan": {[m
+[31m-          "type": "string",[m
+[31m-          "enum": [[m
+[31m-            "free",[m
+[31m-            "pro",[m
+[31m-            "team",[m
+[31m-            "business",[m
+[31m-            "enterprise"[m
+[31m-          ],[m
+[31m-          "default": "enterprise",[m
+[31m-          "description": "Plan EditCore (controla items del marketplace local)"[m
+[31m-        },[m
+[31m-        "editcore.orgBackendUrl": {[m
+[31m-          "type": "string",[m
+[31m-          "default": "https://editcore.mx",[m
+[31m-          "description": "URL del backend real de EditCore (organizaciones, planes, consumo de IA)."[m
+[31m-        },[m
+[31m-        "editcore.product.checkUpdatesOnStartup": {[m
+[31m-          "type": "boolean",[m
+[31m-          "default": true,[m
+[31m-          "description": "Comprobar nuevas versiones de EditCore al iniciar (cada 12 h)"[m
+[31m-        },[m
+[31m-        "editcore.marketplace.remoteUrl": {[m
+[31m-          "type": "string",[m
+[31m-          "default": "",[m
+[31m-          "description": "URL opcional de catalogo JSON remoto (se fusiona con el bundled)"[m
+[31m-        },[m
+[31m-        "editcore.rag.useEmbeddings": {[m
+[31m-          "type": "boolean",[m
+[31m-          "default": true,[m
+[31m-          "description": "Si hay Voyage API Key, re-rankear RAG con embeddings reales"[m
+[31m-        },[m
+[31m-        "editcore.rag.embeddingModel": {[m
+[31m-          "type": "string",[m
+[31m-          "default": "voyage-3-lite",[m
+[31m-          "enum": [[m
+[31m-            "voyage-3-lite",[m
+[31m-            "voyage-3",[m
+[31m-            "voyage-code-3"[m
+[31m-          ],[m
+[31m-          "description": "Modelo Voyage para embeddings de codigo"[m
+[31m-        },[m
+[31m-        "editcore.sessions.autoSummary": {[m
+[31m-          "type": "boolean",[m
+[31m-          "default": true,[m
+[31m-          "description": "Tras cada sesion Agent, generar resumen con Claude (async)"[m
+[31m-        },[m
+[31m-        "editcore.diagnostics.useClaude": {[m
+[31m-          "type": "boolean",[m
+[31m-          "default": true,[m
+[31m-          "description": "En autodiagnostico completo, analizar resultados con Claude"[m
+[31m-        },[m
+[31m-        "editcore.diagnostics.model": {[m
+[31m-          "type": "string",[m
+[31m-          "default": "claude-sonnet-4-6",[m
+[31m-          "enum": [[m
+[31m-            "claude-sonnet-4-6",[m
+[31m-            "claude-opus-4-6",[m
+[31m-            "claude-haiku-4-5"[m
+[31m-          ],[m
+[31m-          "description": "Modelo Claude para analisis de autodiagnostico"[m
+[31m-        },[m
+[31m-        "editcore.diagnostics.maxTokens": {[m
+[31m-          "type": "number",[m
+[31m-          "default": 2048,[m
+[31m-          "minimum": 256,[m
+[31m-          "maximum": 8192,[m
+[31m-          "description": "Tokens maximos del analisis de autodiagnostico"[m
+[31m-        },[m
+[31m-        "editcore.intelligence.enabled": {[m
+[31m-          "type": "boolean",[m
+[31m-          "default": false,[m
+[31m-          "description": "Activa EditCore System Intelligence Layer (lectura del sistema)"[m
+[31m-        },[m
+[31m-        "editcore.intelligence.permissionLevel": {[m
+[31m-          "type": "string",[m
+[31m-          "enum": [[m
+[31m-            "read",[m
+[31m-            "write_docs",[m
+[31m-            "write_config",[m
+[31m-            "write_code"[m
+[31m-          ],[m
+[31m-          "default": "read",[m
+[31m-          "description": "Nivel maximo de permiso SIL sin aprobacion explicita"[m
+[31m-        },[m
+[31m-        "editcore.intelligence.autoGenerateMap": {[m
+[31m-          "type": "boolean",[m
+[31m-          "default": false,[m
+[31m-          "description": "Regenerar mapa del sistema al abrir workspace (Sprint 2)"[m
+[31m-        },[m
+[31m-        "editcore.intelligence.healthIntervalMinutes": {[m
+[31m-          "type": "number",[m
+[31m-          "default": 0,[m
+[31m-          "minimum": 0,[m
+[31m-          "maximum": 1440,[m
+[31m-          "description": "Intervalo de health check automatico (0 = solo manual)"[m
+[31m-        },[m
+[31m-        "editcore.mcp.servers": {[m
+[31m-          "type": "array",[m
+[31m-          "default": [],[m
+[31m-          "description": "Servidores MCP adicionales (ademas de .editcore/mcp.json)",[m
+[31m-          "items": {[m
+[31m-            "type": "object",[m
+[31m-            "properties": {[m
+[31m-              "name": {[m
+[31m-                "type": "string"[m
+[31m-              },[m
+[31m-              "command": {[m
+[31m-                "type": "string"[m
+[31m-              },[m
+[31m-              "args": {[m
+[31m-                "type": "array",[m
+[31m-                "items": {[m
+[31m-                  "type": "string"[m
+[31m-                }[m
+[31m-              }[m
+[31m-            }[m
+[31m-          }[m
+[31m-        }[m
+[31m-      }[m
+[31m-    },[m
+[31m-    "configurationDefaults": {[m
+[31m-      "chat.agent.enabled": true,[m
+[31m-      "chat.agentHost.enabled": false,[m
+[31m-      "chat.newSession.defaultMode": "agent",[m
+[31m-      "chat.agentsControl.enabled": "compact",[m
+[31m-      "chat.unifiedAgentsBar.enabled": false,[m
+[31m-      "chat.customizations.harnessSelector.enabled": true,[m
+[31m-      "chat.extensionTools.enabled": true,[m
+[31m-      "chat.generalPurposeAgent.enabled": false[m
+[31m-    },[m
+[31m-    "keybindings": [[m
+[31m-      {[m
+[31m-        "command": "-workbench.action.chat.open",[m
+[31m-        "key": "ctrl+alt+i",[m
+[31m-        "mac": "cmd+alt+i"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.focusChatInput",[m
+[31m-        "key": "ctrl+alt+i",[m
+[31m-        "mac": "cmd+alt+i"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.commandHub",[m
+[31m-        "key": "ctrl+alt+e",[m
+[31m-        "mac": "cmd+alt+e",[m
+[31m-        "when": "editorTextFocus || !editorFocus"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.selfDiagnostic",[m
+[31m-        "key": "ctrl+alt+d",[m
+[31m-        "mac": "cmd+alt+d",[m
+[31m-        "when": "editorTextFocus || !editorFocus"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.reloadWindow",[m
+[31m-        "key": "ctrl+alt+r",[m
+[31m-        "mac": "cmd+alt+r",[m
+[31m-        "when": "editorTextFocus || !editorFocus"[m
+[31m-      },[m
+[31m-      {[m
+[31m-        "command": "editcore.openBrowser",[m
+[31m-        "key": "ctrl+alt+/",[m
+[31m-        "mac": "cmd+alt+/",[m
+[31m-        "when": "editorTextFocus || !editorFocus"[m
+[31m-      }[m
+[31m-    ],[m
+[31m-    "languageModelChatProviders": [[m
+[31m-      {[m
+[31m-        "vendor": "editcore",[m
+[31m-        "displayName": "EditCore"[m
+[31m-      }[m
+[32m+[m[32m      { "command": "editcoreConnect.signInGithub", "title": "EditCore: Conectar con GitHub", "category": "EditCore Connect" },[m
+[32m+[m[32m      { "command": "editcoreConnect.publishGithub", "title": "EditCore: Publicar proyecto en GitHub", "category": "EditCore Connect" },[m
+[32m+[m[32m      { "command": "editcoreConnect.cloneRepo", "title": "EditCore: Clonar repositorio", "category": "EditCore Connect" },[m
+[32m+[m[32m      { "command": "editcoreConnect.listIssues", "title": "EditCore: Listar issues de GitHub", "category": "EditCore Connect" },[m
+[32m+[m[32m      { "command": "editcoreConnect.createIssue", "title": "EditCore: Crear issue en GitHub", "category": "EditCore Connect" },[m
+[32m+[m[32m      { "command": "editcoreConnect.setVercelToken", "title": "EditCore: Configurar token de Vercel", "category": "EditCore Connect" },[m
+[32m+[m[32m      { "command": "editcoreConnect.deployVercel", "title": "EditCore: Desplegar en Vercel", "category": "EditCore Connect" },[m
+[32m+[m[32m      { "command": "editcoreConnect.setSupabaseToken", "title": "EditCore: Configurar token de Supabase", "category": "EditCore Connect" },[m
+[32m+[m[32m      { "command": "editcoreConnect.linkSupabase", "title": "EditCore: Vincular proyecto Supabase", "category": "EditCore Connect" },[m
+[32m+[m[32m      { "command": "editcoreConnect.initSupabase", "title": "EditCore: Inicializar Supabase", "category": "EditCore Connect" },[m
+[32m+[m[32m      { "command": "editcoreConnect.openApis", "title": "EditCore: Configurar API keys (Claude/OpenAI)", "category": "EditCore Connect" },[m
+[32m+[m[32m      { "command": "editcoreConnect.openAccountPanel", "title": "EditCore: Ver cuentas conectadas", "category": "EditCore Connect" },[m
+[32m+[m[32m      { "command": "editcoreConnect.reloadWindow", "title": "EditCore: Recargar ventana", "category": "EditCore Connect" }[m
+     ][m
+[31m-  },[m
+[31m-  "scripts": {[m
+[31m-    "vscode:prepublish": "npm run compile:release",[m
+[31m-    "compile": "tsc -p ./",[m
+[31m-    "compile:release": "tsc -p ./tsconfig.release.json",[m
+[31m-    "watch": "tsc -watch -p ./",[m
+[31m-    "test": "node --test test/*.test.js"[m
+[31m-  },[m
+[31m-  "devDependencies": {[m
+[31m-    "@types/node": "^20.x",[m
+[31m-    "@types/vscode": "^1.85.0",[m
+[31m-    "typescript": "^5.3.0"[m
+[31m-  },[m
+[31m-  "dependencies": {[m
+[31m-    "@anthropic-ai/sdk": "^0.32.0"[m
+   }[m
+[31m-}[m
+[32m+[m[32m}[m
+\ No newline at end of file[m

@@ -7,7 +7,7 @@ import { redactSecrets } from "./redact";
 export interface TechMemoryEntry {
   id: string;
   timestamp: string;
-  type: "decision" | "change" | "config" | "diagnostic" | "evolution" | "autonomy_cycle";
+  type: "decision" | "change" | "config" | "diagnostic" | "evolution" | "autonomy_cycle" | "rag";
   title: string;
   summary: string;
   metadata?: Record<string, unknown>;

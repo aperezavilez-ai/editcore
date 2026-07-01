@@ -19,9 +19,10 @@ import {
   saveCommandCenterReport,
 } from "./recommendationEngine";
 
-async function openMarkdownReport(markdown: string): Promise<void> {
+async function openMarkdownReport(markdown: string, title?: string): Promise<void> {
+  const content = title ? `# ${title}\n\n${markdown}` : markdown;
   const doc = await vscode.workspace.openTextDocument({
-    content: markdown,
+    content,
     language: "markdown",
   });
   await vscode.window.showTextDocument(doc, { preview: false, viewColumn: vscode.ViewColumn.Beside });
@@ -176,7 +177,7 @@ export function registerIntelligenceCommands(
           decisions: data.decisions.totalDecisions,
         });
 
-        await openMarkdownReport("Command Center", markdown);
+        await openMarkdownReport(markdown, "Command Center");
 
         if (data.decisions.cancelRate > 0.4 && data.decisions.totalDecisions >= 5) {
           vscode.window.showWarningMessage(

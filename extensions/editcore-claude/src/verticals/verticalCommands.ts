@@ -88,6 +88,8 @@ export async function scaffoldVertical(templateId: string): Promise<void> {
     vscode.window.showInformationMessage(msg);
   }
 
+  await guideProjectConnections(root);
+
   const isGps = templateId.includes('gps');
   const role = isGps ? '@gps' : '@saas';
   const rel = path.relative(root, destDir).replace(/\\/g, '/');
@@ -237,4 +239,65 @@ export async function showAuditLog(): Promise<void> {
     language: 'json',
   });
   await vscode.window.showTextDocument(doc, { preview: true });
+}
+
+// ---------------------------------------------------------------------------
+// Wizard de conexión post-creación de proyecto (GitHub / Vercel / Supabase)
+// ---------------------------------------------------------------------------
+
+async function guideProjectConnections(root: string): Promise<void> {
+  const picks = await vscode.window.showQuickPick(
+    [
+      {
+        label: '$(github) GitHub',
+        description: 'Crear repositorio y publicar el proyecto',
+        picked: true,
+        id: 'github' as const,
+      },
+      {
+        label: '$(cloud) Vercel',
+        description: 'Configurar token para desplegar',
+        picked: false,
+        id: 'vercel' as const,
+      },
+      {
+        label: '$(database) Supabase',
+        description: 'Vincular proyecto de base de datos',
+        picked: false,
+        id: 'supabase' as const,
+      },
+    ],
+    {
+      canPickMany: true,
+      placeHolder: 'Proyecto creado — ¿a qué quieres conectarlo ahora? (Esc para omitir)',
+      title: 'EditCore — conectar proyecto',
+    }
+  );
+
+  if (!picks || picks.length === 0) {
+    return;
+  }
+
+  for (const pick of picks) {
+    try {
+      if (pick.id === 'github') {
+        await vscode.commands.executeCommand('editcoreConnect.publishGithub');
+      } else if (pick.id === 'vercel') {
+        await vscode.commands.executeCommand('editcoreConnect.setVercelToken');
+        const deploy = await vscode.window.showInformationMessage(
+          'Token de Vercel configurado. ¿Desplegar el proyecto ahora?',
+          'Desplegar',
+          'Más tarde'
+        );
+        if (deploy === 'Desplegar') {
+          await vscode.commands.executeCommand('editcoreConnect.deployVercel');
+        }
+      } else if (pick.id === 'supabase') {
+        await vscode.commands.executeCommand('editcoreConnect.setSupabaseToken');
+        await vscode.commands.executeCommand('editcoreConnect.linkSupabase');
+      }
+    } catch (err: any) {
+      vscode.window.showErrorMessage(`No se pudo conectar ${pick.label}: ${err?.message ?? err}`);
+    }
+  }
 }
