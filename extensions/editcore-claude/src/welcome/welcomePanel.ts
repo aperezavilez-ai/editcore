@@ -237,7 +237,7 @@ function getHtml(webview: vscode.Webview, context: vscode.ExtensionContext): str
     <div class="brand">
       <img src="${logoUri}" alt="EditCore" />
       <h1>EDITCORE</h1>
-      <p>IDE con Claude y OpenAI integrados · <span id="versionLabel">v…</span></p>
+      <p>EditCore AI · <span id="versionLabel">v…</span></p>
     </div>
 
     <div class="cards">
